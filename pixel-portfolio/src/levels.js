@@ -17,6 +17,7 @@ function newLevel(w, h, extra = {}) {
     spawn: { col: 3, row: GROUND_ROW - 1 },
     bg: 0x3cbcfc,
     theme: 'office',
+    world: 0, // index into WORLDS
     ...extra,
   };
 }

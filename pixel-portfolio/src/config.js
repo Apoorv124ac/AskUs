@@ -43,3 +43,14 @@ export const COLORS = {
   white: '#FCFCFC',
   gold: '#F8D878',
 };
+
+// --- Day 3 settings ---------------------------------------------------------
+export const OWNER_NAME = 'APOORV';
+
+// Paste your Google Apps Script web-app URL here to receive login emails in a
+// Google Sheet (see docs/EMAIL_SETUP.md). Leave '' to keep emails on the
+// visitor's own device only.
+export const EMAIL_ENDPOINT = '';
+
+// Link to your normal resume (PDF or web page). '' = the button shows "SOON".
+export const CLASSIC_RESUME_URL = '';

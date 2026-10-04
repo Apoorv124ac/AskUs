@@ -3,6 +3,7 @@
 // replaced one by one without changing game code (same texture keys).
 import Phaser from 'phaser';
 import { FW, FH, HERO_ANIMS, frameIndex } from '../heroFrames.js';
+import { save, persist, resetSave } from '../systems/save.js';
 
 function canvasTex(scene, key, w, h, draw) {
   const tex = scene.textures.createCanvas(key, w, h);
@@ -160,13 +161,30 @@ export default class PreloadScene extends Phaser.Scene {
       repeat: -1,
     });
 
+    const params = new URLSearchParams(location.search);
+    if (params.has('reset')) resetSave();
+
+    // restore saved progress into the shared registry
     const reg = this.registry;
-    reg.set('coins', 0);
-    reg.set('xp', 0);
-    reg.set('level', 0);
+    reg.set('coins', save.coins);
+    reg.set('xp', save.xp);
+    reg.set('level', save.level);
     reg.set('coffee', 0);
     reg.set('coffeeMs', 0);
+    reg.set('collected', new Set(save.collected));
+    reg.events.on('changedata', (_, key) => {
+      if (!['coins', 'xp', 'level'].includes(key)) return;
+      save.coins = reg.get('coins');
+      save.xp = reg.get('xp');
+      save.level = reg.get('level');
+      save.collected = [...reg.get('collected')];
+      persist();
+    });
 
-    this.scene.start('Game', { room: 'main' });
+    // ?scene=Game jumps straight into gameplay (handy while developing)
+    const only = params.get('scene');
+    if (only === 'Game') this.scene.start('Game', { room: 'main' });
+    else this.scene.start(only || 'Title');
+
   }
 }

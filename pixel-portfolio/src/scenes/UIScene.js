@@ -27,7 +27,7 @@ export default class UIScene extends Phaser.Scene {
       .setAlpha(0)
       .setDepth(10);
     this.pauseText = this.add
-      .text(128, 112, 'PAUSED\n\nP / ESC TO RESUME', { ...style(), align: 'center' })
+      .text(128, 112, 'PAUSED\n\nP / ESC  RESUME\nQ  WORLD MAP', { ...style(), align: 'center' })
       .setOrigin(0.5)
       .setVisible(false)
       .setDepth(11);
@@ -43,6 +43,13 @@ export default class UIScene extends Phaser.Scene {
     const kb = this.input.keyboard;
     kb.on('keydown-P', () => this.togglePause());
     kb.on('keydown-ESC', () => this.togglePause());
+    kb.on('keydown-Q', () => {
+      if (!this.scene.isPaused('Game')) return;
+      this.pauseText.setVisible(false);
+      this.scene.stop('Game');
+      this.scene.stop('UI');
+      this.scene.start('Menu');
+    });
     this.refresh();
   }
 

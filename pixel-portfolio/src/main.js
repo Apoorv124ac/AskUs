@@ -4,6 +4,10 @@ import { GAME_W, GAME_H, PHYSICS } from './config.js';
 import PreloadScene from './scenes/PreloadScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
+import TitleScene from './scenes/TitleScene.js';
+import EntranceScene from './scenes/EntranceScene.js';
+import LoginScene from './scenes/LoginScene.js';
+import MenuScene from './scenes/MenuScene.js';
 
 const debug = new URLSearchParams(location.search).has('debug');
 
@@ -21,7 +25,7 @@ function start() {
       default: 'arcade',
       arcade: { gravity: { y: PHYSICS.gravity }, debug },
     },
-    scene: [PreloadScene, GameScene, UIScene],
+    scene: [PreloadScene, TitleScene, EntranceScene, LoginScene, MenuScene, GameScene, UIScene],
   });
   window.__game = game; // handy for debugging / automated tests
 }

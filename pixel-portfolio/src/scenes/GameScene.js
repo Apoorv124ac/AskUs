@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { TILE, PHYSICS as P, PROGRESSION } from '../config.js';
 import { LEVELS } from '../levels.js';
+import { save, persist } from '../systems/save.js';
 
 const TILE_TEX = {
   '#': 'tile-ground',
@@ -202,8 +203,16 @@ export default class GameScene extends Phaser.Scene {
   hitGoal() {
     if (this.goalShown) return;
     this.goalShown = true;
-    this.game.events.emit('banner', 'END OF DEMO\nWORLD 1 COMES NEXT');
-    this.lockAnim('celebrate', 1500);
+    save.completed[this.level.world] = true;
+    save.lastWorld = Math.min(this.level.world + 1, 5);
+    persist();
+    this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!`);
+    this.lockAnim('celebrate', 2400);
+    this.time.delayedCall(2600, () => {
+      this.scene.stop('UI');
+      this.cameras.main.fadeOut(250, 15, 15, 27);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Menu'));
+    });
   }
 
   popText(x, y, msg) {
