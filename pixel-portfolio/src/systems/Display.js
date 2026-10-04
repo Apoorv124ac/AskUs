@@ -17,6 +17,7 @@ export function setupDisplay(game, save) {
     canvas.style.height = h + 'px';
     stage.style.width = w + 'px';
     stage.style.height = h + 'px';
+    stage.style.setProperty('--s', String(w / GAME.width));
     game.scale.refresh();
   };
   fit();

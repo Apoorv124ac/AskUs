@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import { MovementController } from '../src/systems/MovementController.js';
 import { PHYSICS as P } from '../src/config.js';
+import { validateEmail, submitEmail } from '../src/systems/LoginSystem.js';
+import { isWorldUnlocked, nextWorldToPlay } from '../src/systems/Worlds.js';
 
 const DT = 1 / 60;
 const NO = { speedMult: 1, canAirJump: false };
@@ -32,7 +34,8 @@ const apexOf = (input) => {
   return -apex;
 };
 let n = 0;
-const test = (name, fn) => { fn(); n++; console.log('  ok  ' + name); };
+const queue = [];
+const test = (name, fn) => { queue.push([name, fn]); };
 
 test('walk accelerates to walkSpeed, run to runSpeed', () => {
   const a = makeSim(); a.run(90, { dir: 1 });
@@ -140,4 +143,32 @@ test('reversing at speed skids', () => {
   assert.ok(s.ctrl.skidding);
 });
 
+test('email validation accepts normal addresses and rejects junk', () => {
+  for (const ok of ['a@b.co', ' first.last+tag@sub.example.org ', 'x_y@mail.example.com']) assert.ok(validateEmail(ok).ok, ok);
+  assert.equal(validateEmail(' a@b.co ').value, 'a@b.co');
+  for (const bad of ['', 'abc', 'a@b', 'a@@b.com', 'a b@c.com', '@x.com', 'a@.com', 'a@b..com', 'a@b.c', null, 'x'.repeat(300) + '@a.com']) assert.ok(!validateEmail(bad).ok, String(bad));
+});
+
+test('submitEmail never throws, posts JSON only when an endpoint is set', async () => {
+  let called = null;
+  const fakeOk = async (url, opt) => { called = { url, body: JSON.parse(opt.body), method: opt.method }; return { ok: true }; };
+  assert.equal(await submitEmail(null, 'a@b.co', { fetchImpl: fakeOk }), false);
+  assert.equal(called, null, 'no endpoint = nothing sent');
+  assert.equal(await submitEmail('https://x.test/in', 'a@b.co', { fetchImpl: fakeOk }), true);
+  assert.equal(called.method, 'POST'); assert.equal(called.body.email, 'a@b.co');
+  assert.equal(await submitEmail('https://x.test/in', 'a@b.co', { fetchImpl: async () => { throw new Error('offline'); } }), false);
+});
+
+test('world unlock rules + recruiter mode', () => {
+  const none = new Set();
+  assert.ok(isWorldUnlocked(1, none, false));
+  assert.ok(!isWorldUnlocked(2, none, false));
+  assert.ok(isWorldUnlocked(2, new Set([1]), false));
+  assert.ok(!isWorldUnlocked(3, new Set([1]), false));
+  for (let i = 1; i <= 6; i++) assert.ok(isWorldUnlocked(i, none, true), 'recruiter unlocks ' + i);
+  assert.equal(nextWorldToPlay(none, false), 1);
+  assert.equal(nextWorldToPlay(new Set([1, 2]), false), 3);
+});
+
+for (const [name, fn] of queue) { await fn(); n++; console.log('  ok  ' + name); }
 console.log(`\n${n} tests passed`);

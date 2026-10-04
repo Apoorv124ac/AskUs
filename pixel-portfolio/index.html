@@ -23,6 +23,21 @@
     #boot.hide { display: none; }
     noscript { color: #fff; font: 14px monospace; padding: 20px; }
 
+    /* ---------- DOM overlay in game pixels (256x224), scaled with the canvas ---------- */
+    #overlay { position: absolute; left: 0; top: 0; width: 256px; height: 224px; transform-origin: 0 0; transform: scale(var(--s, 1)); pointer-events: none; line-height: 1; }
+    #login-ui[hidden] { display: none; }
+    #login-ui { position: absolute; inset: 0; }
+    /* font-size 16px (no mobile zoom-on-focus) shrunk by 0.5 => crisp 8px game text */
+    #email { position: absolute; left: 32px; top: 64px; width: 336px; height: 30px; transform: scale(.5); transform-origin: 0 0; pointer-events: auto;
+      font: 16px 'Press Start 2P', monospace; color: #FCFCFC; background: #0F0F1B; border: 2px solid #58D854; border-radius: 0; padding: 0 8px; outline: none; caret-color: #F8D878; }
+    #email:focus { border-color: #F8D878; box-shadow: 0 0 0 2px #0F0F1B; }
+    #email.bad { border-color: #F83800; }
+    #email::placeholder { color: #7C7C7C; }
+    #login-skip { position: absolute; left: 166px; top: 150px; pointer-events: auto; font: 8px 'Press Start 2P', monospace; color: #FCFCFC; background: #0F0F1B;
+      border: 2px solid #BCBCBC; padding: 4px 6px; cursor: pointer; }
+    #login-skip:focus-visible, #login-skip:hover { border-color: #F8D878; color: #F8D878; outline: none; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
     /* ---------- touch controls (shown on touch devices only) ---------- */
     #touch { display: none; position: fixed; inset: 0; pointer-events: none; z-index: 4; font-family: 'Press Start 2P', monospace; }
     body.touch #touch { display: block; }
@@ -45,7 +60,15 @@
 </head>
 <body>
   <div id="boot">LOADING...</div>
-  <div id="stage"><div id="game"></div><div id="crt"></div></div>
+  <div id="stage"><div id="game"></div>
+    <div id="overlay">
+      <form id="login-ui" hidden autocomplete="on" novalidate>
+        <input id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" aria-label="Your e-mail address" aria-describedby="login-live" placeholder="you@company.com" />
+        <button id="login-skip" type="button">SKIP &gt;</button>
+        <div id="login-live" class="sr-only" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+    <div id="crt"></div></div>
   <div id="touch" aria-label="On-screen controls">
     <div id="sys">
       <button data-a="mute" aria-label="Mute">M</button>

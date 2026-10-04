@@ -12,6 +12,9 @@ import { TitleScene } from './scenes/TitleScene.js';
 import { LevelScene } from './scenes/LevelScene.js';
 import { HUDScene } from './scenes/HUDScene.js';
 import { PauseScene } from './scenes/PauseScene.js';
+import { EntranceScene } from './scenes/EntranceScene.js';
+import { LoginScene } from './scenes/LoginScene.js';
+import { WorldMapScene } from './scenes/WorldMapScene.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -39,7 +42,7 @@ async function start() {
     scale: { mode: Phaser.Scale.NONE },
     physics: { default: 'arcade', arcade: { gravity: { y: 0 }, fps: 60, debug: params.has('physics') } },
     fps: { target: 60 },
-    scene: [BootScene, TitleScene, LevelScene, HUDScene, PauseScene],
+    scene: [BootScene, TitleScene, EntranceScene, LoginScene, WorldMapScene, LevelScene, HUDScene, PauseScene],
   });
 
   const display = setupDisplay(game, save);

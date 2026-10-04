@@ -75,6 +75,8 @@ function testLevel() {
   [[50, 9], [52, 8], [53, 7], [54, 8], [56, 9]].forEach(([x, y]) => coin(x, y)); // arc over the long gap
   for (let i = 0; i < 4; i++) coin(70 + i, 3);                     // reward on the high ledge
   o.push(obj('coffee', px(63) + 8, px(8) + 8));
+  o.push(obj('goal', px(77) + 8, px(G), {}, {}, 'goal'));
+  o.push(obj('sign', px(74) + 8, px(8) , {}, { dialogue: 'goal' }));
   o.push(obj('sign', px(5) + 8, px(8), {}, { dialogue: 'move' }));
   o.push(obj('sign', px(13) + 8, px(7) - 4, {}, { dialogue: 'pipe' }));
   o.push(obj('sign', px(46) + 8, px(7), {}, { dialogue: 'longjump' }));

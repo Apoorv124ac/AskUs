@@ -3,9 +3,21 @@
 Phaser 3 + Vite, vanilla JS. 256x224 internal resolution, integer-scaled, Press Start 2P font,
 Tiled-JSON maps, everything configurable from `src/config.js`.
 
-> **Status: Segment 1 / Day 1 - "Movement Lab".** Scaffold, full controls, test level, bonus room,
-> pickups, HUD, pause menu, touch controls, save/load. Worlds 1-6, NPCs, enemies, login and
-> credits come in later segments.
+> **Status: Segment 2 / Day 2 - "The Front Door".** Day 1: scaffold, full controls, test level, pickups, HUD,
+> pause, touch, save. Day 2: hero redesign (Apoorv), Title menu, office-entrance cutscene with a reusable
+> dialogue box, login desk (real e-mail field, validation, ACCESS GRANTED, optional POST), world map with
+> locked/unlocked worlds, Recruiter Mode, finish flag that clears a world. Worlds 1-6 still use the shared
+> test level as a stand-in; enemies, NPCs and credits come in later segments.
+
+## The flow
+
+`Title` -> `Entrance` (cutscene, Esc skips) -> `Login` (e-mail or SKIP) -> `WorldMap` -> `Level` (world n) -> finish flag -> `WorldMap`.
+Returning visitors get **CONTINUE** (straight to the map). **RECRUITER MODE** on the title (or `R` on the map)
+unlocks all worlds, adds `H` = jump to Contact and `V` = classic resume link (set `meta.classicResumeUrl` in `resume.json`).
+
+Login: the e-mail is validated, stored in `localStorage`, and POSTed as JSON **only if** `LOGIN.endpoint` in
+`src/config.js` is set (otherwise nothing leaves the device; the on-screen privacy line changes accordingly).
+Pause > RESET PROGRESS erases it.
 
 ## Run it
 
@@ -39,6 +51,7 @@ URL flags: `?debug` (physics overlay + `window.__oq`), `?reset` (wipe save), `?t
 | interact / confirm | Enter or Space | OK / A in menus |
 | pause / menu | Esc or P | II |
 | mute | M | M |
+| world map | Left/Right or 1-6, Enter, R recruiter, H contact, V resume | D-pad, A, tap nodes/buttons |
 | CRT scanlines | C | pause menu |
 
 Coffee = 12 s of +25 % speed, **double jump** and a glow.
@@ -66,10 +79,13 @@ src/
   assets/placeholders.js procedural placeholder art (hero tiers, tiles, parallax, pickups)
   data/resume.json      single source of truth for portfolio content (placeholders)
   data/dialogue.json    all on-screen text
-  scenes/               Boot, Title, Level, HUD, Pause
+  assets/heroArt.js     hand-drawn hero pixel art (6 career-tier outfits)
+  data/worlds.json      world-map entries
+  scenes/               Boot, Title, Entrance, Login, WorldMap, Level, HUD, Pause
   entities/Player.js    hero (physics zone + juicy sprite)
   systems/              MovementController (pure), Input, Audio (WebAudio chiptune), Save,
-                        GameState, FX, Display (integer scaling, CRT), TouchControls, UI
+                        GameState, FX, Display (integer scaling, CRT), TouchControls, UI,
+                        DialogueBox, LoginSystem (pure), Worlds (pure)
 tests/                  unit + e2e tests
 ```
 

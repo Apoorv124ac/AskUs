@@ -22,25 +22,46 @@ export class TitleScene extends Phaser.Scene {
 
     text(this, 128, 38, 'OFFICE', { size: 24, color: C.yellow }).setShadow(3, 3, C.black, 0, false, true);
     text(this, 128, 68, 'QUEST', { size: 24, color: C.white }).setShadow(3, 3, C.red, 0, false, true);
-    text(this, 128, 100, 'DAY 1 : MOVEMENT LAB', { size: 8, color: C.cyan, backing: true });
+    text(this, 128, 100, 'A PIXEL PORTFOLIO', { size: 8, color: C.cyan, backing: true });
 
-    const touch = document.body.classList.contains('touch');
-    this.prompt = text(this, 128, 138, touch ? dialogue.ui.pressStartTouch : dialogue.ui.pressStart, { size: 8, backing: true });
-    if (!calm) this.tweens.add({ targets: this.prompt, alpha: 0, duration: 500, yoyo: true, repeat: -1 });
-    text(this, 128, 172, 'M SOUND  C SCANLINES', { size: 8, color: C.white, backing: true });
-
+    const { save } = sv;
+    const profile = save.hasProfile || save.flags.introSeen;
+    const goMap = () => this.go('WorldMap');
+    this.items = [
+      { label: profile ? dialogue.ui.continue : dialogue.ui.start, run: () => (profile ? goMap() : this.go('Entrance')) },
+      { label: dialogue.ui.recruiter, run: () => { sv.state.setRecruiter(true); goMap(); } },
+    ];
+    if (save.flags.introSeen) this.items.push({ label: dialogue.ui.replayIntro, run: () => this.go('Entrance') });
+    this.sel = 0;
+    this.rows = this.items.map((it, i) => text(this, 128, 126 + i * 15, it.label, { size: 8, backing: true, shadow: false })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => { if (this.sel === i) this.choose(); else { this.sel = i; this.render(); } }));
+    text(this, 128, 208, 'M SOUND  C SCANLINES', { size: 8, color: C.white, backing: true });
     this.starting = false;
+    this.render();
   }
+
+  render() {
+    this.rows.forEach((r, i) => r.setText((i === this.sel ? '> ' : '  ') + this.items[i].label + (i === this.sel ? ' <' : '  ')).setColor(i === this.sel ? C.yellow : C.white));
+  }
+
+  go(key) {
+    if (this.starting) return;
+    this.starting = true;
+    this.sv.audio.sfx('confirm'); this.sv.audio.startMusic();
+    this.cameras.main.fadeOut(250, 15, 15, 27);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(key));
+  }
+
+  choose() { this.items[this.sel].run(); }
 
   update(_, delta) {
     const calm = this.sv.save.settings.reducedMotion;
     if (!calm) { this.far.tilePositionX += delta * 0.003; this.mid.tilePositionX += delta * 0.01; this.near.tilePositionX += delta * 0.025; }
-    if (!this.starting && this.sv.input.confirmPressed()) {
-      this.starting = true;
-      this.sv.audio.sfx('confirm');
-      this.sv.audio.startMusic();
-      this.cameras.main.fadeOut(250, 15, 15, 27);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Level', { map: 'test-level', spawn: 'start' }));
-    }
+    const { input, audio } = this.sv;
+    if (this.starting) return;
+    if (input.menuUp()) { this.sel = (this.sel + this.items.length - 1) % this.items.length; audio.sfx('menu'); this.render(); }
+    if (input.justPressed('down')) { this.sel = (this.sel + 1) % this.items.length; audio.sfx('menu'); this.render(); }
+    if (input.confirmPressed()) this.choose();
   }
 }

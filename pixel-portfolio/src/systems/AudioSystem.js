@@ -74,6 +74,9 @@ export class AudioSystem {
       case 'checkpoint': [659, 784, 988].forEach((f, i) => this.#tone(f, 0.1, { delay: i * 0.07, vol: 0.16 })); break;
       case 'levelup':  [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this.#tone(f, 0.14, { delay: i * 0.08, vol: 0.2 })); break;
       case 'respawn':  this.#tone(500, 0.4, { slide: -420, vol: 0.2 }); break;
+      case 'blip':     this.#tone(740 + Math.random() * 80, 0.03, { vol: 0.07 }); break;
+      case 'grant':    [392, 523, 659, 784, 1047].forEach((f, i) => this.#tone(f, 0.16, { delay: i * 0.07, vol: 0.18, type: 'triangle' })); break;
+      case 'deny':     this.#tone(200, 0.12, { vol: 0.2 }); this.#tone(150, 0.2, { vol: 0.2, delay: 0.12 }); break;
       case 'menu':     this.#tone(660, 0.05, { vol: 0.15 }); break;
       case 'confirm':  this.#tone(880, 0.08, { vol: 0.16 }); this.#tone(1175, 0.12, { delay: 0.07, vol: 0.16 }); break;
       default: break;

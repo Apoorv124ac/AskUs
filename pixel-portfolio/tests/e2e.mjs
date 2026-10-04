@@ -35,12 +35,74 @@ try {
   await page.screenshot({ path: 'test-output/01-title.png' });
   ok('boots to title screen');
 
+  // ================= DAY 2 FLOW: Title -> Entrance -> Login -> World map -> World 1 =================
+  const active = (k) => page.waitForFunction((k) => window.__oq.game.scene.isActive(k), k, { timeout: 15000 });
+  const sceneState = (fn) => page.evaluate(fn);
+  const titleItems = await sceneState(() => window.__oq.game.scene.getScene('Title').items.map((i) => i.label));
+  assert.deepEqual(titleItems, ['START', 'RECRUITER MODE'], 'first visit shows START + RECRUITER MODE');
   await tap('Enter');
-  await page.waitForFunction(() => window.__oq.game.scene.isActive('Level'), null, { timeout: 5000 });
-  await sleep(900);
-  await page.screenshot({ path: 'test-output/02-level-start.png' });
-  assert.equal(await L((s) => s.mapKey), 'test-level');
-  ok('Enter starts the test level (HUD active: ' + await page.evaluate(() => window.__oq.game.scene.isActive('HUD')) + ')');
+  await active('Entrance');
+  await page.waitForFunction(() => window.__oq.game.scene.getScene('Entrance').box.active, null, { timeout: 12000 });
+  await sleep(1500);
+  await page.screenshot({ path: 'test-output/02a-entrance.png' });
+  ok('title START -> entrance cutscene with dialogue');
+  for (let i = 0; i < 40 && !(await page.evaluate(() => window.__oq.game.scene.isActive('Login'))); i++) { await tap('Enter', 40); await sleep(350); }
+  await active('Login');
+  await sleep(700);
+  await page.screenshot({ path: 'test-output/02b-login.png' });
+  assert.ok(await page.evaluate(() => document.activeElement?.id === 'email'), 'e-mail field focused');
+  await page.fill('#email', 'not-an-email'); await page.keyboard.press('Enter'); await sleep(300);
+  assert.ok(await page.evaluate(() => document.getElementById('email').classList.contains('bad')), 'invalid e-mail rejected');
+  assert.equal(await page.evaluate(() => window.__oq.game.scene.isActive('Login')), true);
+  assert.equal(await page.evaluate(() => localStorage.getItem('office-quest-save-v1')?.includes('not-an-email') ?? false), false, 'invalid address is not stored');
+  await page.screenshot({ path: 'test-output/02c-login-denied.png' });
+  await page.fill('#email', 'recruiter@example.com'); await page.keyboard.press('Enter'); await sleep(600);
+  await page.screenshot({ path: 'test-output/02d-access-granted.png' });
+  const savedEmail = await page.evaluate(() => JSON.parse(localStorage.getItem('office-quest-save-v1')).email);
+  assert.equal(savedEmail, 'recruiter@example.com');
+  ok('login: invalid rejected, valid -> ACCESS GRANTED, stored in localStorage');
+  await active('WorldMap'); await sleep(700);
+  await page.screenshot({ path: 'test-output/02e-worldmap.png' });
+  const wm = () => page.evaluate(() => { const s = window.__oq.game.scene.getScene('WorldMap'); const st = window.__oq.game.services.state; return { sel: s.sel, unlocked: [1,2,3,4,5,6].map((i) => st.isUnlocked(i)), done: [...st.worlds] }; });
+  let w = await wm();
+  assert.deepEqual(w.unlocked, [true, false, false, false, false, false]);
+  await tap('ArrowRight'); await sleep(200);
+  assert.equal((await wm()).sel, 1, 'right selects next world');
+  await tap('Enter'); await sleep(600);
+  assert.equal(await page.evaluate(() => window.__oq.game.scene.isActive('WorldMap')), true, 'locked world does not start');
+  await tap('Digit1'); await sleep(200);
+  assert.equal((await wm()).sel, 0, 'number key jumps to world');
+  ok('world map: select next/previous, locked world refuses to start');
+  await tap('Enter');
+  await active('Level'); await sleep(900);
+  assert.equal(await L((s) => s.world), 1);
+  // clear the level through the finish flag
+  await placeAt(76 * 16, 192); await sleep(300);
+  await L((s, p) => p.teleport(77 * 16 + 8, 192));
+  await active('WorldMap'); await sleep(900);
+  w = await wm();
+  assert.deepEqual(w.done, [1]); assert.equal(w.unlocked[1], true, 'world 2 unlocked after clearing 1'); assert.equal(w.sel, 1);
+  await page.screenshot({ path: 'test-output/02f-world1-cleared.png' });
+  ok('finish flag clears World 1 -> World 2 unlocks, cursor moves on');
+
+  // Recruiter Mode: unlock all, Contact shortcut
+  await tap('KeyR'); await sleep(300);
+  assert.deepEqual((await wm()).unlocked, [true, true, true, true, true, true]);
+  await page.screenshot({ path: 'test-output/02g-recruiter.png' });
+  await tap('KeyV'); await sleep(200);                                    // no resume URL yet -> friendly notice, no crash
+  await tap('KeyH');
+  await active('Level'); await sleep(700);
+  assert.equal(await L((s) => s.world), 6);
+  ok('Recruiter Mode unlocks everything; H jumps straight to Contact (world 6)');
+
+  // pause menu -> WORLD MAP
+  await tap('Escape'); await sleep(300);
+  for (let i = 0; i < 5; i++) { await tap('ArrowDown', 40); await sleep(80); }
+  await tap('Enter');
+  await active('WorldMap'); await sleep(500);
+  await tap('Enter');
+  await active('Level'); await sleep(900);
+  ok('pause menu returns to the world map; map starts a level again');
 
   // ---------- walk vs run
   await placeAt(40 * 16, 192); await settle();
@@ -226,6 +288,15 @@ try {
   const fps = await page.evaluate(() => window.__oq.game.loop.actualFps);
   console.log('      actualFps (headless software GL):', fps.toFixed(0));
 
+  // ---------- returning visitor: save persists across a reload, Title offers CONTINUE
+  await page.goto(`http://localhost:${PORT}/?debug`);
+  await active('Title'); await sleep(500);
+  const items2 = await sceneState(() => window.__oq.game.scene.getScene('Title').items.map((i) => i.label));
+  assert.deepEqual(items2, ['CONTINUE', 'RECRUITER MODE', 'REPLAY INTRO']);
+  await tap('Enter'); await active('WorldMap'); await sleep(400);
+  assert.ok((await wm()).done.includes(1) , 'cleared world persisted');
+  ok('reload: save persisted, CONTINUE goes straight to the world map');
+
   // ---------- touch controls on a phone-sized landscape viewport
   const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
   const tp = await ctx.newPage();
@@ -237,8 +308,20 @@ try {
     el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1 }));
     setTimeout(() => { el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 })); res(); }, ms);
   }), [sel, ms]);
-  await hold('#abtns [data-a="jump"]', 80);                      // A confirms on the title screen
-  await tp.waitForFunction(() => window.__oq.game.scene.isActive('Level'), null, { timeout: 5000 });
+  const tActive = (k) => tp.waitForFunction((k) => window.__oq.game.scene.isActive(k), k, { timeout: 8000 });
+  await hold('#abtns [data-a="jump"]', 80);                      // A confirms START on the title screen
+  await tActive('Entrance');
+  await sleep(500);
+  await hold('#sys [data-a="pause"]', 80);                       // pause button skips the cutscene
+  await tActive('Login');
+  await sleep(600);
+  await tp.screenshot({ path: 'test-output/09a-touch-login.png' });
+  await tp.click('#login-skip');                                 // SKIP > continues as guest
+  await tActive('WorldMap');
+  await sleep(600);
+  await tp.screenshot({ path: 'test-output/09b-touch-map.png' });
+  await hold('#abtns [data-a="jump"]', 80);                      // A starts the selected world
+  await tActive('Level');
   await sleep(900);
   const tx0 = await tp.evaluate(() => window.__oq.game.scene.getScene('Level').player.x);
   await hold('#dpad [data-a="right"]', 600);
@@ -259,7 +342,7 @@ try {
   ok('no console or page errors');
   console.log(`\n${passed} e2e checks passed`);
 } catch (e) {
-  console.error('\nE2E FAILED:', e.message);
+  console.error('\nE2E FAILED:', e.message, (e.stack||'').split('\n').slice(1,3).join(' | '));
   console.error('errors seen:', errors);
   await page.screenshot({ path: 'test-output/failure.png' }).catch(() => {});
   process.exitCode = 1;

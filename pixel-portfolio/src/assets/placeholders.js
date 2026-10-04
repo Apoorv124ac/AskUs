@@ -4,6 +4,7 @@
  * A shared outline pass gives every sprite the 1px dark outline from the style guide.
  */
 import { PALETTE as C } from '../config.js';
+import { drawHeroFrame, HERO_POSES } from './heroArt.js';
 
 const OUTLINE = [15, 15, 27];
 
@@ -31,55 +32,11 @@ function outline(ctx, x, y, w, h) {
 }
 
 /* ------------------------------------------------------------------ hero */
-// Career-ladder looks: shirt colour, lanyard, badge, tie, blazer...
-const TIERS = [
-  { shirt: C.cyan,  lanyard: null,     badge: false, tie: null,     blazer: null,      star: false }, // Intern
-  { shirt: C.white, lanyard: C.lgrey,  badge: true,  tie: null,     blazer: null,      star: false }, // Junior
-  { shirt: C.white, lanyard: C.blue,   badge: true,  tie: null,     blazer: null,      star: false }, // Associate
-  { shirt: C.white, lanyard: C.blue,   badge: true,  tie: C.red,     blazer: null,      star: false }, // Senior
-  { shirt: C.white, lanyard: C.green,  badge: true,  tie: C.red,     blazer: C.navy,    star: false }, // Lead
-  { shirt: C.white, lanyard: C.yellow, badge: true,  tie: C.yellow,  blazer: C.purple,  star: true  }, // Hired!
-];
-const POSES = ['idle', 'walkA', 'walkB', 'jump', 'skid'];
-
-function drawHero(ctx, ox, pose, t) {
-  const r = (color, x, y, w, h) => rect(ctx, color, ox + x, y, w, h);
-  const lean = pose === 'skid' ? -1 : 0;
-  // legs + shoes
-  const leg = (x, y, h) => { r('#003058', x, y, 3, h); r(C.black, x - (pose === 'jump' ? 1 : 0), y + h, 4, 2); };
-  if (pose === 'walkA') { leg(4, 22, 7); leg(10, 22, 5); }
-  else if (pose === 'walkB') { leg(7, 22, 5); leg(5, 22, 7); }
-  else if (pose === 'jump') { leg(4, 22, 5); leg(10, 21, 4); }
-  else if (pose === 'skid') { leg(3, 22, 7); leg(10, 22, 7); }
-  else { leg(5, 22, 7); leg(9, 22, 7); }
-  // torso (blazer or shirt)
-  const body = TIERS_CURRENT.blazer ?? TIERS_CURRENT.shirt;
-  r(body, 5 + lean, 11, 7, 11);
-  if (TIERS_CURRENT.blazer) r(TIERS_CURRENT.shirt, 7 + lean, 11, 3, 6);   // shirt V under the blazer
-  // arm
-  const armY = pose === 'jump' ? 9 : 12;
-  const swing = pose === 'walkA' ? 1 : pose === 'walkB' ? -1 : 0;
-  r(body, 3 + lean + swing, armY, 2, 7);
-  r(C.cream, 3 + lean + swing, armY + 7, 2, 2);
-  // lanyard, badge, tie
-  if (TIERS_CURRENT.lanyard) { r(TIERS_CURRENT.lanyard, 7 + lean, 11, 1, 6); r(TIERS_CURRENT.lanyard, 10 + lean, 11, 1, 6); r(C.white, 7 + lean, 17, 4, 3); r(C.blue, 7 + lean, 17, 4, 1); }
-  if (TIERS_CURRENT.tie) { r(TIERS_CURRENT.tie, 8 + lean, 11, 2, 7); }
-  if (TIERS_CURRENT.star) { r(C.yellow, 5 + lean, 13, 1, 1); r(C.yellow, 11 + lean, 13, 1, 1); }
-  // head
-  r(C.cream, 5 + lean, 5, 7, 6);
-  r(C.black, 5 + lean, 2, 8, 3);          // hair
-  r(C.black, 4 + lean, 3, 2, 6);
-  r(C.black, 9 + lean, 6, 1, 2);          // eye
-  r(C.orange, 8 + lean, 8, 2, 1);         // mouth/nose hint
-}
-let TIERS_CURRENT = TIERS[0];
-
 export function generateHero(scene, key, tier) {
-  TIERS_CURRENT = TIERS[tier];
-  const t = canvasTex(scene.textures, key, 16 * POSES.length, 32, (ctx) => {
-    POSES.forEach((p, i) => { drawHero(ctx, i * 16, p, TIERS_CURRENT); outline(ctx, i * 16, 0, 16, 32); });
+  const t = canvasTex(scene.textures, key, 16 * HERO_POSES.length, 32, (ctx) => {
+    HERO_POSES.forEach((p, i) => { drawHeroFrame(ctx, i * 16, p, tier); outline(ctx, i * 16, 0, 16, 32); });
   });
-  POSES.forEach((_, i) => t.add(i, 0, i * 16, 0, 16, 32));
+  HERO_POSES.forEach((_, i) => t.add(i, 0, i * 16, 0, 16, 32));
 }
 
 /* ----------------------------------------------------------------- tiles */
@@ -145,6 +102,86 @@ const GEN = {
   },
 
   px(scene, key) { canvasTex(scene.textures, key, 2, 2, (ctx) => rect(ctx, '#ffffff', 0, 0, 2, 2)); },
+
+
+  /* ------------------------------------------------ cutscene / login / map backdrops */
+  lobbyBg(scene, key) {
+    canvasTex(scene.textures, key, 256, 224, (ctx) => {
+      const R = (c, x, y, w, h) => rect(ctx, c, x, y, w, h);
+      R('#BCBCBC', 0, 0, 256, 176);                                  // wall
+      R('#7C7C7C', 0, 150, 256, 26); R('#FCFCFC', 0, 150, 256, 1);   // wainscot
+      R(C.black, 0, 0, 256, 18); for (let x = 12; x < 256; x += 48) { R(C.white, x, 6, 24, 5); R(C.yellow, x + 2, 11, 20, 1); } // ceiling lights
+      R(C.navy, 0, 18, 256, 2);
+      // big window with morning sky + skyline
+      R(C.black, 118, 38, 100, 66); R(C.cyan, 121, 41, 94, 60); R('#58D0FC', 121, 41, 94, 20);
+      [[126, 30], [150, 44], [172, 36], [194, 50]].forEach(([x, h]) => { R(C.blue, x, 101 - h, 18, h); R('#0868F8', x, 101 - h, 18, 2); });
+      R(C.black, 166, 38, 3, 66); R(C.black, 118, 70, 100, 3);
+      // wall clock
+      R(C.black, 74, 40, 24, 24); R(C.white, 76, 42, 20, 20); R(C.black, 85, 46, 2, 9); R(C.black, 85, 53, 7, 2);
+      // welcome mat strip + plant
+      R(C.darkBrown, 0, 150, 32, 1);
+      R(C.darkGreen, 238, 126, 4, 26); R(C.green, 230, 112, 20, 16); R(C.lime, 234, 106, 8, 10); R(C.brown, 232, 148, 16, 10); R(C.black, 232, 158, 16, 1);
+      // glass entrance door (left)
+      R(C.black, 2, 88, 36, 88); R(C.cyan, 5, 91, 30, 82); R('#58D0FC', 5, 91, 30, 14); R(C.black, 19, 91, 2, 82); R(C.white, 9, 96, 2, 14);
+      // floor tiles
+      for (let y = 176; y < 224; y += 16) for (let x = 0; x < 256; x += 16) R(((x / 16 + y / 16) % 2) ? '#7C7C7C' : '#BCBCBC', x, y, 16, 16);
+      R(C.black, 0, 176, 256, 1);
+    });
+  },
+  receptionDesk(scene, key) {
+    canvasTex(scene.textures, key, 80, 24, (ctx) => {
+      const R = (c, x, y, w, h) => rect(ctx, c, x, y, w, h);
+      R(C.black, 0, 0, 80, 24); R(C.yellow, 1, 1, 78, 3); R(C.brown, 1, 4, 78, 19); R(C.darkBrown, 1, 19, 78, 4);
+      R(C.cream, 6, 8, 24, 1); R(C.cream, 50, 8, 24, 1);
+      R(C.white, 32, 9, 16, 8); R(C.red, 36, 11, 8, 4);              // little company sign on the desk front
+    });
+  },
+  npcReceptionist(scene, key) {
+    canvasTex(scene.textures, key, 16, 32, (ctx) => {
+      const R = (c, x, y, w, h) => rect(ctx, c, x, y, w, h);
+      R(C.black, 3, 1, 10, 6); R(C.black, 2, 4, 3, 8); R(C.black, 11, 4, 3, 8);  // hair
+      R('#F0B880', 5, 5, 6, 7); R(C.black, 6, 8, 1, 1); R(C.black, 9, 8, 1, 1); R(C.red, 7, 10, 2, 1);
+      R(C.lgrey, 1, 7, 2, 1); R(C.lgrey, 13, 7, 2, 1); R(C.lgrey, 3, 3, 10, 1);   // headset
+      R(C.blue, 3, 13, 10, 11); R(C.white, 6, 13, 4, 3); R('#F0B880', 1, 15, 2, 8); R('#F0B880', 13, 15, 2, 8);
+      R(C.blue, 1, 14, 2, 6); R(C.blue, 13, 14, 2, 6);
+      outline(ctx, 0, 0, 16, 32);
+    });
+  },
+  deskBg(scene, key) {
+    canvasTex(scene.textures, key, 256, 224, (ctx) => {
+      const R = (c, x, y, w, h) => rect(ctx, c, x, y, w, h);
+      R('#142c58', 0, 0, 256, 176); R(C.navy, 0, 0, 256, 6);
+      // night window behind the monitor
+      for (let i = 0; i < 12; i++) { const h = 14 + (i * 23) % 36; R('#0c1c40', i * 22, 130 - h, 18, h + 46); for (let w = 0; w < h; w += 8) R(C.yellow, i * 22 + 4, 134 - h + w, 3, 3); }
+      R(C.black, 0, 176, 256, 1); R('#503000', 0, 177, 256, 47);
+      // desk surface
+      R(C.yellow, 0, 168, 216, 2); R(C.brown, 0, 170, 216, 54); R(C.darkBrown, 0, 214, 216, 10); R(C.black, 0, 168, 216, 1);
+      R(C.black, 215, 168, 1, 56);
+      // monitor
+      R(C.black, 14, 8, 200, 124); R(C.lgrey, 16, 10, 196, 120); R(C.grey, 16, 124, 196, 6);
+      R(C.black, 22, 16, 184, 100); R('#002058', 24, 18, 180, 96);
+      R(C.black, 104, 132, 24, 22); R(C.grey, 106, 132, 20, 20); R(C.black, 88, 152, 56, 6); R(C.lgrey, 90, 152, 52, 4);
+      R(C.red, 192, 125, 4, 3);                                      // power LED
+      // keyboard, mug, plant
+      R(C.black, 56, 176, 104, 14); R(C.lgrey, 58, 178, 100, 10); for (let k = 60; k < 156; k += 6) { R(C.white, k, 179, 4, 3); R(C.white, k + 2, 184, 4, 3); }
+      R(C.black, 176, 172, 16, 18); R(C.white, 178, 174, 12, 14); R(C.darkBrown, 179, 175, 10, 3); R(C.white, 190, 177, 5, 2); R(C.white, 193, 177, 2, 6); R(C.white, 190, 181, 5, 2);
+      R(C.black, 6, 150, 22, 18); R(C.red, 8, 152, 18, 14);
+      R(C.darkGreen, 14, 130, 3, 20); R(C.green, 6, 120, 20, 14); R(C.lime, 10, 114, 10, 10);
+    });
+  },
+  mapBg(scene, key) {
+    canvasTex(scene.textures, key, 256, 224, (ctx) => {
+      const R = (c, x, y, w, h) => rect(ctx, c, x, y, w, h);
+      R('#58D0FC', 0, 0, 256, 224);
+      ['#0058F8', '#0868F8', '#1078F8', '#20A0F8', '#00B8F8', '#58D0FC'].forEach((c, i) => R(c, 0, i * 20, 256, 20));
+      [[20, 24, 40], [140, 38, 32], [200, 16, 36]].forEach(([x, y, w]) => { R(C.white, x, y, w, 6); R(C.white, x + 6, y - 4, w - 14, 4); });
+      // far skyline
+      for (let i = 0; i < 9; i++) { const h = 20 + (i * 31) % 38; R('#2c88f8', i * 30, 150 - h, 24, h + 40); R('#58a8fc', i * 30, 150 - h, 24, 2); }
+      // rolling hills
+      for (let x = 0; x < 256; x++) { const h = 40 + Math.round(10 * Math.sin(x / 22) + 6 * Math.sin(x / 9)); R(C.green, x, 224 - h, 1, h); R(C.lime, x, 224 - h, 1, 2); }
+      R(C.darkGreen, 0, 214, 256, 10);
+    });
+  },
 
   /* ------------------------------------------------ parallax (256x224, tileable) */
   bgFar(scene, key) {

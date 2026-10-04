@@ -1,17 +1,65 @@
 {
   "_comment": "All spoken / on-screen text lives here. Keys are referenced from map objects (property 'dialogue') and scenes.",
   "signs": {
-    "move":     "ARROWS: WALK\nHOLD SHIFT: RUN\nUP: JUMP",
-    "pipe":     "STAND ON PIPE\nPRESS DOWN",
+    "move": "ARROWS: WALK\nHOLD SHIFT: RUN\nUP: JUMP",
+    "pipe": "STAND ON PIPE\nPRESS DOWN",
     "longjump": "SHIFT + UP\n= LONG JUMP",
-    "coffee":   "COFFEE: SPEED\n+ DOUBLE JUMP",
-    "bonus":    "BONUS ROOM!"
+    "coffee": "COFFEE: SPEED\n+ DOUBLE JUMP",
+    "bonus": "BONUS ROOM!",
+    "goal": "FINISH FLAG!"
   },
   "ui": {
     "pressStart": "PRESS ENTER",
     "pressStartTouch": "TAP A",
     "levelUp": "LEVEL UP!",
-    "paused": "PAUSED"
+    "paused": "PAUSED",
+    "start": "START",
+    "continue": "CONTINUE",
+    "recruiter": "RECRUITER MODE",
+    "replayIntro": "REPLAY INTRO",
+    "skipIntro": "ESC: SKIP",
+    "skipLogin": "SKIP >"
   },
-  "npcs": {}
+  "npcs": {},
+  "intro": [
+    {
+      "who": "RECEPTIONIST",
+      "text": "Good morning! You must be {name}."
+    },
+    {
+      "who": "{name}",
+      "text": "That's me! Here for the big interview."
+    },
+    {
+      "who": "RECEPTIONIST",
+      "text": "Wonderful. Your desk is at the back. Log in so I can tell the team you're here!"
+    }
+  ],
+  "login": {
+    "header": "OFFICE QUEST INTRANET",
+    "label": "ENTER YOUR E-MAIL TO LOG IN",
+    "hint": "PRESS ENTER",
+    "placeholder": "you@company.com",
+    "granted": "ACCESS GRANTED",
+    "loading": "LOADING WORLD MAP...",
+    "denied": "ACCESS DENIED",
+    "invalid": "CHECK YOUR E-MAIL ADDRESS",
+    "privacyLocal": "PRIVATE: STAYS ON THIS\nDEVICE. CLEAR IT ANY TIME\nIN PAUSE > RESET.",
+    "privacyRemote": "PRIVATE: GOES TO {name}\nONLY, TO REPLY TO YOU.\nNEVER SHARED OR SOLD.",
+    "welcomeBack": "WELCOME BACK"
+  },
+  "worldmap": {
+    "title": "WORLD MAP",
+    "hint": "< > SELECT  ENTER PLAY",
+    "locked": "LOCKED: CLEAR WORLD {prev} FIRST",
+    "ready": "READY!",
+    "cleared": "CLEARED",
+    "standIn": "(PLACEHOLDER LEVEL)",
+    "recruiterOn": "RECRUITER MODE: ON",
+    "recruiterOff": "RECRUITER MODE: OFF",
+    "contact": "CONTACT",
+    "resume": "RESUME",
+    "noResume": "SET classicResumeUrl IN resume.json",
+    "cleared_banner": "WORLD {n} CLEARED!"
+  }
 }

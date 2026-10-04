@@ -1,0 +1,11 @@
+{
+  "_comment": "World-map entries. `map` is the Tiled map to load; standIn:true means it still uses the shared test level until that world is built.",
+  "worlds": [
+    { "id": 1, "short": "INTRO",      "name": "WORLD 1: INTRO",      "desc": "WHO IS {name}?",       "map": "test-level", "standIn": true },
+    { "id": 2, "short": "EDUCATION",  "name": "WORLD 2: EDUCATION",  "desc": "DEGREES & LEARNING",   "map": "test-level", "standIn": true },
+    { "id": 3, "short": "EXPERIENCE", "name": "WORLD 3: EXPERIENCE", "desc": "ONE FLOOR PER JOB",    "map": "test-level", "standIn": true },
+    { "id": 4, "short": "SKILLS",     "name": "WORLD 4: SKILLS",     "desc": "COINS BECOME XP",      "map": "test-level", "standIn": true },
+    { "id": 5, "short": "AWARDS",     "name": "WORLD 5: AWARDS",     "desc": "CERTS IN ? BLOCKS",    "map": "test-level", "standIn": true },
+    { "id": 6, "short": "CONTACT",    "name": "WORLD 6: CONTACT",    "desc": "ROOFTOP: SAY HELLO",   "map": "test-level", "standIn": true }
+  ]
+}

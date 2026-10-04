@@ -18,6 +18,8 @@ export class LevelScene extends Phaser.Scene {
 
   init(data) {
     this.mapKey = data?.map ?? 'test-level';
+    this.world = data?.world ?? null;      // world number when launched from the map
+    this.finished = false;
     this.spawnName = data?.spawn ?? 'start';
     this.transitioning = false;
     this.respawning = false;
@@ -83,6 +85,9 @@ export class LevelScene extends Phaser.Scene {
       switch (o.type) {
         case 'spawn': this.spawns[o.name] = { x: o.x, y: o.y, emerge: !!p.emerge }; break;
         case 'pipe': this.pipes.push({ x: o.x, y: o.y, w: o.width, target: p.target, spawn: p.spawn }); break;
+        case 'goal':
+          this.goal = { x: o.x, y: o.y, flag: this.add.sprite(o.x, o.y, 'flag', 1).setOrigin(0.5, 1).setDepth(3).setTint(0xf8d878) };
+          break;
         case 'checkpoint': {
           const flag = this.add.sprite(o.x, o.y, 'flag', 0).setOrigin(0.5, 1).setDepth(3);
           this.checkpoints.push({ x: o.x, y: o.y, flag, active: state.checkpoint?.map === this.mapKey && state.checkpoint.x === o.x });
@@ -199,6 +204,23 @@ export class LevelScene extends Phaser.Scene {
     });
   }
 
+  /** Touching the finish flag clears the current world and returns to the map. */
+  reachGoal() {
+    this.finished = true;
+    const { state, audio } = this.sv;
+    state.completeWorld(this.world ?? 1);
+    this.player.lock();
+    audio.sfx('levelup');
+    this.fx.burst(this.goal.x, this.goal.y - 24, { count: 26, speed: 110, colors: [C.yellow, C.white, C.lime, C.red], life: 700 });
+    this.add.text(GAME.width / 2, 90, 'WORLD CLEAR!', { fontFamily: FONT, fontSize: '16px', color: C.yellow, backgroundColor: 'rgba(15,15,27,0.85)', padding: { x: 6, y: 5 } })
+      .setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    this.time.delayedCall(1900, () => {
+      const cam = this.cameras.main;
+      cam.fadeOut(CAMERA.fadeMs, 15, 15, 27);
+      cam.once('camerafadeoutcomplete', () => { this.scene.stop('HUD'); this.scene.start('WorldMap', { cleared: this.world ?? 1 }); });
+    });
+  }
+
   pauseGame() {
     if (this.transitioning || !this.scene.isActive()) return;
     this.scene.launch('Pause');
@@ -235,8 +257,10 @@ export class LevelScene extends Phaser.Scene {
       }
     }
 
+    if (this.goal && !this.finished && Math.abs(this.player.x - this.goal.x) < 12 && Math.abs(this.player.feetY - this.goal.y) < 30) this.reachGoal();
+
     // fell into a pit
-    if (!this.respawning && this.player.body.top > this.mapH + 24) this.respawn(RESPAWN.pitCoinLoss);
+    if (!this.finished && !this.respawning && this.player.body.top > this.mapH + 24) this.respawn(RESPAWN.pitCoinLoss);
 
     this.updateCamera(dt);
   }

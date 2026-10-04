@@ -118,6 +118,10 @@ export const AUDIO = {
   musicEnabled: true,
 };
 
+export const UI = {
+  typeCharsPerSec: 45,     // dialogue typewriter speed (0 = instant)
+};
+
 export const STORAGE = {
   key: 'office-quest-save-v1',
 };

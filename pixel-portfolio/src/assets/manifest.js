@@ -23,6 +23,11 @@ export const IMAGES = {
   bg_far:  { url: null, generator: 'bgFar' },
   bg_mid:  { url: null, generator: 'bgMid' },
   bg_near: { url: null, generator: 'bgNear' },
+  lobby_bg:       { url: null, generator: 'lobbyBg' },
+  reception_desk: { url: null, generator: 'receptionDesk' },
+  npc_receptionist: { url: null, generator: 'npcReceptionist' },   // 16x32
+  desk_bg:        { url: null, generator: 'deskBg' },
+  map_bg:         { url: null, generator: 'mapBg' },
 };
 /** Hero sheets: one per career tier. `{tier}` in url is replaced by 0..5. */
 export const HERO = { url: null, tiers: 6, frameWidth: 16, frameHeight: 32 };

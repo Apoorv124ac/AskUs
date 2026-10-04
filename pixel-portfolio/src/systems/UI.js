@@ -22,3 +22,21 @@ export function text(scene, x, y, str, { size = 8, color = C.white, origin = [0.
   if (shadow) t.setShadow(1, 1, C.black, 0, false, true);
   return t;
 }
+
+/** Replace {tokens} in a string: fmt('Hi {name}', { name: 'A' }). */
+export const fmt = (str, vars = {}) => String(str).replace(/\{(\w+)\}/g, (_, k) => (k in vars ? vars[k] : `{${k}}`));
+
+/** Fade the camera out, then switch scene. */
+export function fadeTo(scene, key, data, ms = 250) {
+  const cam = scene.cameras.main;
+  cam.fadeOut(ms, 15, 15, 27);
+  cam.once('camerafadeoutcomplete', () => scene.scene.start(key, data));
+}
+
+/** Chunky pixel disc (no anti-aliasing) drawn into a Graphics object. */
+export function disc(g, cx, cy, r) {
+  for (let dy = -r; dy <= r; dy++) {
+    const w = Math.floor(Math.sqrt(r * r - dy * dy + r * 0.4));
+    g.fillRect(cx - w, cy + dy, 2 * w + 1, 1);
+  }
+}

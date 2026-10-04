@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PROGRESSION, COFFEE } from '../config.js';
+import { isWorldUnlocked } from './Worlds.js';
 
 /**
  * Runtime game state shared by every scene (coins, XP, career tier, coffee timer, collected ids).
@@ -15,6 +16,20 @@ export class GameState extends Phaser.Events.EventEmitter {
     this.collected = new Set(p.collected);
     this.coffeeMs = 0;
     this.checkpoint = null;      // { map, x, y }
+    this.worlds = new Set(p.worlds);
+    this.lastWorld = p.lastWorld ?? 1;
+  }
+
+  get recruiter() { return !!this.saveSys.settings.recruiter; }
+  setRecruiter(on) { this.saveSys.settings.recruiter = !!on; this.saveSys.save(); this.emit('recruiter', !!on); }
+  isUnlocked(id) { return isWorldUnlocked(id, this.worlds, this.recruiter); }
+  /** Mark a world cleared. Returns true if it was newly cleared. */
+  completeWorld(id) {
+    const fresh = !this.worlds.has(id);
+    this.worlds.add(id);
+    this.persist();
+    this.emit('world', id);
+    return fresh;
   }
 
   get tier() {
@@ -63,11 +78,13 @@ export class GameState extends Phaser.Events.EventEmitter {
   persist() {
     const p = this.saveSys.progress;
     p.coins = this.coins; p.xp = this.xp; p.collected = [...this.collected];
+    p.worlds = [...this.worlds]; p.lastWorld = this.lastWorld;
     this.saveSys.save();
   }
   reset() {
     this.saveSys.reset();
     this.coins = 0; this.xp = 0; this.collected.clear(); this.coffeeMs = 0; this.checkpoint = null;
+    this.worlds.clear(); this.lastWorld = 1;
     this.emit('coins', 0); this.emit('xp', 0); this.emit('tier', 0);
   }
 }

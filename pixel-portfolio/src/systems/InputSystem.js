@@ -14,6 +14,11 @@ const KEYMAP = {
   pause:    ['Escape', 'KeyP'],
   mute:     ['KeyM'],
   crt:      ['KeyC'],
+  recruiter: ['KeyR'],
+  contact:  ['KeyH'],
+  resume:   ['KeyV'],
+  n1: ['Digit1', 'Numpad1'], n2: ['Digit2', 'Numpad2'], n3: ['Digit3', 'Numpad3'],
+  n4: ['Digit4', 'Numpad4'], n5: ['Digit5', 'Numpad5'], n6: ['Digit6', 'Numpad6'],
 };
 const BLOCK_DEFAULT = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'Enter']);
 
@@ -34,7 +39,7 @@ export class InputSystem {
 
   #onKey(e, down) {
     const t = e.target;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return; // typing in the login field
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON')) return; // typing / DOM buttons keep native keys
     if (down && BLOCK_DEFAULT.has(e.code)) e.preventDefault();
     if (down && this.onFirstGesture) this.onFirstGesture();
     if (down === this.keys.has(e.code)) return;      // ignore key-repeat
@@ -69,6 +74,8 @@ export class InputSystem {
   justReleased(action) { return this.released.has(action); }
   /** Menus accept Enter/Space or the touch A button. */
   confirmPressed() { return this.justPressed('interact') || this.justPressed('confirm'); }
+  /** Menu 'up': the Up key / D-pad up, but not the touch A button (which also fires 'jump'). */
+  menuUp() { return this.justPressed('jump') && !this.justPressed('confirm'); }
   /** Direction on the horizontal axis: -1, 0, 1. */
   get dir() { return (this.isDown('right') ? 1 : 0) - (this.isDown('left') ? 1 : 0); }
 
