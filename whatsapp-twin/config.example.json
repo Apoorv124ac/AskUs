@@ -1,0 +1,12 @@
+{
+  "my_name": "Your Name As Shown In Exported Chats",
+  "model": "claude-sonnet-5-5",
+  "mode": "draft",
+  "away_mode": true,
+  "disclose_assistant": true,
+  "reply_in_groups": false,
+  "only_reply_to": [],
+  "never_reply_to": [],
+  "max_replies_per_contact_per_hour": 6,
+  "few_shot": 8
+}
