@@ -53,6 +53,8 @@ export default class GameScene extends Phaser.Scene {
     this.ljDir = 1;
     this.wasGrounded = true;
     this.prevVy = 0;
+    this.animLock = { key: null, until: 0 };
+    this.idleSince = 0;
 
     this.buildBackground();
     this.buildTiles();
@@ -147,10 +149,12 @@ export default class GameScene extends Phaser.Scene {
     this.spawnPoint = { x, bottom };
 
     const p = this.physics.add.sprite(x, bottom - 16, 'hero', 0).setDepth(5);
-    p.body.setSize(10, 28).setOffset(3, 4);
+    p.body.setSize(10, 28).setOffset(7, 4);
     p.body.setMaxVelocity(400, P.maxFallSpeed);
     p.setCollideWorldBounds(true);
     this.player = p;
+    this.aura = this.add.sprite(x, bottom - 16, 'hero', 0).setDepth(4).setVisible(false);
+    this.aura.setTint(0xffe080).setBlendMode(Phaser.BlendModes.ADD);
     this.cameras.main.startFollow(p, true, 0.12, 0.12);
     this.cameras.main.setDeadzone(8, 40);
 
@@ -174,6 +178,7 @@ export default class GameScene extends Phaser.Scene {
     if (lvl > reg.get('level')) {
       reg.set('level', lvl);
       this.game.events.emit('banner', `LEVEL UP!\n${PROGRESSION.titles[lvl]}`);
+      this.lockAnim('celebrate', 900);
     }
   }
 
@@ -184,6 +189,7 @@ export default class GameScene extends Phaser.Scene {
     this.coffeeMs = P.coffeeMs;
     this.game.events.emit('banner', 'CAFFEINATED!\nFASTER + DOUBLE JUMP');
     this.cameras.main.shake(120, 0.004);
+    this.lockAnim('sip', 700);
   }
 
   hitCheckpoint(flag) {
@@ -196,7 +202,8 @@ export default class GameScene extends Phaser.Scene {
   hitGoal() {
     if (this.goalShown) return;
     this.goalShown = true;
-    this.game.events.emit('banner', 'END OF DAY-1 DEMO\nWORLD 1 COMES NEXT');
+    this.game.events.emit('banner', 'END OF DEMO\nWORLD 1 COMES NEXT');
+    this.lockAnim('celebrate', 1500);
   }
 
   popText(x, y, msg) {
@@ -239,7 +246,7 @@ export default class GameScene extends Phaser.Scene {
     this.entering = true;
     p.body.enable = false;
     p.setVelocity(0, 0);
-    p.anims.play('idle', true);
+    p.anims.play('crouch', true);
     p.x = pipe.x + TILE;
     this.tweens.add({
       targets: p,
@@ -263,6 +270,7 @@ export default class GameScene extends Phaser.Scene {
     p.setPosition(this.spawnPoint.x, this.spawnPoint.bottom - 16);
     this.cameras.main.flash(200, 255, 255, 255);
     this.game.events.emit('banner', `OOPS! -${P.pitCoinPenalty} COINS`);
+    this.lockAnim('hurt', 600);
   }
 
   // --- main loop -----------------------------------------------------------
@@ -275,24 +283,32 @@ export default class GameScene extends Phaser.Scene {
     const b = p.body;
     const c = this.cursors;
     const shift = this.shift.isDown;
-    const dir = (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
     const grounded = b.blocked.down;
+    const crouching = grounded && c.down.isDown;
+    const dir = crouching ? 0 : (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
 
     // coffee timer + HUD value
     this.coffeeMs = Math.max(0, this.coffeeMs - delta);
     const powered = this.coffeeMs > 0;
     const ratio = Math.ceil((this.coffeeMs / P.coffeeMs) * 20) / 20;
     if (this.registry.get('coffee') !== ratio) this.registry.set('coffee', ratio);
-    const blink = powered && (this.coffeeMs > 2000 || Math.floor(time / 90) % 2);
-    if (powered && blink) p.setTint(Math.floor(time / 120) % 2 ? 0xffe080 : 0xffffff);
-    else p.clearTint();
+    // golden aura behind the hero while caffeinated (blinks in the last 2 seconds)
+    const auraOn = powered && (this.coffeeMs > 2000 || Math.floor(time / 90) % 2 === 0);
+    this.aura.setVisible(auraOn);
+    if (auraOn) {
+      this.aura.setPosition(p.x, p.y).setFlipX(p.flipX).setFrame(p.frame.name);
+      this.aura.setScale(1.18).setAlpha(0.35 + 0.15 * Math.sin(time / 120));
+    }
 
     if (grounded) {
       this.lastGrounded = time;
       this.airJumps = powered ? P.coffeeAirJumps : 0;
       this.longJumping = false;
       this.jumping = false;
-      if (!this.wasGrounded && this.prevVy > 150) this.dust(p.x, b.bottom, 5);
+      if (!this.wasGrounded && this.prevVy > 150) {
+        this.dust(p.x, b.bottom, 5);
+        this.lockAnim('land', 90, time);
+      }
     }
 
     // jumping: buffer + coyote + coffee double jump
@@ -338,11 +354,21 @@ export default class GameScene extends Phaser.Scene {
     b.setVelocityX(vx);
     if (dir !== 0) p.setFlipX(dir < 0);
 
-    // animation
-    if (!grounded) p.anims.play('jump', true);
-    else if (Math.abs(vx) > P.walkSpeed * 1.15 * boost * 0.9) p.anims.play('run', true);
-    else if (Math.abs(vx) > 8) p.anims.play('walk', true);
-    else p.anims.play('idle', true);
+    // animation: a short "lock" (sip, hurt, celebrate...) beats normal movement poses
+    const moving = Math.abs(vx) > 8 || !grounded || crouching;
+    if (moving) this.idleSince = time;
+    if (time >= this.animLock.until && time - this.idleSince > 4000) {
+      this.lockAnim('wave', 700, time);
+      this.idleSince = time;
+    }
+    let anim;
+    if (time < this.animLock.until) anim = this.animLock.key;
+    else if (!grounded) anim = this.longJumping ? 'longjump' : b.velocity.y > 40 ? 'fall' : 'jump';
+    else if (crouching) anim = 'crouch';
+    else if (Math.abs(vx) > P.walkSpeed * 1.15 * boost * 0.9) anim = 'run';
+    else if (Math.abs(vx) > 8) anim = 'walk';
+    else anim = 'idle';
+    p.anims.play(anim, true);
 
     // camera look-ahead
     this.cameras.main.setFollowOffset(-Phaser.Math.Clamp(vx * 0.15, -24, 24), 0);
@@ -353,6 +379,11 @@ export default class GameScene extends Phaser.Scene {
 
     this.wasGrounded = grounded;
     this.prevVy = b.velocity.y;
+  }
+
+  lockAnim(key, ms, now = this.time.now) {
+    this.animLock = { key, until: now + ms };
+    this.player.anims.play(key, true);
   }
 
   doJump(long, dir, powered, air = false) {

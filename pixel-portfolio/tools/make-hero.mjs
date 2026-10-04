@@ -1,0 +1,328 @@
+// Draws the hero sprite sheet (Apoorv) -> public/assets/hero.png
+// Run:  node tools/make-hero.mjs        (no dependencies)
+// Optional: node tools/make-hero.mjs --preview <out.png>  (8x contact sheet)
+import fs from 'node:fs';
+import zlib from 'node:zlib';
+import { FW, FH, COLS, HERO_FRAMES } from '../src/heroFrames.js';
+
+// --- palette ---------------------------------------------------------------
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const C = {
+  K: hex('#0f0f1b'), // outline
+  E: hex('#0f0f1b'), // eye
+  H: hex('#1b1512'), h: hex('#3b2c24'), // hair
+  S: hex('#e8b890'), s: hex('#c98f68'), // skin (light)
+  B: hex('#2b1e18'), b: hex('#4a362b'), // beard
+  M: hex('#8c3b32'), W: hex('#fcfcfc'), // mouth, teeth
+  blazer: hex('#2a2a48'), blazerHi: hex('#4a4a72'),
+  shirt: hex('#fcfcfc'), shirtShade: hex('#bcbcbc'),
+  red: hex('#e4002b'), // WSP red
+  pants: hex('#3a3a58'),
+  shoe: hex('#1f1f2e'), shoeHi: hex('#6c6c8c'),
+  watch: hex('#bcbcbc'),
+  cup: hex('#fcfcfc'), lid: hex('#ac7c00'), cupBand: hex('#ac4040'),
+  gray: hex('#bcbcbc'), grayDark: hex('#7c7c7c'),
+};
+
+// 14x14 head, facing right. See legend in C.
+const HEAD = [
+  '...KKKKKKKK...',
+  '..KHHHhHHHHK..',
+  '.KHHhHHHHHHHHK',
+  'KHHHHHHHHHHHHK',
+  'KHHHHHHHHHSSSK',
+  'KHHHHHSSSHHHSK',
+  'KHHHHSSSSSESSK',
+  'KHHHSsSSSSESSK',
+  'KBSSSSSSSSSsSK',
+  'KBBBSSSSBBBBBK',
+  'KBBBBBBBMWMBBK',
+  'KBBBBBBBBBbBBK',
+  '.KBBBBBBBBBBK.',
+  '..KKKKKKKKKK..',
+];
+function headRows(kind) {
+  const r = HEAD.slice();
+  const set = (row, col, ch) => (r[row] = r[row].slice(0, col) + ch + r[row].slice(col + 1));
+  if (kind === 'blink') {
+    set(6, 10, 'S');
+    set(7, 10, 'K');
+  } else if (kind === 'hurt') {
+    set(6, 10, 'K');
+    set(7, 10, 'S');
+    set(6, 9, 'K');
+    r[10] = 'KBBBBBBBMMMBBK';
+    r[10] = r[10].slice(0, 14);
+  } else if (kind === 'open') {
+    r[10] = 'KBBBBBBMMMMBBK';
+    set(10, 8, 'W');
+  }
+  return r;
+}
+
+// --- tiny raster helpers ---------------------------------------------------
+class Frame {
+  constructor() {
+    this.p = new Array(FW * FH).fill(null);
+  }
+  set(x, y, c) {
+    if (x >= 0 && y >= 0 && x < FW && y < FH) this.p[y * FW + x] = c;
+  }
+  rect(x, y, w, h, c) {
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) this.set(x + i, y + j, c);
+  }
+}
+const brushPath = (x0, y0, x1, y1) => {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = n ? i / n : 0;
+    pts.push([Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t)]);
+  }
+  return pts;
+};
+const limb = (x0, y0, x1, y1, w) => brushPath(x0, y0, x1, y1).map(([x, y]) => [x, y, w, w]);
+// outline first (1px around every rect), then fill => clean separation between parts
+function part(f, rects, color) {
+  for (const [x, y, w, h] of rects) f.rect(x - 1, y - 1, w + 2, h + 2, C.K);
+  for (const [x, y, w, h] of rects) f.rect(x, y, w, h, color);
+}
+function drawHead(f, x, y, kind) {
+  headRows(kind).forEach((row, j) =>
+    [...row].forEach((ch, i) => {
+      if (ch !== '.') f.set(x + i, y + j, C[ch]);
+    })
+  );
+}
+
+// --- body composer -----------------------------------------------------------
+function arm(f, shoulder, [dx, dy], withWatch) {
+  const [sx, sy] = shoulder;
+  const ex = sx + dx;
+  const ey = sy + dy;
+  part(f, limb(sx, sy, ex, ey, 3), C.blazer);
+  const len = Math.hypot(dx, dy) || 1;
+  const hx = Math.round(ex + 0.5 + (dx / len) * 2);
+  const hy = Math.round(ey + 0.5 + (dy / len) * 2);
+  if (withWatch) f.rect(ex, ey + (dy > 0 ? 2 : dy < 0 ? 0 : 1), 3, 1, C.watch);
+  part(f, [[hx, hy, 2, 2]], C.S);
+  return [hx, hy];
+}
+function leg(f, x, hip, { dx = 0, lift = 0 } = {}) {
+  const footTop = 30 - lift;
+  const endY = Math.max(hip, footTop - 3);
+  part(f, limb(x, hip, x + dx, endY, 4), C.pants);
+  part(f, [[x + dx, footTop, 6, 2]], C.shoe);
+  f.set(x + dx + 5, footTop, C.shoeHi);
+}
+
+function compose(o = {}) {
+  const f = new Frame();
+  const lean = o.lean || 0;
+  const hd = o.headDy || 0;
+  const hip = o.hip ?? 23;
+  const ty = 14 + hd;
+  const th = hip - ty;
+
+  const back = arm(f, [8 + lean, ty + 1], o.backArm || [-1, 6], false);
+  void back;
+  if (!o.seated) leg(f, 8 + lean * 0, hip, o.backLeg);
+
+  // torso: blazer + shirt + lapel + red/white WSP lanyard + badge
+  part(f, [[7 + lean, ty, 10, th]], C.blazer);
+  f.rect(13 + lean, ty, 4, Math.min(7, th), C.shirt);
+  f.rect(13 + lean, ty + 5, 4, 1, C.shirtShade);
+  f.rect(12 + lean, ty, 1, Math.min(8, th), C.blazerHi);
+  f.rect(14 + lean, ty, 2, Math.min(8, th), C.red);
+  if (th > 3) f.set(14 + lean, ty + 2, C.W);
+  if (th > 5) f.set(14 + lean, ty + 4, C.W);
+  if (th >= 8) {
+    f.rect(13 + lean, ty + 6, 4, 3, C.W);
+    f.rect(13 + lean, ty + 6, 4, 1, C.red);
+    f.set(14 + lean, ty + 8, C.grayDark);
+  }
+
+  if (o.seated) {
+    part(f, limb(9, hip, 17, hip, 4), C.pants); // thigh
+    part(f, limb(17, hip + 1, 17, 27, 4), C.pants); // shin
+    part(f, [[17, 30, 6, 2]], C.shoe);
+  } else {
+    leg(f, 11 + lean * 0, hip, o.frontLeg);
+  }
+
+  if (o.preHead) o.preHead(f, ty);
+  const hand = arm(f, [11 + lean, ty + 1], o.frontArm || [1, 6], true);
+  if (o.extra) o.extra(f, hand, ty);
+  drawHead(f, 5 + lean, hd, o.face || 'smile');
+  if (o.postHead) o.postHead(f, hand, ty);
+  return f;
+}
+
+// --- pose library ------------------------------------------------------------
+function walkFrame(i, amp, run) {
+  const s = Math.sin((i / 6) * Math.PI * 2);
+  const c = Math.cos((i / 6) * Math.PI * 2);
+  const sw = Math.round(amp * s);
+  const aSw = Math.round(amp * 0.8 * s);
+  return compose({
+    lean: run ? 1 : 0,
+    headDy: i % 3 === 0 ? 1 : 0,
+    backLeg: { dx: -sw, lift: c < -0.2 ? 1 : 0 },
+    frontLeg: { dx: sw, lift: c > 0.2 ? 1 : 0 },
+    backArm: [aSw - 1, run ? 5 : 6],
+    frontArm: [-aSw + 1, run ? 5 : 6],
+  });
+}
+
+const cup = (f, x, y, tilt) => {
+  part(f, [[x, y, 4, 5]], C.cup);
+  f.rect(x, y + 2, 4, 1, C.cupBand);
+  f.rect(x - (tilt ? 0 : 0), y, 4, 1, C.lid);
+};
+
+function pose(name) {
+  switch (name) {
+    case 'idle':
+      return compose();
+    case 'blink':
+      return compose({ face: 'blink' });
+    case 'jump':
+      return compose({ frontArm: [5, -5], backArm: [-3, 5], frontLeg: { dx: 3, lift: 3 }, backLeg: { dx: -3, lift: 1 } });
+    case 'fall':
+      return compose({ frontArm: [4, -4], backArm: [-4, -3], frontLeg: { dx: 2, lift: 0 }, backLeg: { dx: -2, lift: 1 } });
+    case 'longjump':
+      return compose({ lean: 2, headDy: 1, hip: 24, frontArm: [8, -1], backArm: [-6, -2], frontLeg: { dx: 5, lift: 1 }, backLeg: { dx: -5, lift: 2 } });
+    case 'land':
+      return compose({ headDy: 3, hip: 26, frontArm: [3, 4], backArm: [-3, 4], frontLeg: { dx: 2 }, backLeg: { dx: -2 } });
+    case 'crouch':
+      return compose({ headDy: 6, hip: 27, frontArm: [3, 3], backArm: [-2, 3], frontLeg: { dx: 1 }, backLeg: { dx: -1 } });
+    case 'sip0':
+      return compose({ frontArm: [5, -1], extra: (f, h) => cup(f, h[0] + 1, h[1] - 3) });
+    case 'sip1':
+      return compose({
+        frontArm: [4, -3],
+        postHead: (f, h) => {
+          // cup raised to the mouth, drawn over the beard edge
+          cup(f, h[0] + 1, h[1] - 3);
+        },
+      });
+    case 'celebrate0':
+      return compose({ face: 'open', frontArm: [3, -9], backArm: [-4, -8], frontLeg: { dx: 1 }, backLeg: { dx: -1 } });
+    case 'celebrate1':
+      return compose({ face: 'open', headDy: -1, frontArm: [4, -9], backArm: [-5, -8], frontLeg: { dx: 1, lift: 2 }, backLeg: { dx: -1, lift: 2 } });
+    case 'hurt':
+      return compose({ face: 'hurt', lean: -1, frontArm: [5, -6], backArm: [-5, -5], frontLeg: { dx: 3, lift: 1 }, backLeg: { dx: -3 } });
+    case 'wave0':
+      return compose({ frontArm: [2, -9], backArm: [-1, 6] });
+    case 'wave1':
+      return compose({ frontArm: [5, -8], backArm: [-1, 6] });
+    case 'type0':
+    case 'type1': {
+      const up = name === 'type0' ? 0 : 1;
+      return compose({
+        seated: true,
+        headDy: 2,
+        hip: 24,
+        frontArm: [8, 2 - up],
+        backArm: [7, 3 + up],
+        preHead: (f) => {
+          part(f, [[16, 21, 8, 2]], C.gray); // laptop base
+          part(f, [[22, 11, 2, 10]], C.grayDark); // screen (side view)
+        },
+      });
+    }
+    default:
+      if (name.startsWith('walk')) return walkFrame(+name.slice(4), 3, false);
+      if (name.startsWith('run')) return walkFrame(+name.slice(3), 4, true);
+      throw new Error(`no pose: ${name}`);
+  }
+}
+
+// --- sheet + PNG ---------------------------------------------------------------
+function buildSheet() {
+  const rows = Math.ceil(HERO_FRAMES.length / COLS);
+  const W = COLS * FW;
+  const H = rows * FH;
+  const rgba = new Uint8Array(W * H * 4);
+  HERO_FRAMES.forEach((name, idx) => {
+    const fr = pose(name);
+    const ox = (idx % COLS) * FW;
+    const oy = Math.floor(idx / COLS) * FH;
+    fr.p.forEach((c, k) => {
+      if (!c) return;
+      const x = ox + (k % FW);
+      const y = oy + Math.floor(k / FW);
+      const o = (y * W + x) * 4;
+      rgba[o] = c[0];
+      rgba[o + 1] = c[1];
+      rgba[o + 2] = c[2];
+      rgba[o + 3] = 255;
+    });
+  });
+  return { W, H, rgba };
+}
+
+function crc32(buf) {
+  let c;
+  let crc = ~0;
+  for (let n = 0; n < buf.length; n++) {
+    c = (crc ^ buf[n]) & 0xff;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    crc = (crc >>> 8) ^ c;
+  }
+  return ~crc >>> 0;
+}
+function chunk(type, data) {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length);
+  const td = Buffer.concat([Buffer.from(type), data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(td));
+  return Buffer.concat([len, td, crc]);
+}
+function png(W, H, rgba) {
+  const raw = Buffer.alloc((W * 4 + 1) * H);
+  for (let y = 0; y < H; y++) {
+    raw[y * (W * 4 + 1)] = 0;
+    Buffer.from(rgba.buffer, y * W * 4, W * 4).copy(raw, y * (W * 4 + 1) + 1);
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(W, 0);
+  ihdr.writeUInt32BE(H, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', zlib.deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+const { W, H, rgba } = buildSheet();
+fs.mkdirSync(new URL('../public/assets/', import.meta.url), { recursive: true });
+fs.writeFileSync(new URL('../public/assets/hero.png', import.meta.url), png(W, H, rgba));
+console.log(`wrote public/assets/hero.png (${W}x${H}, ${HERO_FRAMES.length} frames)`);
+
+const pi = process.argv.indexOf('--preview');
+if (pi > -1) {
+  const S = 6;
+  const bg = [88, 176, 248];
+  const PW = W * S;
+  const PH = H * S;
+  const out = new Uint8Array(PW * PH * 4);
+  for (let y = 0; y < PH; y++)
+    for (let x = 0; x < PW; x++) {
+      const sx = Math.floor(x / S);
+      const sy = Math.floor(y / S);
+      const o = (sy * W + sx) * 4;
+      const a = rgba[o + 3];
+      const d = (y * PW + x) * 4;
+      const col = a ? [rgba[o], rgba[o + 1], rgba[o + 2]] : bg;
+      out[d] = col[0];
+      out[d + 1] = col[1];
+      out[d + 2] = col[2];
+      out[d + 3] = 255;
+    }
+  fs.writeFileSync(process.argv[pi + 1], png(PW, PH, out));
+}

@@ -2,6 +2,7 @@
 // files yet. Day 2 swaps 'hero' for the real sprite sheet; the rest can be
 // replaced one by one without changing game code (same texture keys).
 import Phaser from 'phaser';
+import { FW, FH, HERO_ANIMS, frameIndex } from '../heroFrames.js';
 
 function canvasTex(scene, key, w, h, draw) {
   const tex = scene.textures.createCanvas(key, w, h);
@@ -14,62 +15,6 @@ const fill = (ctx, c, x, y, w, h) => {
   ctx.fillStyle = c;
   ctx.fillRect(x, y, w, h);
 };
-
-// --- Hero (16x32 x 4 frames: idle, walk A, walk B, jump) ------------------
-const HAIR = '#2a1a0e';
-const SKIN = '#e0a070';
-const SHIRT = '#0058f8';
-const PANTS = '#2c2c5c';
-const SHOE = '#ac7c00';
-
-function heroRects(pose) {
-  const r = [];
-  const add = (x, y, w, h, c) => r.push([x, y, w, h, c]);
-  // head
-  add(4, 2, 8, 9, SKIN);
-  add(4, 2, 8, 3, HAIR);
-  add(3, 3, 2, 6, HAIR);
-  add(9, 6, 1, 2, '#0f0f1b'); // eye
-  add(9, 9, 2, 1, '#ac4040'); // smile
-  add(7, 11, 3, 1, SKIN); // neck
-  // torso + lanyard + badge
-  add(4, 12, 8, 9, SHIRT);
-  add(7, 12, 1, 6, '#f8d878');
-  add(6, 18, 3, 3, '#fcfcfc');
-  // arms, legs by pose
-  if (pose === 3) {
-    add(3, 9, 2, 5, SHIRT);
-    add(11, 9, 2, 5, SHIRT);
-    add(3, 8, 2, 2, SKIN);
-    add(11, 8, 2, 2, SKIN);
-    add(3, 21, 4, 6, PANTS);
-    add(9, 21, 4, 5, PANTS);
-    add(2, 26, 5, 2, SHOE);
-    add(9, 25, 5, 2, SHOE);
-  } else {
-    const swing = pose === 1 ? 1 : pose === 2 ? -1 : 0;
-    add(3 - swing, 13, 2, 7, SHIRT);
-    add(11 + swing, 13, 2, 7, SHIRT);
-    add(3 - swing, 20, 2, 2, SKIN);
-    add(11 + swing, 20, 2, 2, SKIN);
-    const lx = 5 - swing;
-    const rx = 9 + swing;
-    add(lx, 21, 3, 8, PANTS);
-    add(rx, 21, 3, 8, PANTS);
-    add(lx - 1, 29, 4, 2, SHOE);
-    add(rx, 29, 4, 2, SHOE);
-  }
-  return r;
-}
-
-function drawHero(ctx) {
-  for (let f = 0; f < 4; f++) {
-    const rects = heroRects(f);
-    ctx.fillStyle = '#0f0f1b';
-    for (const [x, y, w, h] of rects) ctx.fillRect(f * 16 + x - 1, y - 1, w + 2, h + 2);
-    for (const [x, y, w, h, c] of rects) fill(ctx, c, f * 16 + x, y, w, h);
-  }
-}
 
 // --- Tiles ----------------------------------------------------------------
 function drawGround(ctx) {
@@ -172,10 +117,13 @@ export default class PreloadScene extends Phaser.Scene {
     super('Preload');
   }
 
+  preload() {
+    // Hero sprite sheet: made by tools/make-hero.mjs (replace with your own art any time)
+    this.load.spritesheet('hero', 'assets/hero.png', { frameWidth: FW, frameHeight: FH });
+  }
+
   create() {
     const t = this.textures;
-    const hero = canvasTex(this, 'hero', 64, 32, drawHero);
-    for (let i = 0; i < 4; i++) hero.add(i, 0, i * 16, 0, 16, 32);
 
     canvasTex(this, 'tile-ground', 16, 16, drawGround);
     canvasTex(this, 'tile-dirt', 16, 16, drawDirt);
@@ -197,20 +145,14 @@ export default class PreloadScene extends Phaser.Scene {
     t.get('skyline-far'); // keep reference quiet for bundlers
 
     const a = this.anims;
-    a.create({ key: 'idle', frames: [{ key: 'hero', frame: 0 }], frameRate: 1 });
-    a.create({
-      key: 'walk',
-      frames: [1, 0, 2, 0].map((frame) => ({ key: 'hero', frame })),
-      frameRate: 8,
-      repeat: -1,
+    Object.entries(HERO_ANIMS).forEach(([key, def]) => {
+      a.create({
+        key,
+        frames: def.frames.map((n) => ({ key: 'hero', frame: frameIndex(n) })),
+        frameRate: def.fps,
+        repeat: def.repeat,
+      });
     });
-    a.create({
-      key: 'run',
-      frames: [1, 0, 2, 0].map((frame) => ({ key: 'hero', frame })),
-      frameRate: 14,
-      repeat: -1,
-    });
-    a.create({ key: 'jump', frames: [{ key: 'hero', frame: 3 }], frameRate: 1 });
     a.create({
       key: 'coin-spin',
       frames: [0, 1, 2, 3].map((frame) => ({ key: 'coin', frame })),

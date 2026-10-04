@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Hero preview — Office Quest</title>
+    <link rel="icon" href="data:," />
+    <style>
+      body { margin: 0; padding: 16px; background: #0f0f1b; color: #fcfcfc; font: 12px/1.4 "Press Start 2P", monospace; }
+      h1 { font-size: 14px; color: #f8d878; }
+      .grid { display: flex; flex-wrap: wrap; gap: 12px; }
+      .card { background: #58b0f8; padding: 8px; text-align: center; color: #0f0f1b; }
+      canvas { image-rendering: pixelated; display: block; margin: 0 auto 6px; }
+      a { color: #f8d878; }
+    </style>
+  </head>
+  <body>
+    <h1>APOORV — all animations</h1>
+    <p><a href="./">&larr; back to the game</a></p>
+    <div class="grid" id="grid"></div>
+    <script type="module">
+      import { FW, FH, COLS, HERO_ANIMS, frameIndex } from './src/heroFrames.js';
+      const SCALE = 8;
+      const img = new Image();
+      img.src = './assets/hero.png';
+      img.onload = () => {
+        const grid = document.getElementById('grid');
+        const players = Object.entries(HERO_ANIMS).map(([name, def]) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          const cv = document.createElement('canvas');
+          cv.width = FW * SCALE;
+          cv.height = FH * SCALE;
+          card.append(cv, name.toUpperCase());
+          grid.append(card);
+          return { cv, ctx: cv.getContext('2d'), def, i: 0 };
+        });
+        players.forEach((pl) => (pl.ctx.imageSmoothingEnabled = false));
+        const draw = () => {
+          players.forEach((pl) => {
+            const f = frameIndex(pl.def.frames[pl.i % pl.def.frames.length]);
+            pl.ctx.clearRect(0, 0, pl.cv.width, pl.cv.height);
+            pl.ctx.drawImage(img, (f % COLS) * FW, Math.floor(f / COLS) * FH, FW, FH, 0, 0, FW * SCALE, FH * SCALE);
+            pl.i++;
+          });
+        };
+        draw();
+        setInterval(draw, 130);
+      };
+    </script>
+  </body>
+</html>
