@@ -8,6 +8,9 @@ import { WORLDS } from '../data/worlds.js';
 import { txt, burst } from '../ui/pixel.js';
 import { ZOOM, CLASSIC_RESUME_URL } from '../config.js';
 import { CampusTasks } from '../systems/campus.js';
+import { Enemies } from '../systems/enemies.js';
+import { Gimmicks } from '../systems/gimmicks.js';
+import { DragonBoss } from '../systems/dragon.js';
 import { OfficeTasks } from '../systems/office.js';
 import { ArcadeSkills, countSkills, TOTAL as SKILL_TOTAL } from '../systems/arcade.js';
 import { TrophyHall, countCerts, CERT_ENTRIES } from '../systems/trophies.js';
@@ -73,6 +76,11 @@ export default class GameScene extends Phaser.Scene {
     this.campus = null;
     this.office = null;
     this.arcade = null;
+    this.gimmicks = null;
+    this.enemies = null;
+    this.dragon = null;
+    this.motes = [];
+    this.nextDust = 0;
     this.trophies = null;
     this.finale = null;
 
@@ -81,10 +89,15 @@ export default class GameScene extends Phaser.Scene {
     this.buildObjects();
     this.buildPlayer();
     this.buildNpcs();
+    this.gimmicks = new Gimmicks(this);
+    if (L.enemies && L.enemies.length) this.enemies = new Enemies(this);
+    this.buildMotes();
     if (L.campus || L.forceStation !== undefined) this.campus = new CampusTasks(this);
     if (L.office) this.office = new OfficeTasks(this);
     if (L.arcade || L.arcadeRoom) this.arcade = new ArcadeSkills(this);
     else reg.set('skillBars', null);
+    reg.set('bossBar', null);
+    if (L.dragon) this.dragon = new DragonBoss(this);
     if (L.hall) this.trophies = new TrophyHall(this);
     if (L.finale) this.finale = new Rooftop(this);
     this.input.on('pointerdown', () => this.talking && this.advanceTalk());
@@ -226,7 +239,13 @@ export default class GameScene extends Phaser.Scene {
     p.body.setMaxVelocity(400, P.maxFallSpeed);
     p.setCollideWorldBounds(true);
     this.player = p;
+    // The physics sprite stays invisible; this visual twin lets us squash & stretch without
+    // changing the hitbox, and a soft shadow grounds the hero in the world.
+    p.setVisible(false);
+    this.shadow = this.add.ellipse(x, bottom, 14, 4, 0x0f0f1b, 0.32).setDepth(2);
+    this.vis = this.add.sprite(x, bottom, 'hero', 0).setOrigin(0.5, 1).setDepth(5);
     this.aura = this.add.sprite(x, bottom - 16, 'hero', 0).setDepth(4).setVisible(false);
+    this.aura.setOrigin(0.5, 0.5);
     this.aura.setTint(0xffe080).setBlendMode(Phaser.BlendModes.ADD);
     this.cameras.main.startFollow(p, true, 0.12, 0.12);
     this.cameras.main.setDeadzone(8, 40);
@@ -427,7 +446,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.goalShown) return;
     this.goalShown = true;
     save.completed[this.level.world] = true;
-    save.lastWorld = Math.min(this.level.world + 1, 5);
+    save.lastWorld = Math.min(this.level.world + 1, 6);
     persist();
     const f =
       this.level.world === 0
@@ -438,7 +457,9 @@ export default class GameScene extends Phaser.Scene {
             ? `\nFLOORS ${save.floors.filter(Boolean).length}/5`
             : this.level.world === 3
               ? `\nSKILLS ${countSkills(this.collected)}/${SKILL_TOTAL}`
-              : `\nCERTS ${countCerts(this.collected)}/${CERT_ENTRIES.length}`;
+              : this.level.world === 4
+                ? `\nCERTS ${countCerts(this.collected)}/${CERT_ENTRIES.length}`
+                : '\nTHE DEADLINE DRAGON IS DOWN';
     this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!${f}`);
     this.lockAnim('celebrate', 2400);
     this.time.delayedCall(2600, () => {
@@ -575,6 +596,7 @@ export default class GameScene extends Phaser.Scene {
       if (!this.wasGrounded && this.prevVy > 150) {
         this.dust(p.x, b.bottom, 5);
         this.lockAnim('land', 90, time);
+        this.squash(1.25, 0.78, 150);
       }
     }
 
@@ -647,8 +669,87 @@ export default class GameScene extends Phaser.Scene {
 
     if (p.y > this.worldH + 30) this.respawn();
 
+    this.syncHero(time, grounded, vx);
+    if (this.dragon) this.dragon.update(time);
+    if (this.gimmicks) this.gimmicks.update(time, delta);
+    if (this.enemies) this.enemies.update(time, delta);
+    this.updateMotes(dt);
+
     this.wasGrounded = grounded;
     this.prevVy = b.velocity.y;
+  }
+
+  // keep the visual hero glued to the physics body, with squash/stretch + shadow + run dust
+  syncHero(time, grounded, vx) {
+    const p = this.player;
+    const v = this.vis;
+    v.setPosition(p.x, p.body.bottom);
+    v.setFlipX(p.flipX);
+    if (p.frame && p.frame.name !== undefined) v.setFrame(p.frame.name);
+    v.setAlpha(p.alpha);
+    // shadow on the floor below (shrinks as you rise)
+    const gy = this.groundYBelow(p.x, p.body.bottom - 2);
+    const h = Math.max(0, gy - p.body.bottom);
+    this.shadow.setPosition(p.x, gy).setScale(Math.max(0.35, 1 - h / 140), 1).setAlpha(grounded ? 0.32 : Math.max(0.1, 0.3 - h / 400));
+    // dust when running
+    if (grounded && Math.abs(vx) > 110 && time > this.nextDust) {
+      this.nextDust = time + 130;
+      this.dust(p.x - Math.sign(vx) * 5, p.body.bottom, 2);
+    }
+  }
+
+  groundYBelow(x, y) {
+    const L = this.level;
+    const c = Math.floor(x / TILE);
+    for (let r = Math.max(0, Math.floor(y / TILE)); r < L.h; r++) {
+      const ch = (L.grid[r] || [])[c];
+      if (ch && '#dBpqlrC><'.includes(ch)) return r * TILE;
+    }
+    return this.worldH + 40;
+  }
+
+  // squash & stretch on the hero's visual twin (the hitbox never changes)
+  squash(sx, sy, ms = 170) {
+    const v = this.vis;
+    if (!v) return;
+    this.tweens.killTweensOf(v);
+    v.setScale(sx, sy);
+    this.tweens.add({ targets: v, scaleX: 1, scaleY: 1, duration: ms, ease: 'Back.out' });
+  }
+
+  refillAirJumps() {
+    this.airJumps = this.coffeeMs > 0 ? P.coffeeAirJumps : P.baseAirJumps;
+  }
+
+  // brief freeze-frame on impact: makes stomps feel heavy
+  hitStop(ms = 60) {
+    const w = this.physics.world;
+    if (w.isPaused) return;
+    w.pause();
+    this.time.delayedCall(ms, () => w.resume());
+  }
+
+  // drifting light motes: depth + atmosphere
+  buildMotes() {
+    const warm = this.level.theme === 'office' ? 0xfff0c0 : 0xa0b8ff;
+    for (let i = 0; i < 18; i++) {
+      const m = this.add.rectangle(Phaser.Math.Between(0, 256), Phaser.Math.Between(20, 200), 1, 1, warm, 0.4).setDepth(7).setScrollFactor(0);
+      m.sp = Phaser.Math.FloatBetween(3, 9);
+      m.ph = Math.random() * 6;
+      this.motes.push(m);
+    }
+  }
+
+  updateMotes(dt) {
+    const off = 128 * (ZOOM - 1);
+    const offY = 112 * (ZOOM - 1);
+    this.motes.forEach((m) => {
+      m.ph += dt;
+      m.y0 = (m.y0 ?? m.y - offY) - m.sp * dt;
+      if (m.y0 < 16) m.y0 = 210;
+      m.x0 = m.x0 ?? m.x - off;
+      m.setPosition(m.x0 + Math.sin(m.ph) * 6 + off, m.y0 + offY);
+    });
   }
 
   lockAnim(key, ms, now = this.time.now) {
@@ -672,5 +773,6 @@ export default class GameScene extends Phaser.Scene {
     this.jumpPressedAt = -1e9;
     this.lastGrounded = -1e9;
     this.dust(p.x, b.bottom, air ? 3 : 4);
+    this.squash(0.8, 1.24, 180);
   }
 }

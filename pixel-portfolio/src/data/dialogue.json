@@ -291,5 +291,18 @@
       "PRESS ENTER AGAIN TO *OPEN* THE RESUME."
     ],
     "link": "@resume"
+  },
+  "dragonIntro": {
+    "name": "MEERA",
+    "role": "MANAGER",
+    "color": "#f8a0d8",
+    "lines": [
+      "STOP, *{name}*! THE *DEADLINE DRAGON* GUARDS THE EXIT.",
+      "IT BREATHES FIRE ALONG THE FLOOR, SO *JUMP* OR HOP ONTO THE *LEDGES*. WATCH THE FIREBALLS TOO!",
+      "WHEN IT GETS *TIRED*, STOMP ITS HEAD. FIVE TIMES SHOULD DO IT. GOOD LUCK!"
+    ],
+    "again": [
+      "STOMP ITS HEAD WHEN IT'S TIRED, {name}. NOT BEFORE!"
+    ]
   }
 }

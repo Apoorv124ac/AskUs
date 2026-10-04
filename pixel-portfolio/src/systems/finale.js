@@ -21,8 +21,8 @@ export class Rooftop {
     const { s } = this;
     if (this.raised) return;
     this.raised = true;
-    save.completed[5] = true;
-    save.lastWorld = 5;
+    save.completed[6] = true;
+    save.lastWorld = 6;
     persist();
     s.lockAnim('celebrate', 4000);
     s.tweens.add({ targets: this.flag, y: 192 - 56, duration: 1500, ease: 'Sine.out' });

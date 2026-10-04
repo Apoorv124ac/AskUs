@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PROGRESSION } from '../config.js';
+import { PROGRESSION, ZOOM } from '../config.js';
 import { NPC_ORDER, NPC_COLS } from '../npcFrames.js';
 import { txt, panel, richText, burst, bump, viewCam, COLORS } from '../ui/pixel.js';
 
@@ -12,6 +12,7 @@ export default class UIScene extends Phaser.Scene {
   create() {
     viewCam(this);
     const reg = this.registry;
+    this.add.image(0, 0, 'vignette').setOrigin(0).setScale(1 / ZOOM).setDepth(0).setAlpha(0.9);
     this.shown = { coins: null, facts: null };
 
     // --- top bar (14px, so the game gets the screen) ---
@@ -24,6 +25,11 @@ export default class UIScene extends Phaser.Scene {
     this.coffeeIcon = this.add.image(190, 20, 'coffee').setScale(0.5).setVisible(false).setDepth(2);
     this.coffeeBar = this.add.graphics().setDepth(2);
 
+    // boss health bar (floor bosses + the dragon)
+    this.bossBox = this.add.container(0, 0).setDepth(3).setVisible(false);
+    this.bossGfx = this.add.graphics();
+    this.bossName = txt(this, 128, 21, '', { origin: 0.5, bold: true, color: '#ff7070', depth: 3 });
+    this.bossBox.add([this.bossGfx, this.bossName]);
     // skill bars strip (World 4 only)
     this.barStrip = this.add.container(0, 0).setDepth(2).setVisible(false);
     this.barStrip.add(this.add.rectangle(0, 14, 256, 11, 0x0f0f1b, 0.55).setOrigin(0));
@@ -313,6 +319,20 @@ export default class UIScene extends Phaser.Scene {
     if (this.shown.facts !== null && facts > this.shown.facts) bump(this, this.factText, 1.4);
     this.shown.facts = facts;
 
+    const boss = reg.get('bossBar');
+    this.bossBox.setVisible(!!boss);
+    if (boss) {
+      this.bossGfx.clear();
+      const w = 110;
+      const x0 = 128 - w / 2;
+      const cw = Math.floor((w - (boss.max - 1) * 2) / boss.max);
+      this.bossGfx.fillStyle(0x0f0f1b, 0.8).fillRect(x0 - 3, 25, w + 6, 8);
+      for (let k = 0; k < boss.max; k++) {
+        this.bossGfx.fillStyle(k < boss.hp ? 0xf83800 : 0x3a2030).fillRect(x0 + k * (cw + 2), 27, cw, 4);
+      }
+      this.bossName.setText(boss.name);
+      this.bossBox.setPosition(0, reg.get('skillBars') ? 10 : 0);
+    }
     const bars = reg.get('skillBars');
     this.barStrip.setVisible(!!bars);
     if (bars) {

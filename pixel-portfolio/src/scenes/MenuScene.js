@@ -4,8 +4,9 @@ import { WORLDS } from '../data/worlds.js';
 import { save, persist } from '../systems/save.js';
 import { txt, panel, go, skyline, popIn, burst, COLORS, viewCam } from '../ui/pixel.js';
 
-const NODE_X = [28, 68, 108, 148, 188, 228];
-const NODE_Y = [96, 68, 96, 68, 96, 68];
+const NODE_X = [22, 57, 92, 128, 164, 199, 234];
+const NODE_Y = [96, 68, 96, 68, 96, 68, 96];
+const DIFF_NAMES = ['RELAXED', 'NORMAL', 'HARD'];
 
 // World map: jump to any unlocked world with < > (or A/D), Enter to play.
 export default class MenuScene extends Phaser.Scene {
@@ -28,6 +29,8 @@ export default class MenuScene extends Phaser.Scene {
     txt(this, 6, 7, `HELLO, ${save.name || 'GUEST'}!`, { color: COLORS.gold, bold: true, origin: [0, 0.5], depth: 9 });
     this.coinText = txt(this, 250, 7, '', { origin: [1, 0.5], depth: 9, bold: true });
     txt(this, 128, 28, 'CHOOSE A WORLD', { display: true, origin: 0.5, depth: 9 });
+    this.diffText = txt(this, 152, 7, '', { origin: 0.5, depth: 9, bold: true });
+    this.diffText.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.cycleDifficulty());
 
     // dotted path between nodes
     const path = this.add.graphics().setDepth(4);
@@ -85,10 +88,10 @@ export default class MenuScene extends Phaser.Scene {
     kb.on('keydown-LEFT', () => this.select(this.sel - 1));
     kb.on('keydown-A', () => this.select(this.sel - 1));
     kb.on('keydown-RIGHT', () => this.select(this.sel + 1));
-    kb.on('keydown-D', () => this.select(this.sel + 1));
     kb.on('keydown-ENTER', () => this.play());
     kb.on('keydown-SPACE', () => this.play());
     kb.on('keydown-R', () => this.toggleRecruiter());
+    kb.on('keydown-D', () => this.cycleDifficulty());
     kb.on('keydown-C', () => this.openResume());
 
     this.refresh(true);
@@ -130,6 +133,13 @@ export default class MenuScene extends Phaser.Scene {
     this.time.delayedCall(1400, () => this.refresh());
   }
 
+  cycleDifficulty() {
+    save.difficulty = ((save.difficulty ?? 1) + 1) % 3;
+    persist();
+    this.refresh();
+    this.tweens.add({ targets: this.diffText, scale: { from: 1.4, to: 1 }, duration: 220, ease: 'Back.out' });
+  }
+
   toggleRecruiter() {
     save.recruiter = !save.recruiter;
     persist();
@@ -142,6 +152,7 @@ export default class MenuScene extends Phaser.Scene {
 
   refresh(instant = false) {
     const reg = this.registry;
+    this.diffText.setText(`D: ${DIFF_NAMES[save.difficulty ?? 1]}`).setColor(['#58d854', '#fcfcfc', '#f83800'][save.difficulty ?? 1]);
     this.coinText.setText(`COINS ${String(reg.get('coins') || 0).padStart(2, '0')}`);
 
     this.nodes.forEach((n, i) => {

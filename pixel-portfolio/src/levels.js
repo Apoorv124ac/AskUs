@@ -1,13 +1,14 @@
 // Levels are built in code from simple helpers (easy to read, no editor needed).
-// Later days can swap these for Tiled JSON maps without touching the scenes.
 //
 // Grid characters:  . empty   # carpet(top)   d carpet(under)   B desk block
 //   p q l r pipe pieces   o coin   f FACT coin   t TOOL coin   c coffee
-//   F checkpoint   G goal door   T plant (decor)   D counter (decor)   K bookshelf (decor)
-//   World 5: Q ? block (hit from below)   Y trophy   V curtain   World 6: P flagpole
-//   World 4 skill coins: u (design) v (lead) w (tools)   M N O arcade cabinets (decor)
-//   World 3 floors: k client badge   E elevator (decor)
+//   F checkpoint   G goal door   T plant   D counter   K bookshelf   Y trophy   V curtain (decor)
+//   M N O arcade cabinets (decor)   P flagpole   Q ? block (hit from below)
+//   ^ spikes   S spring   C crumbling tile   > < conveyor belt (right / left)
 //   World 2 tasks: s swatch   b typo bug   i idea bulb   1 2 3 4 data nodes (collect in order)
+//   World 3 floors: k client badge   E elevator (decor)
+//   World 4 skills: u (design) v (lead) w (tools)
+// Enemies (turtle, croc, bat, diver, spiker, piranha) and moving platforms are listed separately.
 import { TILE, CLASSIC_RESUME_URL } from './config.js';
 
 const GROUND_ROW = 12; // rows 12-13 are floor; row 11 is the first walkable row
@@ -20,6 +21,8 @@ function newLevel(w, h, extra = {}) {
     pipes: [],
     labels: [],
     npcs: [],
+    enemies: [],
+    movers: [],
     spawn: { col: 3, row: GROUND_ROW - 1 },
     bg: 0x3cbcfc,
     theme: 'office',
@@ -60,60 +63,96 @@ function label(L, col, row, text) {
 function npc(L, id, col, face = -1, autoTalk = true, dlg = id) {
   L.npcs.push({ id, dlg, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face, autoTalk });
 }
+function board(L, col, frame, dlg, autoTalk = false) {
+  L.npcs.push({ id: 'board', frame, dlg, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face: -1, autoTalk, board: true });
+}
+function cheer(L, id, col) {
+  L.npcs.push({ id, dlg: null, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face: -1, autoTalk: false, cheer: true });
+}
 
-// World 1 "Reception": tutorial + 10 fact coins + a toolkit bonus room.
+// --- enemies & mechanics -----------------------------------------------------
+// type: turtle | croc | spiker (walk on the ground at `col`), bat | diver (fly at `row`),
+//       piranha (sits in the pipe whose top row is `row`). min: 0 relaxed+, 1 normal+, 2 hard only
+const enemy = (L, type, col, o = {}) => L.enemies.push({ type, col, ...o });
+const wall = (L, col, rows = 1) => {
+  for (let i = 0; i < rows; i++) put(L, col, 11 - i, 'B');
+};
+const spring = (L, col, row = 11) => put(L, col, row, 'S');
+const spikes = (L, c1, c2, row = 11) => span(L, row, c1, c2, '^');
+const crumble = (L, c1, c2, row) => span(L, row, c1, c2, 'C');
+const belt = (L, c1, c2, dir) => span(L, GROUND_ROW, c1, c2, dir > 0 ? '>' : '<');
+// moving platform, 3 tiles wide: axis 'x' or 'y', range in tiles, speed ~1 = slow
+const mover = (L, col, row, axis, range, speed = 1, phase = 0) =>
+  L.movers.push({ col, row, tiles: 3, axis, range, speed, phase });
+
+// ============================================================================
+// WORLD 1  "Reception"  - friendly tutorial: spring, first turtle, moving platform, a bat
+// ============================================================================
 function buildWorld1() {
-  const L = newLevel(110, 14, { room: 'world1' });
-  ground(L, [
-    [40, 44], // 5 tiles  -> needs a Shift+Up long jump
-    [70, 76], // 7 tiles  -> long jump
-  ]);
+  const L = newLevel(96, 14, { room: 'world1' });
+  ground(L, [[45, 49], [83, 85]]);
 
-  // Reception area
-  put(L, 4, 11, 'T');
+  // reception + controls
+  put(L, 3, 11, 'T');
   span(L, 11, 9, 11, 'D');
-  put(L, 19, 11, 'T');
-  npc(L, 'rita', 7);
+  npc(L, 'rita', 6);
   label(L, 1, 3, 'ARROWS  MOVE / JUMP');
   label(L, 1, 4, 'SHIFT+SIDE  RUN');
   label(L, 1, 5, 'SHIFT+UP  LONG JUMP');
-  label(L, 1, 6, 'DOWN ON PIPE  ENTER');
-  label(L, 1, 7, 'UP IN AIR  DOUBLE JUMP');
+  label(L, 1, 6, 'UP IN AIR  DOUBLE JUMP');
+  label(L, 1, 7, 'DOWN ON PIPE  ENTER');
+  put(L, 14, 11, 'f'); // 1
 
-  put(L, 14, 11, 'f'); // fact 1
-  span(L, 10, 16, 19, 'B'); // platform A
-  put(L, 17, 9, 'f'); // fact 2
-  span(L, 8, 23, 26, 'B'); // platform B
-  put(L, 24, 7, 'f'); // fact 3
+  // spring up to a high ledge
+  spring(L, 18);
+  label(L, 16, 9, 'BOUNCE!');
+  span(L, 7, 20, 23, 'B');
+  put(L, 21, 6, 'f'); // 2
 
-  npc(L, 'raju', 28);
-  label(L, 31, 7, 'TOOLKIT ROOM');
-  pipe(L, 33, 2, 'a', { room: 'bonus', pipe: 'b' });
+  // turtle yard: stomp -> shell -> kick
+  wall(L, 26);
+  wall(L, 34);
+  enemy(L, 'turtle', 30);
+  label(L, 26, 7, 'STOMP, THEN KICK THE SHELL');
+  put(L, 31, 9, 'f'); // 3
 
-  put(L, 37, 11, 'f'); // fact 4
-  label(L, 35, 8, 'HOLD SHIFT+UP!');
-  put(L, 42, 8, 'f'); // fact 5 (collect it mid-air over the gap)
+  npc(L, 'raju', 38);
+  label(L, 40, 8, 'TOOLKIT ROOM');
+  pipe(L, 41, 2, 'a', { room: 'bonus', pipe: 'b' });
 
-  put(L, 50, 11, 'F'); // checkpoint
+  // pit with a moving platform
+  mover(L, 46, 11, 'x', 1.2, 1.1);
+  label(L, 44, 8, 'RIDE THE PLATFORM');
+  put(L, 47, 8, 'f'); // 4
+  put(L, 52, 11, 'F');
 
-  // Staircase
+  // bat over a ledge
+  enemy(L, 'bat', 58, { row: 7, range: 3 });
+  span(L, 10, 59, 62, 'B');
+  put(L, 60, 9, 'f'); // 5
+
+  // little hill
   [1, 2, 3, 2, 1].forEach((h, i) => {
-    const col = 54 + i;
-    for (let r = GROUND_ROW - h; r < GROUND_ROW; r++) put(L, col, r, 'B');
+    for (let r = GROUND_ROW - h; r < GROUND_ROW; r++) put(L, 66 + i, r, 'B');
   });
-  put(L, 56, 8, 'f'); // fact 6
+  put(L, 68, 8, 'f'); // 6
 
-  pipe(L, 62, 3);
-  put(L, 66, 11, 'f'); // fact 7
-  label(L, 67, 7, 'LONG JUMP!');
-  put(L, 73, 8, 'f'); // fact 8 (over the wide gap)
+  // spiker yard: do NOT stomp the spiky one
+  wall(L, 72);
+  wall(L, 80);
+  enemy(L, 'spiker', 76);
+  label(L, 73, 6, "SPIKY! DON'T STOMP");
+  span(L, 8, 75, 77, 'B');
+  put(L, 76, 7, 'f'); // 7
 
-  span(L, 10, 82, 86, 'B');
-  put(L, 84, 9, 'f'); // fact 9
-  put(L, 95, 11, 'f'); // fact 10
-  put(L, 99, 11, 'T');
-  npc(L, 'meera', 100, -1);
-  put(L, 106, 11, 'G'); // goal door
+  // spring launch over the last pit
+  spring(L, 82);
+  put(L, 84, 6, 'f'); // 8
+  span(L, 10, 87, 90, 'B');
+  put(L, 88, 9, 'f'); // 9
+  put(L, 91, 11, 'f'); // 10
+  npc(L, 'meera', 93, -1, true, 'meera');
+  put(L, 95, 11, 'G');
   return L;
 }
 
@@ -130,85 +169,93 @@ function buildBonus() {
   return L;
 }
 
-// World 2 "Training Campus": four classrooms, one per degree, each with a task + a gate.
+// ============================================================================
+// WORLD 2  "Training Campus" - four classrooms, each with its own mechanic
+// ============================================================================
 function buildWorld2() {
-  const L = newLevel(136, 14, { room: 'world2', world: 1, bg: 0xa4e4fc });
-  ground(L);
+  const L = newLevel(112, 14, { room: 'world2', world: 1, bg: 0xa4e4fc });
+  ground(L, [[21, 26]]);
+  belt(L, 84, 92, -1);
   L.campus = true;
   L.stations = [
-    { name: 'COLORS', title: 'BSC MULTIMEDIA', years: '2013-2016', from: 10, to: 35, gateCol: 35, kind: 'swatch',
+    { name: 'COLORS', title: 'BSC MULTIMEDIA', years: '2013-2016', from: 8, to: 31, gateCol: 31, kind: 'swatch',
       objective: 'COLLECT 3 COLOUR SWATCHES' },
-    { name: 'BUGS', title: 'MA JOURNALISM', years: '2018-2020', from: 36, to: 63, gateCol: 63, kind: 'bug',
+    { name: 'BUGS', title: 'MA JOURNALISM', years: '2018-2020', from: 32, to: 55, gateCol: 55, kind: 'bug',
       objective: 'STOMP 3 TYPO BUGS' },
-    { name: 'IDEAS', title: 'IIT DELHI', years: '2021-2022', from: 64, to: 93, gateCol: 93, kind: 'bulb',
+    { name: 'IDEAS', title: 'IIT DELHI', years: '2021-2022', from: 56, to: 79, gateCol: 79, kind: 'bulb',
       objective: 'FIND 3 IDEAS (ONE IS HIDDEN)' },
-    { name: 'DATA', title: 'DATA SCIENCE', years: '2023-2024', from: 94, to: 123, gateCol: 123, kind: 'node',
+    { name: 'DATA', title: 'DATA SCIENCE', years: '2023-2024', from: 80, to: 103, gateCol: 103, kind: 'node',
       objective: 'COLLECT NODES IN ORDER 1-2-3-4' },
   ];
 
-  // Entrance
-  npc(L, 'prof', 6, -1, true, 'prof');
+  // entrance
+  npc(L, 'prof', 5, -1, true, 'prof');
+  put(L, 2, 11, 'K');
   put(L, 3, 11, 'K');
-  put(L, 4, 11, 'K');
-  put(L, 9, 11, 'T');
+  put(L, 8, 11, 'T');
 
-  // Classroom 1: colour lab
-  label(L, 12, 3, 'DEGREE 1/4');
-  label(L, 12, 4, 'BSC MULTIMEDIA');
-  put(L, 12, 11, 'K');
-  span(L, 10, 14, 17, 'B');
-  put(L, 15, 9, 's');
-  span(L, 8, 21, 24, 'B');
-  put(L, 22, 7, 's');
-  span(L, 10, 28, 31, 'B');
-  put(L, 29, 9, 's');
-  put(L, 33, 11, 'T');
-  put(L, 36, 11, 'F');
+  // 1. colour lab: crumbling tiles
+  label(L, 10, 3, 'DEGREE 1/4');
+  label(L, 10, 4, 'BSC MULTIMEDIA');
+  label(L, 12, 6, 'CRUMBLING!');
+  crumble(L, 12, 14, 9);
+  put(L, 13, 8, 's');
+  crumble(L, 18, 20, 7);
+  put(L, 19, 6, 's');
+  put(L, 22, 11, 'C');
+  put(L, 24, 11, 'C');
+  put(L, 24, 9, 's');
+  put(L, 28, 11, 'F');
+  put(L, 30, 11, 'T');
 
-  // Classroom 2: newsroom (bugs patrol between two low walls)
-  label(L, 39, 3, 'DEGREE 2/4');
-  label(L, 39, 4, 'MA JOURNALISM');
-  put(L, 38, 11, 'B');
-  put(L, 61, 11, 'B');
-  [44, 50, 56].forEach((c) => put(L, c, 11, 'b'));
-  span(L, 10, 46, 49, 'B');
-  span(L, 8, 52, 55, 'B');
+  // 2. newsroom: bugs + a flying spam bat
+  label(L, 35, 3, 'DEGREE 2/4');
+  label(L, 35, 4, 'MA JOURNALISM');
+  wall(L, 34);
+  wall(L, 53);
+  [40, 45, 49].forEach((c) => put(L, c, 11, 'b'));
+  enemy(L, 'bat', 44, { row: 6, range: 4 });
+  span(L, 8, 37, 40, 'B');
+  span(L, 8, 47, 50, 'B');
+  put(L, 52, 11, 'F');
 
-  // Classroom 3: idea lab (one bulb is up high, one is in the secret room)
-  label(L, 66, 3, 'DEGREE 3/4');
-  label(L, 66, 4, 'IIT DELHI');
-  put(L, 65, 11, 'F');
-  span(L, 10, 67, 70, 'B');
-  put(L, 68, 9, 'i');
-  span(L, 10, 74, 76, 'B');
-  span(L, 8, 77, 79, 'B');
-  span(L, 6, 80, 82, 'B');
-  span(L, 8, 83, 85, 'B'); // steps back down, so you can always climb again
-  put(L, 81, 5, 'i');
-  label(L, 84, 5, 'SECRET ROOM');
-  pipe(L, 86, 2, 'a', { room: 'lab', pipe: 'b' });
-  put(L, 90, 11, 'T');
+  // 3. idea lab: spikes, a moving platform, a spring
+  label(L, 58, 3, 'DEGREE 3/4');
+  label(L, 58, 4, 'IIT DELHI');
+  span(L, 10, 59, 62, 'B');
+  put(L, 60, 9, 'i');
+  spikes(L, 64, 69);
+  label(L, 63, 8, 'SPIKES! RIDE OVER');
+  mover(L, 65, 9, 'x', 1.6, 1.1);
+  span(L, 10, 70, 72, 'B');
+  spring(L, 73);
+  span(L, 7, 74, 77, 'B');
+  put(L, 75, 6, 'i');
+  label(L, 77, 9, 'SECRET ROOM');
+  pipe(L, 77, 2, 'a', { room: 'lab', pipe: 'b' });
+  put(L, 57, 11, 'F');
 
-  // Classroom 4: data centre (collect 1-2-3-4 in order; 2 hides behind 3)
-  label(L, 96, 3, 'DEGREE 4/4');
-  label(L, 96, 4, 'DATA SCIENCE');
-  put(L, 95, 11, 'F');
-  span(L, 10, 97, 100, 'B');
-  put(L, 98, 9, '1');
-  span(L, 8, 104, 107, 'B');
-  put(L, 105, 7, '3');
-  span(L, 10, 109, 112, 'B');
-  put(L, 110, 9, '2');
-  span(L, 10, 114, 116, 'B');
-  span(L, 8, 117, 120, 'B');
-  span(L, 10, 121, 122, 'B'); // step down on the far side
-  put(L, 119, 7, '4');
+  // 4. data centre: conveyor belts push you back, a croc guards the end
+  label(L, 82, 3, 'DEGREE 4/4');
+  label(L, 82, 4, 'DATA SCIENCE');
+  span(L, 10, 83, 86, 'B');
+  put(L, 84, 9, '1');
+  span(L, 8, 88, 91, 'B');
+  put(L, 89, 7, '3');
+  span(L, 10, 94, 97, 'B');
+  put(L, 95, 9, '2');
+  span(L, 8, 99, 102, 'B');
+  put(L, 100, 7, '4');
+  wall(L, 93);
+  wall(L, 102);
+  enemy(L, 'croc', 98);
+  put(L, 81, 11, 'F');
 
-  // Graduation
-  npc(L, 'prof', 127, -1, true, 'profEnd');
-  put(L, 125, 11, 'T');
-  put(L, 130, 11, 'K');
-  put(L, 133, 11, 'G');
+  // graduation
+  npc(L, 'prof', 107, -1, true, 'profEnd');
+  put(L, 105, 11, 'T');
+  put(L, 109, 11, 'K');
+  put(L, 111, 11, 'G');
   return L;
 }
 
@@ -228,54 +275,114 @@ function buildLab() {
   return L;
 }
 
-// World 3 "Office Floors": one room per role, climbed by elevator. Floor 1 = collect client
-// badges; floors 2-5 = a boss tied to a real achievement (each stomp reveals one resume bullet).
+// ============================================================================
+// WORLD 3  "Office Floors" - five floors, five different mechanics
+// ============================================================================
 const FLOOR_BG = [0x3cbcfc, 0x58b0f8, 0x6888fc, 0xf8a060, 0x6844fc];
 const FLOOR_SPEC = [
-  { w: 72, gate: 62, plats: [[10, 13, 16], [8, 25, 28], [10, 37, 40], [10, 45, 47], [8, 48, 50], [6, 51, 53], [8, 54, 56], [10, 57, 59]], npc: 'sam',
-    skill: 'STAKEHOLDER COLLABORATION', badges: [[14, 9], [26, 7], [38, 9], [52, 5]] },
-  { w: 84, gate: 72, arena: [51, 69], boss: { col: 60, hp: 2, name: 'THE VAGUE BRIEF' },
-    plats: [[10, 12, 15], [8, 20, 23], [10, 28, 31], [8, 35, 38], [10, 42, 44]], coffee: [22, 7], npc: 'meera',
-    skill: 'BRAND IDENTITY' },
-  { w: 84, gate: 72, arena: [51, 69], boss: { col: 60, hp: 2, name: 'THE DEADLINE CLOCK' },
-    plats: [[10, 12, 15], [8, 18, 21], [6, 24, 27], [8, 30, 33], [10, 36, 40], [8, 43, 46]], coffee: [26, 5], npc: 'rita',
-    skill: 'MARKETING & CAMPAIGN DESIGN' },
-  { w: 84, gate: 72, arena: [51, 69], boss: { col: 60, hp: 3, name: 'THE OFF-BRAND BEAST' },
-    plats: [[10, 12, 14], [8, 17, 20], [10, 23, 26], [7, 29, 33], [10, 36, 39], [8, 42, 45]], coffee: [31, 6], npc: 'sam',
-    team: true, skill: 'CREATIVE TEAM LEADERSHIP' },
-  { w: 90, gate: 74, arena: [52, 70], boss: { col: 61, hp: 3, name: 'THE 100-SLIDE DECK' },
-    plats: [[10, 12, 15], [8, 19, 22], [6, 26, 29], [8, 33, 36], [10, 39, 42], [8, 45, 48]], coffee: [27, 5], npc: 'ceo',
-    skill: 'EXECUTIVE PRESENTATIONS', goal: true },
+  { w: 76, gate: 66, skill: 'STAKEHOLDER COLLABORATION', npc: 'sam', badges: true },
+  { w: 72, gate: 62, arena: [38, 59], boss: { col: 49, hp: 2, name: 'THE VAGUE BRIEF' }, skill: 'BRAND IDENTITY', npc: 'meera' },
+  { w: 72, gate: 62, arena: [42, 59], boss: { col: 51, hp: 2, name: 'THE DEADLINE CLOCK' }, skill: 'MARKETING & CAMPAIGN DESIGN', npc: 'rita' },
+  { w: 72, gate: 62, arena: [42, 59], boss: { col: 51, hp: 3, name: 'THE OFF-BRAND BEAST' }, skill: 'CREATIVE TEAM LEADERSHIP', npc: 'sam', team: true },
+  { w: 88, gate: 72, arena: [46, 69], boss: { col: 58, hp: 3, name: 'THE 100-SLIDE DECK' }, skill: 'EXECUTIVE PRESENTATIONS', npc: 'ceo', goal: true },
 ];
 
 function buildFloor(k) {
   const f = FLOOR_SPEC[k];
   const L = newLevel(f.w, 14, { room: `floor${k + 1}`, world: 2, bg: FLOOR_BG[k] });
-  ground(L);
   const dlg = `floor${k + 1}`;
   npc(L, f.npc, 7, -1, true, dlg);
   if (f.team) npc(L, 'rita', 11, -1, false, 'cheer');
   put(L, 4, 11, k % 2 ? 'K' : 'T');
   put(L, 10, 11, 'D');
-  f.plats.forEach(([row, c1, c2]) => {
-    span(L, row, c1, c2, 'B');
-    if (!f.badges) for (let c = c1 + 1; c < c2; c += 2) put(L, c, row - 1, 'o');
-  });
-  if (f.coffee) put(L, f.coffee[0], f.coffee[1], 'c');
-  (f.badges || []).forEach(([c, r]) => put(L, c, r, 'k'));
-  if (f.badges) {
-    [[18, 11], [30, 11], [42, 11]].forEach(([c, r]) => put(L, c, r, 'o'));
+
+  if (k === 0) {
+    // FREELANCE: moving platforms, a spring, four client badges
+    ground(L, [[31, 36]]);
+    enemy(L, 'bat', 20, { row: 7, range: 3 });
+    span(L, 10, 13, 16, 'B');
+    put(L, 14, 9, 'k');
+    spring(L, 22);
+    span(L, 6, 24, 28, 'B');
+    put(L, 26, 5, 'k');
+    put(L, 38, 11, 'F');
+    mover(L, 32, 11, 'x', 1.7, 1.1);
+    span(L, 10, 39, 42, 'B');
+    put(L, 40, 9, 'k');
+    wall(L, 45);
+    wall(L, 53);
+    enemy(L, 'turtle', 49);
+    [[10, 55, 57], [8, 58, 60], [6, 61, 63], [8, 64, 65]].forEach(([r, a, b]) => span(L, r, a, b, 'B'));
+    put(L, 62, 5, 'k');
     label(L, 12, 5, 'FREELANCE  2013-2016');
+    [[18, 11], [30, 9], [47, 9]].forEach(([c, r]) => put(L, c, r, 'o'));
+  } else if (k === 1) {
+    // BHOOMI: conveyor belts against you, spikes, a turtle yard
+    ground(L);
+    belt(L, 12, 22, -1);
+    span(L, 9, 13, 15, 'B');
+    span(L, 9, 18, 20, 'B');
+    [14, 19].forEach((c) => put(L, c, 8, 'o'));
+    spikes(L, 25, 27);
+    span(L, 8, 24, 28, 'B');
+    put(L, 26, 7, 'c');
+    wall(L, 30);
+    wall(L, 36);
+    enemy(L, 'turtle', 33);
+    put(L, 31, 11, 'o');
+  } else if (k === 2) {
+    // DELOITTE: flying hawks + a crumbling bridge
+    ground(L, [[32, 38]]);
+    crumble(L, 32, 38, 11);
+    enemy(L, 'diver', 16, { row: 5 });
+    enemy(L, 'bat', 25, { row: 6, range: 3 });
+    enemy(L, 'diver', 28, { row: 5, min: 2 });
+    span(L, 10, 12, 15, 'B');
+    span(L, 8, 20, 23, 'B');
+    put(L, 21, 7, 'c');
+    put(L, 30, 11, 'F');
+    [[13, 9], [14, 9], [22, 7]].forEach(([c, r]) => put(L, c, r, 'o'));
+  } else if (k === 3) {
+    // JLL: springs and crocs (leading a team means knowing when to bounce back)
+    ground(L);
+    spring(L, 14);
+    span(L, 5, 16, 19, 'B');
+    put(L, 17, 4, 'c');
+    spring(L, 26);
+    span(L, 6, 28, 31, 'B');
+    put(L, 29, 5, 'o');
+    put(L, 30, 5, 'o');
+    wall(L, 19);
+    wall(L, 25);
+    enemy(L, 'croc', 22);
+    wall(L, 34);
+    wall(L, 40);
+    enemy(L, 'croc', 37);
+  } else {
+    // WSP: the grand finale of the office - pipes with piranhas, a moving platform, a hawk
+    ground(L, [[32, 37]]);
+    pipe(L, 14, 2);
+    enemy(L, 'piranha', 14, { row: 10 });
+    pipe(L, 24, 3);
+    enemy(L, 'piranha', 24, { row: 9 });
+    mover(L, 33, 11, 'x', 1.7, 1);
+    enemy(L, 'diver', 30, { row: 5 });
+    span(L, 8, 18, 21, 'B');
+    put(L, 19, 7, 'c');
+    span(L, 9, 27, 29, 'B');
+    wall(L, 38);
+    wall(L, 44);
+    enemy(L, 'turtle', 41);
+    put(L, 30, 11, 'F');
   }
-  put(L, f.gate - 6, 11, 'F');
+
   if (f.arena) {
     const [a, b] = f.arena;
-    put(L, a, 11, 'B');
-    put(L, a, 10, 'B');
-    put(L, b, 11, 'B');
-    put(L, b, 10, 'B');
+    wall(L, a, 2);
+    wall(L, b, 2);
     label(L, a + 2, 5, f.boss.name);
   }
+  if (!f.arena) put(L, f.gate - 4, 11, 'F');
   put(L, f.gate + 3, 11, 'E');
   L.office = {
     floor: k,
@@ -289,70 +396,84 @@ function buildFloor(k) {
   if (f.goal) {
     put(L, f.gate + 8, 11, 'G');
     npc(L, 'ceo', f.gate + 5, -1, true, 'floor5End');
-    L.grid[11][f.gate + 3] = '.'; // top floor: no elevator, just the exit door
+    L.grid[11][f.gate + 3] = '.';
     L.office.elevCol = null;
   }
   return L;
 }
 
-// World 4 "Skill Arcade": three cabinets, 15 skill coins (some hidden in pipe rooms).
+// ============================================================================
+// WORLD 4  "Skill Arcade" - three cabinets, three different gauntlets
+// ============================================================================
 function buildWorld4() {
-  const L = newLevel(158, 14, { room: 'world4', world: 3, bg: 0x2a1a5c });
-  ground(L, [[30, 33], [70, 74], [124, 128]]);
+  const L = newLevel(122, 14, { room: 'world4', world: 3, bg: 0x2a1a5c });
+  ground(L, [[29, 33], [52, 58], [66, 70]]);
+  belt(L, 86, 96, 1);
   L.arcade = true;
-  npc(L, 'ravi', 6, -1, true, 'skill1');
+  npc(L, 'ravi', 5, -1, true, 'skill1');
   put(L, 3, 11, 'T');
 
-  // Cabinet 1: design craft
-  put(L, 10, 11, 'M');
-  label(L, 12, 3, 'CABINET 1');
-  label(L, 12, 4, 'DESIGN CRAFT');
-  span(L, 10, 15, 18, 'B');
-  put(L, 16, 9, 'u');
-  span(L, 8, 23, 26, 'B');
-  put(L, 24, 7, 'u');
-  span(L, 10, 35, 38, 'B');
-  put(L, 36, 9, 'u');
+  // Cabinet 1 - design craft: springs and crumbling stepping stones
+  put(L, 9, 11, 'M');
+  label(L, 11, 3, 'CABINET 1');
+  label(L, 11, 4, 'DESIGN CRAFT');
+  span(L, 10, 14, 17, 'B');
+  put(L, 15, 9, 'u');
+  spring(L, 20);
+  span(L, 6, 22, 25, 'B');
+  put(L, 23, 5, 'u');
+  crumble(L, 29, 33, 11);
+  enemy(L, 'bat', 28, { row: 7, range: 3 });
+  span(L, 10, 36, 39, 'B');
+  put(L, 37, 9, 'u');
   label(L, 40, 8, 'BONUS ROOM');
-  pipe(L, 43, 2, 'a', { room: 'arc1', pipe: 'r' });
-  put(L, 49, 11, 'F');
+  pipe(L, 42, 2, 'a', { room: 'arc1', pipe: 'r' });
+  put(L, 46, 11, 'F');
 
-  // Cabinet 2: leadership & impact
-  put(L, 56, 11, 'N');
-  label(L, 58, 3, 'CABINET 2');
-  label(L, 58, 4, 'LEADERSHIP & IMPACT');
-  span(L, 10, 60, 63, 'B');
-  put(L, 61, 9, 'v');
-  span(L, 8, 64, 66, 'B');
-  span(L, 6, 67, 69, 'B');
-  put(L, 68, 5, 'v');
-  span(L, 10, 79, 82, 'B');
-  put(L, 80, 9, 'v');
-  put(L, 76, 11, 'c');
-  label(L, 87, 8, 'BONUS ROOM');
-  pipe(L, 90, 2, 'b', { room: 'arc2', pipe: 'r' });
-  put(L, 96, 11, 'F');
+  // Cabinet 2 - leadership & impact: moving platforms over pits, a hawk
+  put(L, 48, 11, 'N');
+  label(L, 50, 3, 'CABINET 2');
+  label(L, 50, 4, 'LEADERSHIP & IMPACT');
+  mover(L, 54, 11, 'x', 1.5, 1.1);
+  put(L, 55, 7, 'v');
+  mover(L, 67, 11, 'x', 1.5, 1.0);
+  span(L, 9, 61, 64, 'B');
+  put(L, 62, 8, 'v');
+  enemy(L, 'diver', 60, { row: 5 });
+  span(L, 10, 71, 74, 'B');
+  put(L, 72, 9, 'v');
+  put(L, 75, 11, 'c');
+  enemy(L, 'turtle', 78);
+  wall(L, 76);
+  wall(L, 82);
+  label(L, 79, 8, 'BONUS ROOM');
+  pipe(L, 84, 2, 'b', { room: 'arc2', pipe: 'r' });
+  put(L, 60, 11, 'F');
 
-  // Cabinet 3: toolkit
-  put(L, 104, 11, 'O');
-  label(L, 106, 3, 'CABINET 3');
-  label(L, 106, 4, 'TOOLKIT');
-  span(L, 10, 108, 111, 'B');
-  put(L, 109, 9, 'w');
-  span(L, 8, 115, 118, 'B');
-  put(L, 116, 7, 'w');
-  span(L, 10, 130, 133, 'B');
-  put(L, 131, 9, 'w');
-  span(L, 8, 134, 136, 'B');
-  span(L, 6, 137, 139, 'B');
-  put(L, 138, 5, 'w');
-  label(L, 141, 8, 'BONUS ROOM');
-  pipe(L, 144, 2, 'c', { room: 'arc3', pipe: 'r' });
-  put(L, 120, 11, 'F');
+  // Cabinet 3 - toolkit: conveyor + spikes gauntlet, a croc
+  put(L, 87, 11, 'O');
+  label(L, 89, 3, 'CABINET 3');
+  label(L, 89, 4, 'TOOLKIT');
+  span(L, 10, 88, 91, 'B');
+  put(L, 89, 9, 'w');
+  span(L, 7, 93, 96, 'B');
+  put(L, 94, 6, 'w');
+  spikes(L, 98, 99);
+  span(L, 10, 101, 104, 'B');
+  put(L, 102, 9, 'w');
+  spring(L, 106);
+  span(L, 6, 108, 111, 'B');
+  put(L, 109, 5, 'w');
+  wall(L, 100);
+  wall(L, 105);
+  enemy(L, 'croc', 102);
+  label(L, 113, 8, 'BONUS ROOM');
+  pipe(L, 112, 2, 'c', { room: 'arc3', pipe: 'r' });
+  put(L, 86, 11, 'F');
 
-  npc(L, 'ravi', 149, -1, true, 'skillEnd');
-  put(L, 152, 11, 'T');
-  put(L, 155, 11, 'G');
+  npc(L, 'ravi', 117, -1, true, 'skillEnd');
+  put(L, 115, 11, 'T');
+  put(L, 120, 11, 'G');
   return L;
 }
 
@@ -370,59 +491,83 @@ function buildArcadeRoom(n, ch, name, count) {
   return L;
 }
 
-// extra NPC kinds: signboards (contact info) and cheering cast
-function board(L, col, frame, dlg, autoTalk = false) {
-  L.npcs.push({ id: 'board', frame, dlg, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face: -1, autoTalk, board: true });
-}
-function cheer(L, id, col) {
-  L.npcs.push({ id, dlg: null, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face: -1, autoTalk: false, cheer: true });
-}
-
-// World 5 "Trophy Hall": hit 5 ? blocks from below to release the certificates.
+// ============================================================================
+// WORLD 5  "Trophy Hall" - hit 5 ? blocks from below; crocs, bats and a turtle patrol
+// ============================================================================
 function buildWorld5() {
-  const L = newLevel(100, 14, { room: 'world5', world: 4, bg: 0x2a0a22, theme: 'hall' });
+  const L = newLevel(88, 14, { room: 'world5', world: 4, bg: 0x2a0a22, theme: 'hall' });
   ground(L);
   L.hall = true;
-  span(L, 1, 0, 99, 'V'); // velvet valance along the top
+  span(L, 1, 0, 87, 'V');
   npc(L, 'curator', 6, -1, true, 'curator');
   put(L, 3, 11, 'Y');
-  [[16, 8], [30, 7], [44, 8], [58, 7], [72, 8]].forEach(([c, r], i) => {
+  [[16, 8], [28, 7], [40, 8], [52, 7], [64, 8]].forEach(([c, r], i) => {
     put(L, c, r, 'Q');
     put(L, c, 11, 'D');
     put(L, c, 10, 'Y');
     label(L, c - 2, 3, `CERTIFICATE ${i + 1}/5`);
   });
-  [[22, 9], [24, 9], [37, 9], [38, 9], [51, 9], [52, 9], [65, 9], [66, 9]].forEach(([c, r]) => put(L, c, r, 'o'));
-  put(L, 34, 11, 'c');
-  put(L, 50, 11, 'F');
-  put(L, 82, 11, 'Y');
-  npc(L, 'curator', 86, -1, true, 'curatorEnd');
-  put(L, 94, 11, 'G');
+  [[20, 9], [22, 9], [34, 9], [46, 9], [58, 9], [60, 9]].forEach(([c, r]) => put(L, c, r, 'o'));
+  enemy(L, 'bat', 22, { row: 5, range: 3 });
+  wall(L, 31);
+  wall(L, 37);
+  enemy(L, 'croc', 34);
+  enemy(L, 'bat', 46, { row: 5, range: 3, min: 2 });
+  put(L, 25, 11, 'c');
+  put(L, 44, 11, 'F');
+  wall(L, 56);
+  wall(L, 61);
+  enemy(L, 'turtle', 58);
+  put(L, 70, 11, 'Y');
+  npc(L, 'curator', 76, -1, true, 'curatorEnd');
+  put(L, 84, 11, 'G');
   return L;
 }
 
-// World 6 "Rooftop": contact boards, the cheering cast, and the "hire me" flagpole.
+// ============================================================================
+// WORLD 6  "Dragon's Lair" - the Deadline Dragon (see systems/dragon.js)
+// ============================================================================
+function buildDragon() {
+  const L = newLevel(54, 14, { room: 'dragon', world: 5, bg: 0x38101a, tint: 0xff8060 });
+  ground(L);
+  L.dragon = { col: 41, gateCol: 49 };
+  npc(L, 'meera', 6, -1, true, 'dragonIntro');
+  put(L, 3, 11, 'T');
+  put(L, 11, 11, 'F');
+  // safe platforms to hop onto while the flames sweep the floor
+  span(L, 9, 14, 17, 'B');
+  span(L, 7, 21, 24, 'B');
+  span(L, 9, 28, 31, 'B');
+  [[15, 8], [16, 8], [22, 6], [23, 6], [29, 8], [30, 8]].forEach(([c, r]) => put(L, c, r, 'o'));
+  put(L, 20, 11, 'c');
+  put(L, 52, 11, 'G');
+  return L;
+}
+
+// ============================================================================
+// WORLD 7  "Rooftop" - contact boards, the cheering cast, the "hire me" flagpole
+// ============================================================================
 function buildWorld6() {
-  const L = newLevel(122, 14, { room: 'world6', world: 5, bg: 0xf87858, tint: 0xffb878 });
+  const L = newLevel(98, 14, { room: 'world6', world: 6, bg: 0xf87858, tint: 0xffb878 });
   ground(L);
   L.finale = true;
   npc(L, 'meera', 8, -1, true, 'rooftop');
   put(L, 4, 11, 'T');
   board(L, 16, 0, 'bLinkedIn');
-  board(L, 24, 1, 'bEmail');
-  board(L, 32, 2, 'bPhone');
-  if (CLASSIC_RESUME_URL) board(L, 40, 3, 'bResume');
-  [12, 20, 28, 36, 44].forEach((c) => put(L, c, 11, 'T'));
-  [[18, 9], [20, 9], [26, 9], [28, 9], [34, 9], [36, 9]].forEach(([c, r]) => put(L, c, r, 'o'));
-  put(L, 52, 11, 'F');
-  label(L, 54, 6, 'HOW TO REACH ME');
-  span(L, 10, 56, 59, 'B');
-  span(L, 8, 62, 65, 'B');
-  [[57, 9], [58, 9], [63, 7], [64, 7]].forEach(([c, r]) => put(L, c, r, 'o'));
-  board(L, 74, 4, 'bHire', true);
-  ['rita', 'raju', 'prof', 'ceo', 'sam', 'ravi', 'curator'].forEach((id, i) => cheer(L, id, 84 + i * 3));
-  put(L, 108, 11, 'P');
-  label(L, 100, 5, 'RAISE THE FLAG!');
+  board(L, 22, 1, 'bEmail');
+  board(L, 28, 2, 'bPhone');
+  if (CLASSIC_RESUME_URL) board(L, 34, 3, 'bResume');
+  [13, 19, 25, 31, 37].forEach((c) => put(L, c, 11, 'T'));
+  [[18, 9], [20, 9], [24, 9], [26, 9], [30, 9], [32, 9]].forEach(([c, r]) => put(L, c, r, 'o'));
+  put(L, 42, 11, 'F');
+  label(L, 44, 6, 'HOW TO REACH ME');
+  span(L, 10, 46, 49, 'B');
+  span(L, 8, 52, 55, 'B');
+  [[47, 9], [48, 9], [53, 7], [54, 7]].forEach(([c, r]) => put(L, c, r, 'o'));
+  board(L, 60, 4, 'bHire', true);
+  ['rita', 'raju', 'prof', 'ceo', 'sam', 'ravi', 'curator'].forEach((id, i) => cheer(L, id, 67 + i * 3));
+  put(L, 92, 11, 'P');
+  label(L, 84, 5, 'RAISE THE FLAG!');
   return L;
 }
 
@@ -431,12 +576,13 @@ export const LEVELS = {
   bonus: buildBonus(),
   world2: buildWorld2(),
   lab: buildLab(),
-  world5: buildWorld5(),
-  world6: buildWorld6(),
   world4: buildWorld4(),
   arc1: buildArcadeRoom(1, 'u', 'DESIGN CRAFT', 2),
   arc2: buildArcadeRoom(2, 'v', 'LEADERSHIP & IMPACT', 1),
   arc3: buildArcadeRoom(3, 'w', 'TOOLKIT', 2),
+  world5: buildWorld5(),
+  dragon: buildDragon(),
+  world6: buildWorld6(),
   ...Object.fromEntries([0, 1, 2, 3, 4].map((k) => [`floor${k + 1}`, buildFloor(k)])),
 };
 

@@ -11,6 +11,8 @@ export const WORLDS = [
     chapter: 'THE ARCADE', desc: 'THREE CABINETS, FIFTEEN SKILL COINS. SEE WHERE EACH ONE WAS USED.' },
   { id: 5, name: 'TROPHY HALL', topic: 'AWARDS & CERTIFICATES', color: 0xf8d878, ready: true, room: 'world5',
     chapter: 'THE TROPHY HALL', desc: 'HIT THE ? BLOCKS FROM BELOW TO RELEASE 5 CERTIFICATES.' },
-  { id: 6, name: 'ROOFTOP', topic: 'CONTACT & CREDITS', color: 0x00a800, ready: true, room: 'world6',
+  { id: 6, name: "DRAGON'S LAIR", topic: 'FINAL BOSS', color: 0xc82810, ready: true, room: 'dragon',
+    chapter: "THE DRAGON'S LAIR", desc: 'THE DEADLINE DRAGON BLOCKS THE EXIT. DODGE THE FIRE. STOMP THE HEAD.' },
+  { id: 7, name: 'ROOFTOP', topic: 'CONTACT & CREDITS', color: 0x00a800, ready: true, room: 'world6',
     chapter: 'THE ROOFTOP', desc: 'SUNSET, HOW TO REACH ME, THE CAST, AND THE CREDITS.' },
 ];

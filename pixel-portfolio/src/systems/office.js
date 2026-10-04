@@ -100,6 +100,7 @@ export class OfficeTasks {
     boss.invuln = false;
     boss.nextHop = s.time.now + 1800;
     this.boss = boss;
+    this.s.registry.set('bossBar', { name: b.name, hp: b.hp, max: b.hp });
   }
 
   touchBoss(boss) {
@@ -109,6 +110,7 @@ export class OfficeTasks {
     if (!stomp) return s.hurtPlayer(boss.x);
     boss.hp--;
     this.hits++;
+    s.registry.set('bossBar', { name: this.spec.boss.name, hp: boss.hp, max: this.spec.boss.hp });
     this.lastHud = null;
     boss.invuln = true;
     p.setVelocityY(-260);
@@ -135,6 +137,7 @@ export class OfficeTasks {
     const { s } = this;
     boss.dead = true;
     boss.body.enable = false;
+    s.registry.set('bossBar', null);
     s.tweens.add({ targets: boss, scale: 0, angle: 360, alpha: 0, duration: 600, ease: 'Back.in', onComplete: () => boss.destroy() });
     burst(s, boss.x, boss.y, { n: 24, spread: 50, colors: [0xf83800, 0xf8d878, 0xfcfcfc, 0x58d854] });
     this.complete();

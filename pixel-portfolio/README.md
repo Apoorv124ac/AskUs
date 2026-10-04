@@ -1,4 +1,4 @@
-# Office Quest — Days 1–8 (all 6 worlds + credits)
+# Office Quest — 7 worlds, a boss fight and credits
 
 Playable engine demo: controls, movement feel, pickups, pipes, HUD, and the pixel
 hero (Apoorv). Level art is still placeholder (generated in code).
@@ -77,3 +77,12 @@ Up again in mid-air = double jump (coffee = triple). R = back to the last checkp
 - **Contact data** lives in `contact` in `src/data/resume.json` (email, phone, LinkedIn). Set
   `CLASSIC_RESUME_URL` in `src/config.js` to add a resume board. Clear `email`/`phone` to hide them.
   NOTE: anything in this repo is visible to anyone who can see the repository.
+
+## Enemies, mechanics, boss (Day 8.5)
+- Enemies (`src/systems/enemies.js`): turtle (stomp -> shell -> kick), croc (snaps/lunges), spam bat, email hawk
+  (dives), spiker (never stomp), piranha plant (hides if you stand on the pipe). Art: `src/art/creatures.js`.
+- Mechanics (`src/systems/gimmicks.js`): springs, spikes, crumbling tiles, conveyor belts, moving platforms.
+- Levels are in `src/levels.js`; every world has its own mechanic mix. Difficulty (D on the map): relaxed /
+  normal / hard changes enemy speed, croc toughness and some extra enemies.
+- Boss: `src/systems/dragon.js` (THE DEADLINE DRAGON). Telegraphed attacks; stomp the head only when it's tired.
+- Polish: squash-and-stretch + shadow + run dust on the hero, hit-stop on stomps, light motes, vignette.

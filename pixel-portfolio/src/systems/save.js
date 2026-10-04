@@ -5,7 +5,7 @@ const DEFAULTS = {
   email: '',
   name: '',
   emailSent: '',
-  completed: [false, false, false, false, false, false],
+  completed: [false, false, false, false, false, false, false],
   recruiter: false,
   coins: 0,
   xp: 0,
@@ -15,11 +15,16 @@ const DEFAULTS = {
   storySeen: false,
   degrees: [false, false, false, false],
   floors: [false, false, false, false, false],
+  difficulty: 1, // 0 relaxed, 1 normal, 2 hard
+  dragonDown: false,
 };
 
 function read() {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
+    const s = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
+    // older saves had 6 worlds; the Dragon's Lair now sits before the Rooftop
+    if (s.completed.length === 6) s.completed.splice(5, 0, false);
+    return s;
   } catch {
     return { ...DEFAULTS };
   }

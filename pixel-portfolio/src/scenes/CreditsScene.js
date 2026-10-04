@@ -42,6 +42,7 @@ export default class CreditsScene extends Phaser.Scene {
       [`FLOORS ${save.floors.filter(Boolean).length}/5`, ''],
       [`SKILLS ${countSkills(col)}/${SKILLS}`, ''],
       [`CERTIFICATES ${countCerts(col)}/5`, ''],
+      [`DEADLINE DRAGON: ${save.dragonDown ? 'DEFEATED' : 'STILL BREATHING'}`, ''],
       ['', ''],
       ['STORY, ART AND DESIGN', 'h2'],
       [resume.profile.name.toUpperCase(), ''],
@@ -93,7 +94,7 @@ export default class CreditsScene extends Phaser.Scene {
   }
 
   end() {
-    save.lastWorld = 5;
+    save.lastWorld = 6;
     go(this, 'Menu');
   }
 

@@ -5,6 +5,8 @@ import Phaser from 'phaser';
 import { FW, FH, HERO_ANIMS, frameIndex } from '../heroFrames.js';
 import { save, persist, resetSave } from '../systems/save.js';
 import { NPC_ORDER, NPC_ANIMS } from '../npcFrames.js';
+import { createCreatureTextures, createVignette } from '../art/creatures.js';
+import { GAME_W, GAME_H, ZOOM } from '../config.js';
 
 function canvasTex(scene, key, w, h, draw) {
   const tex = scene.textures.createCanvas(key, w, h);
@@ -458,7 +460,28 @@ export default class PreloadScene extends Phaser.Scene {
     canvasTex(this, 'skyline-near', 256, 224, (c) => drawSkyline(c, '#3858c8', '#f8d878', 13, 40, 90));
     t.get('skyline-far'); // keep reference quiet for bundlers
 
+    createCreatureTextures(this);
+    createVignette(this, GAME_W * ZOOM, GAME_H * ZOOM);
     const a = this.anims;
+    const seq = (key, tex, frames, fps, repeat = -1) =>
+      a.create({ key, frames: frames.map((frame) => ({ key: tex, frame })), frameRate: fps, repeat });
+    seq('turtle-walk', 'turtle', [0, 1], 5);
+    seq('turtle-shell', 'turtle', [2], 1, 0);
+    seq('turtle-spin', 'turtle', [3, 4], 14);
+    seq('croc-walk', 'croc', [0, 1], 5);
+    seq('croc-snap', 'croc', [2], 1, 0);
+    seq('bat-fly', 'bat', [0, 1, 2, 1], 10);
+    seq('diver-fly', 'diver', [0, 1], 7);
+    seq('diver-dive', 'diver', [2], 1, 0);
+    seq('spiker-walk', 'spiker', [0, 1], 5);
+    seq('piranha-bite', 'piranha', [0, 1], 4);
+    seq('flame-burn', 'flame', [0, 1, 2], 14);
+    seq('fireball-spin', 'fireball', [0, 1], 12);
+    seq('conv', 'tile-conveyor', [0, 1], 6);
+    seq('dragon-idle', 'dragon', [0, 1], 2);
+    seq('dragon-windup', 'dragon', [2], 1, 0);
+    seq('dragon-breath', 'dragon', [3], 1, 0);
+    seq('dragon-hurt', 'dragon', [4], 1, 0);
     NPC_ORDER.forEach((id) =>
       Object.entries(NPC_ANIMS(id)).forEach(([key, def]) =>
         a.create({ key, frames: def.frames.map((frame) => ({ key: 'npcs', frame })), frameRate: def.fps, repeat: def.repeat })
