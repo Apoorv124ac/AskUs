@@ -1,0 +1,11 @@
+{
+  "_comment": "SINGLE SOURCE OF TRUTH for all portfolio content. Placeholders for now - replace with real data. Worlds read from here; never hard-code content in scenes.",
+  "meta": { "name": "YOUR NAME", "headline": "Your headline here", "location": "City, Country", "classicResumeUrl": "" },
+  "intro": { "facts": ["PLACEHOLDER FACT 1", "PLACEHOLDER FACT 2", "PLACEHOLDER FACT 3", "PLACEHOLDER FACT 4", "PLACEHOLDER FACT 5", "PLACEHOLDER FACT 6", "PLACEHOLDER FACT 7", "PLACEHOLDER FACT 8", "PLACEHOLDER FACT 9", "PLACEHOLDER FACT 10"] },
+  "education": [{ "degree": "Degree", "school": "School", "years": "YYYY-YYYY", "task": "Short in-level task idea" }],
+  "experience": [{ "company": "Company", "role": "Role", "years": "YYYY-YYYY", "achievement": "Real achievement the mini-boss is linked to" }],
+  "skills": [{ "category": "Category", "items": [{ "name": "Skill", "level": 0.8 }] }],
+  "awards": [{ "title": "Certificate / award", "issuer": "Issuer", "year": "YYYY" }],
+  "contact": { "email": "", "linkedin": "", "github": "", "website": "", "resumePdf": "" },
+  "credits": ["Design & code: YOU", "Built with Phaser 3 + Vite"]
+}

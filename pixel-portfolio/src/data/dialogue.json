@@ -1,0 +1,17 @@
+{
+  "_comment": "All spoken / on-screen text lives here. Keys are referenced from map objects (property 'dialogue') and scenes.",
+  "signs": {
+    "move":     "ARROWS: WALK\nHOLD SHIFT: RUN\nUP: JUMP",
+    "pipe":     "STAND ON PIPE\nPRESS DOWN",
+    "longjump": "SHIFT + UP\n= LONG JUMP",
+    "coffee":   "COFFEE: SPEED\n+ DOUBLE JUMP",
+    "bonus":    "BONUS ROOM!"
+  },
+  "ui": {
+    "pressStart": "PRESS ENTER",
+    "pressStartTouch": "TAP A",
+    "levelUp": "LEVEL UP!",
+    "paused": "PAUSED"
+  },
+  "npcs": {}
+}
