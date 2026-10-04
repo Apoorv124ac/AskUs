@@ -155,5 +155,30 @@
     "again": [
       "GO GET IT, BOSS!"
     ]
+  },
+  "skill1": {
+    "name": "RAVI",
+    "role": "ARCADE",
+    "color": "#a888ff",
+    "lines": [
+      "WELCOME TO THE *SKILL ARCADE*, {name}! THREE CABINETS, *FIFTEEN* SKILLS.",
+      "EACH COIN IS A SKILL. GRAB IT TO SEE *WHERE I USED IT*. SOME COINS HIDE IN *PIPE ROOMS*.",
+      "THE BARS AT THE TOP SHOW HOW MANY YOU'VE FOUND IN EACH CABINET."
+    ],
+    "again": [
+      "FIFTEEN SKILLS, {name}. YOU HAVE *{skills}* SO FAR!"
+    ]
+  },
+  "skillEnd": {
+    "name": "RAVI",
+    "role": "ARCADE",
+    "color": "#a888ff",
+    "lines": [
+      "*{skills}/15* SKILLS COLLECTED, {name}. NOT BAD AT ALL!",
+      "TWO WORLDS LEFT: THE *TROPHY HALL*, THEN THE *ROOFTOP*."
+    ],
+    "again": [
+      "YOU HAVE *{skills}/15* SKILLS. ANY MISSING ONES ARE BACK IN THE PIPE ROOMS!"
+    ]
   }
 }

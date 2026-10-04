@@ -4,6 +4,7 @@
 // Grid characters:  . empty   # carpet(top)   d carpet(under)   B desk block
 //   p q l r pipe pieces   o coin   f FACT coin   t TOOL coin   c coffee
 //   F checkpoint   G goal door   T plant (decor)   D counter (decor)   K bookshelf (decor)
+//   World 4 skill coins: u (design) v (lead) w (tools)   M N O arcade cabinets (decor)
 //   World 3 floors: k client badge   E elevator (decor)
 //   World 2 tasks: s swatch   b typo bug   i idea bulb   1 2 3 4 data nodes (collect in order)
 import { TILE } from './config.js';
@@ -293,11 +294,90 @@ function buildFloor(k) {
   return L;
 }
 
+// World 4 "Skill Arcade": three cabinets, 15 skill coins (some hidden in pipe rooms).
+function buildWorld4() {
+  const L = newLevel(158, 14, { room: 'world4', world: 3, bg: 0x2a1a5c });
+  ground(L, [[30, 33], [70, 74], [124, 128]]);
+  L.arcade = true;
+  npc(L, 'ravi', 6, -1, true, 'skill1');
+  put(L, 3, 11, 'T');
+
+  // Cabinet 1: design craft
+  put(L, 10, 11, 'M');
+  label(L, 12, 3, 'CABINET 1');
+  label(L, 12, 4, 'DESIGN CRAFT');
+  span(L, 10, 15, 18, 'B');
+  put(L, 16, 9, 'u');
+  span(L, 8, 23, 26, 'B');
+  put(L, 24, 7, 'u');
+  span(L, 10, 35, 38, 'B');
+  put(L, 36, 9, 'u');
+  label(L, 40, 8, 'BONUS ROOM');
+  pipe(L, 43, 2, 'a', { room: 'arc1', pipe: 'r' });
+  put(L, 49, 11, 'F');
+
+  // Cabinet 2: leadership & impact
+  put(L, 56, 11, 'N');
+  label(L, 58, 3, 'CABINET 2');
+  label(L, 58, 4, 'LEADERSHIP & IMPACT');
+  span(L, 10, 60, 63, 'B');
+  put(L, 61, 9, 'v');
+  span(L, 8, 64, 66, 'B');
+  span(L, 6, 67, 69, 'B');
+  put(L, 68, 5, 'v');
+  span(L, 10, 79, 82, 'B');
+  put(L, 80, 9, 'v');
+  put(L, 76, 11, 'c');
+  label(L, 87, 8, 'BONUS ROOM');
+  pipe(L, 90, 2, 'b', { room: 'arc2', pipe: 'r' });
+  put(L, 96, 11, 'F');
+
+  // Cabinet 3: toolkit
+  put(L, 104, 11, 'O');
+  label(L, 106, 3, 'CABINET 3');
+  label(L, 106, 4, 'TOOLKIT');
+  span(L, 10, 108, 111, 'B');
+  put(L, 109, 9, 'w');
+  span(L, 8, 115, 118, 'B');
+  put(L, 116, 7, 'w');
+  span(L, 10, 130, 133, 'B');
+  put(L, 131, 9, 'w');
+  span(L, 8, 134, 136, 'B');
+  span(L, 6, 137, 139, 'B');
+  put(L, 138, 5, 'w');
+  label(L, 141, 8, 'BONUS ROOM');
+  pipe(L, 144, 2, 'c', { room: 'arc3', pipe: 'r' });
+  put(L, 120, 11, 'F');
+
+  npc(L, 'ravi', 149, -1, true, 'skillEnd');
+  put(L, 152, 11, 'T');
+  put(L, 155, 11, 'G');
+  return L;
+}
+
+function buildArcadeRoom(n, ch, name, count) {
+  const L = newLevel(20, 14, { bg: 0x101830, theme: 'underground', room: `arc${n}`, world: 3 });
+  ground(L);
+  L.arcadeRoom = true;
+  span(L, 0, 0, 19, 'B');
+  span(L, 1, 0, 19, 'B');
+  label(L, 2, 3, 'BONUS ROOM');
+  label(L, 2, 4, name);
+  const xs = count === 1 ? [8] : [6, 11];
+  xs.forEach((c) => put(L, c, 9, ch));
+  pipe(L, 16, 2, 'r', { room: 'world4', pipe: ['a', 'b', 'c'][n - 1] });
+  return L;
+}
+
 export const LEVELS = {
   world1: buildWorld1(),
   bonus: buildBonus(),
   world2: buildWorld2(),
   lab: buildLab(),
+  world4: buildWorld4(),
+  arc1: buildArcadeRoom(1, 'u', 'DESIGN CRAFT', 2),
+  arc2: buildArcadeRoom(2, 'v', 'LEADERSHIP & IMPACT', 1),
+  arc3: buildArcadeRoom(3, 'w', 'TOOLKIT', 2),
   ...Object.fromEntries([0, 1, 2, 3, 4].map((k) => [`floor${k + 1}`, buildFloor(k)])),
 };
 

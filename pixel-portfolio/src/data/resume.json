@@ -205,5 +205,94 @@
     "location": "Lucknow, India",
     "email": "",
     "phone": ""
-  }
+  },
+  "skillArcade": [
+    {
+      "key": "design",
+      "name": "DESIGN CRAFT",
+      "short": "DESIGN",
+      "tint": 16740464,
+      "color": "#ff7070",
+      "skills": [
+        {
+          "name": "BRAND IDENTITY",
+          "proof": "AT *JLL* I KEPT ONE BRAND CONSISTENT ACROSS US MARKETS."
+        },
+        {
+          "name": "TYPOGRAPHY & LAYOUT",
+          "proof": "FROM *CONCEPT TO FINAL LAYOUT*: BRANDING, LEARNING MATERIAL AND WEB GRAPHICS."
+        },
+        {
+          "name": "VISUAL STORYTELLING",
+          "proof": "I TURN *COMPLEX IDEAS* INTO CLEAR, COMPELLING VISUAL STORIES."
+        },
+        {
+          "name": "DATA VISUALIZATION",
+          "proof": "MAKING DATA AND SERVICES *EASY TO SEE*. DATA SCIENCE CERTIFICATE, IIT GUWAHATI."
+        },
+        {
+          "name": "INTERFACE DESIGN",
+          "proof": "*ADOBE XD: DESIGN & PROTOTYPE* CERTIFIED (LINKEDIN, 2022)."
+        }
+      ]
+    },
+    {
+      "key": "lead",
+      "name": "LEADERSHIP & IMPACT",
+      "short": "LEAD",
+      "tint": 5812472,
+      "color": "#58b0f8",
+      "skills": [
+        {
+          "name": "CREATIVE TEAM LEADERSHIP",
+          "proof": "I *LED A DESIGN TEAM* AT JLL, 2022 TO 2024."
+        },
+        {
+          "name": "STAKEHOLDER COLLABORATION",
+          "proof": "WORKING WITH *COPYWRITERS, CREATIVE DIRECTORS* AND CROSS-FUNCTIONAL TEAMS."
+        },
+        {
+          "name": "EXECUTIVE PRESENTATIONS",
+          "proof": "*PRESENTATIONS FOR GLOBAL LEADERSHIP*, INCLUDING THE CEO TEAM AT WSP."
+        },
+        {
+          "name": "CAMPAIGN DESIGN",
+          "proof": "*NEWSPAPER AD CAMPAIGNS* FOR CLIENTS IN THE US, UK AND AUSTRALIA."
+        }
+      ]
+    },
+    {
+      "key": "tools",
+      "name": "TOOLKIT",
+      "short": "TOOLS",
+      "tint": 5822548,
+      "color": "#58d854",
+      "skills": [
+        {
+          "name": "ADOBE INDESIGN",
+          "proof": "MY GO-TO FOR *LAYOUTS*: DECKS, COLLATERAL AND PRINT."
+        },
+        {
+          "name": "ILLUSTRATOR",
+          "proof": "*LOGOS AND ILLUSTRATIONS*. CERTIFIED: ILLUSTRATOR GRAPHIC DESIGN (LINKEDIN, 2022)."
+        },
+        {
+          "name": "PHOTOSHOP",
+          "proof": "*IMAGE EDITING* AND VISUAL ASSETS, EVERY DAY."
+        },
+        {
+          "name": "AFTER EFFECTS",
+          "proof": "WHEN A DESIGN NEEDS TO *MOVE*."
+        },
+        {
+          "name": "ADOBE XD",
+          "proof": "*DESIGN AND PROTOTYPE* INTERFACES."
+        },
+        {
+          "name": "POWERPOINT",
+          "proof": "*VISUAL STORYTELLING IN POWERPOINT* CERTIFIED (LINKEDIN, 2022)."
+        }
+      ]
+    }
+  ]
 }

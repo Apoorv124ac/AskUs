@@ -291,6 +291,25 @@ function drawElevator(ctx) {
   });
 }
 
+// --- World 4 (arcade): cabinets
+function drawCabinets(ctx) {
+  ['#f83800', '#0058f8', '#00a800'].forEach((c, i) => {
+    const o = i * 16;
+    fill(ctx, '#0f0f1b', o, 2, 16, 30);
+    fill(ctx, '#2c2c5c', o + 1, 3, 14, 29);
+    fill(ctx, '#0f0f1b', o + 3, 5, 10, 9);
+    fill(ctx, c, o + 4, 6, 8, 7);
+    fill(ctx, '#fcfcfc', o + 5, 7, 2, 1);
+    fill(ctx, '#fcfcfc', o + 8, 9, 3, 1);
+    fill(ctx, '#0f0f1b', o + 2, 17, 12, 5);
+    fill(ctx, '#7c7c7c', o + 3, 18, 10, 3);
+    fill(ctx, '#f83800', o + 5, 15, 2, 2); // joystick ball
+    fill(ctx, '#f8d878', o + 9, 19, 2, 2);
+    fill(ctx, '#58d854', o + 12, 19, 1, 2);
+    fill(ctx, c, o + 2, 3, 12, 1); // marquee glow
+  });
+}
+
 // --- Parallax skyline (tiles horizontally) ---------------------------------
 function drawSkyline(ctx, base, windowCol, seed, minH, maxH) {
   let s = seed;
@@ -341,6 +360,8 @@ export default class PreloadScene extends Phaser.Scene {
     const fact = canvasTex(this, 'fact', 64, 16, drawFactCoins);
     for (let i = 0; i < 4; i++) fact.add(i, 0, i * 16, 0, 16, 16);
     canvasTex(this, 'plant', 16, 16, drawPlant);
+    const cab = canvasTex(this, 'cabinet', 48, 32, drawCabinets);
+    [0, 1, 2].forEach((i) => cab.add(i, 0, i * 16, 0, 16, 32));
     const bug = canvasTex(this, 'bug', 32, 16, drawBug);
     [0, 1].forEach((i) => bug.add(i, 0, i * 16, 0, 16, 16));
     const sw = canvasTex(this, 'swatch', 48, 16, drawSwatches);

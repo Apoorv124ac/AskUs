@@ -1,4 +1,4 @@
-# Office Quest — Days 1–6 (Worlds 1, 2 and 3)
+# Office Quest — Days 1–7 (Worlds 1 to 4)
 
 Playable engine demo: controls, movement feel, pickups, pipes, HUD, and the pixel
 hero (Apoorv). Level art is still placeholder (generated in code).
@@ -60,3 +60,11 @@ Floors 2-5: a boss tied to a real achievement (Vague Brief, Deadline Clock, Off-
 skill. Logic: `src/systems/office.js`; layouts: `buildFloor()` in `src/levels.js`; the first-person
 bullets are `experience[].short` in `src/data/resume.json`. Re-entering World 3 resumes at the first
 unfinished floor.
+
+## World 4 — Skill Arcade (Day 7)
+Three cabinets, 15 skill coins (design craft 5, leadership 4, toolkit 6); some hide in pipe rooms.
+Each coin shows where the skill was used. The bars count what you've *found*, not a rating.
+Skills + proofs: `skillArcade` in `src/data/resume.json`; logic: `src/systems/arcade.js`.
+
+## Controls added later
+Up again in mid-air = double jump (coffee = triple). R = back to the last checkpoint (never stuck).

@@ -15,6 +15,7 @@ const LOOKS = {
   prof: { skin: '#b07a52', skinS: '#8c5c3c', hair: '#9c9c9c', long: false, top: '#8c5c00', topHi: '#ac7c00', bottom: '#3a3a58', shoe: '#2a2a2a', glasses: true, clip: false },
   ceo: { skin: '#e0a070', skinS: '#c98f68', hair: '#bcbcbc', long: false, top: '#14141f', topHi: '#3a3a58', bottom: '#14141f', shoe: '#0f0f1b', glasses: true },
   sam: { skin: '#c98f68', skinS: '#a87048', hair: '#14100e', long: false, top: '#7c7c7c', topHi: '#bcbcbc', bottom: '#3a3a58', shoe: '#fcfcfc' },
+  ravi: { skin: '#b07a52', skinS: '#8c5c3c', hair: '#14100e', long: false, top: '#6844fc', topHi: '#a888ff', bottom: '#2a2a48', shoe: '#fcfcfc', glasses: true },
   meera: { skin: '#e0a070', skinS: '#c98f68', hair: '#4a2a18', long: false, bun: true, top: '#2c3a7c', topHi: '#4a5aac', bottom: '#2c3a7c', shoe: '#14141f', glasses: true, clip: true },
 };
 

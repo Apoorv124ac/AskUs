@@ -24,6 +24,12 @@ export default class UIScene extends Phaser.Scene {
     this.coffeeIcon = this.add.image(190, 20, 'coffee').setScale(0.5).setVisible(false).setDepth(2);
     this.coffeeBar = this.add.graphics().setDepth(2);
 
+    // skill bars strip (World 4 only)
+    this.barStrip = this.add.container(0, 0).setDepth(2).setVisible(false);
+    this.barStrip.add(this.add.rectangle(0, 14, 256, 11, 0x0f0f1b, 0.55).setOrigin(0));
+    this.barGfx = this.add.graphics();
+    this.barLabels = [0, 1, 2].map((i) => txt(this, [6, 90, 176][i], 19.5, '', { origin: [0, 0.5], bold: true, shadow: false, depth: 2 }));
+    this.barStrip.add([this.barGfx, ...this.barLabels]);
     this.banner = this.add.container(128, 100).setDepth(30).setVisible(false);
     this.dim = this.add.rectangle(0, 0, 256, 224, 0x0f0f1b, 0).setOrigin(0).setDepth(20);
     this.bubble = null;
@@ -194,7 +200,7 @@ export default class UIScene extends Phaser.Scene {
     if (this.cardTimer) this.cardTimer.remove();
     if (this.cardBox) this.cardBox.destroy();
     const X = 6;
-    const Y = 18;
+    const Y = this.registry.get('skillBars') ? 28 : 18; // leave room for the skill-bar strip
     const W = 244;
     const TX = 50;
     const rt = richText(this, TX, Y + 14, text, { width: W - (TX - X) - 8, depth: 0 });
@@ -305,6 +311,22 @@ export default class UIScene extends Phaser.Scene {
     this.factText.setText(total ? `FACTS ${facts}/${total}` : reg.get('hudInfo') || '');
     if (this.shown.facts !== null && facts > this.shown.facts) bump(this, this.factText, 1.4);
     this.shown.facts = facts;
+
+    const bars = reg.get('skillBars');
+    this.barStrip.setVisible(!!bars);
+    if (bars) {
+      this.barGfx.clear();
+      bars.forEach(([have, total, tint, label], i) => {
+        const x0 = [6, 90, 176][i];
+        const lw = [38, 26, 30][i];
+        const bw = [40, 44, 40][i];
+        this.barLabels[i].setText(label).setColor('#' + tint.toString(16).padStart(6, '0'));
+        const cw = Math.floor((bw - (total - 1)) / total);
+        for (let k = 0; k < total; k++) {
+          this.barGfx.fillStyle(k < have ? tint : 0x2c3a7c).fillRect(x0 + lw + k * (cw + 1), 17, cw, 5);
+        }
+      });
+    }
 
     const cf = reg.get('coffee') || 0;
     this.coffeeIcon.setVisible(cf > 0);

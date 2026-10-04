@@ -9,6 +9,7 @@ import { txt, burst } from '../ui/pixel.js';
 import { ZOOM } from '../config.js';
 import { CampusTasks } from '../systems/campus.js';
 import { OfficeTasks } from '../systems/office.js';
+import { ArcadeSkills, countSkills, TOTAL as SKILL_TOTAL } from '../systems/arcade.js';
 
 const TILE_TEX = {
   '#': 'tile-ground',
@@ -69,6 +70,7 @@ export default class GameScene extends Phaser.Scene {
     this.invulUntil = 0;
     this.campus = null;
     this.office = null;
+    this.arcade = null;
 
     this.buildBackground();
     this.buildTiles();
@@ -77,6 +79,8 @@ export default class GameScene extends Phaser.Scene {
     this.buildNpcs();
     if (L.campus || L.forceStation !== undefined) this.campus = new CampusTasks(this);
     if (L.office) this.office = new OfficeTasks(this);
+    if (L.arcade || L.arcadeRoom) this.arcade = new ArcadeSkills(this);
+    else reg.set('skillBars', null);
     this.input.on('pointerdown', () => this.talking && this.advanceTalk());
     this.events.once('shutdown', () => this.game.events.emit('dialogue-end'));
     if (L.world === 0) {
@@ -119,6 +123,10 @@ export default class GameScene extends Phaser.Scene {
         const ch = L.grid[r][c];
         if (ch === 'T' || ch === 'D' || ch === 'K') {
           this.add.image(c * TILE + 8, r * TILE + 8, { T: 'plant', D: 'counter', K: 'bookshelf' }[ch]).setDepth(2);
+          continue;
+        }
+        if (ch === 'M' || ch === 'N' || ch === 'O') {
+          this.add.image(c * TILE + 8, (r + 1) * TILE - 16, 'cabinet', 'MNO'.indexOf(ch)).setDepth(2);
           continue;
         }
         const tex = TILE_TEX[ch];
@@ -291,7 +299,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   fmt(str) {
-    return str.replace(/\{name\}/g, save.name || 'FRIEND');
+    return str.replace(/\{name\}/g, save.name || 'FRIEND').replace(/\{skills\}/g, String(countSkills(this.collected)));
   }
 
   startTalk(npc) {
@@ -375,6 +383,36 @@ export default class GameScene extends Phaser.Scene {
       }
       if (pressed) return this.startTalk(n);
     }
+  }
+
+  hitCheckpoint(flag) {
+    if (flag.texture.key === 'flag-on') return;
+    flag.setTexture('flag-on');
+    this.registry.set('checkpoint', { room: this.roomKey, ...flag.cp });
+    this.game.events.emit('banner', 'CHECKPOINT!');
+  }
+
+  hitGoal() {
+    if (this.goalShown) return;
+    this.goalShown = true;
+    save.completed[this.level.world] = true;
+    save.lastWorld = Math.min(this.level.world + 1, 5);
+    persist();
+    const f =
+      this.level.world === 0
+        ? `\nFACTS ${countFacts(this.collected)}/${WORLD1_FACTS.length}`
+        : this.level.world === 1
+          ? `\nDEGREES ${save.degrees.filter(Boolean).length}/4`
+          : this.level.world === 2
+            ? `\nFLOORS ${save.floors.filter(Boolean).length}/5`
+            : `\nSKILLS ${countSkills(this.collected)}/${SKILL_TOTAL}`;
+    this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!${f}`);
+    this.lockAnim('celebrate', 2400);
+    this.time.delayedCall(2600, () => {
+      this.scene.stop('UI');
+      this.cameras.main.fadeOut(250, 15, 15, 27);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Menu'));
+    });
   }
 
   popText(x, y, msg) {
