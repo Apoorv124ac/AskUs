@@ -94,14 +94,29 @@ export const PROGRESSION = {
   coinValue: 1,
   xpPerCoin: 1,
   // Career ladder. Test thresholds for Day 1; final values depend on total coins in the game.
+  // Thresholds match the coins available per world (W1 10, W2 12, W3 15, W4 28, W5 16, W6 8 = 89),
+  // so each cleared world roughly earns the next career title. The final flag promotes you to HIRED!.
   levels: [
     { title: 'INTERN',    xp: 0 },
-    { title: 'JUNIOR',    xp: 5 },
-    { title: 'ASSOCIATE', xp: 12 },
-    { title: 'SENIOR',    xp: 20 },
-    { title: 'LEAD',      xp: 28 },
-    { title: 'HIRED!',    xp: 36 },
+    { title: 'JUNIOR',    xp: 10 },
+    { title: 'ASSOCIATE', xp: 22 },
+    { title: 'SENIOR',    xp: 37 },
+    { title: 'LEAD',      xp: 65 },
+    { title: 'HIRED!',    xp: 85 },
   ],
+};
+
+/** Enemy tuning. Speeds are multiplied by (1 + speedPerDifficulty * (worldDifficulty - 1)). */
+export const ENEMIES = {
+  speedPerDifficulty: 0.12,
+  stompBounce: 230,        // bounce velocity after stomping
+  stompBounceHeld: 320,    // ... with the jump key held
+  bug:     { speed: 26 },
+  clock:   { speed: 52 },
+  invite:  { speed: 1.1, rangeX: 44, amplitudeY: 14 },   // speed = radians/sec of the swoop
+  spam:    { hopEvery: 1.3, hopVy: 200, hopVx: 46 },
+  printer: { fireEvery: 2.4, range: 150, paperSpeed: 72 },
+  boss:    { hp: 3, speed: 38, hopEvery: 1.8, hopVy: 230, invulnMs: 1100 },
 };
 
 export const RESPAWN = {

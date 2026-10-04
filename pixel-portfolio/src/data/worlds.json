@@ -1,11 +1,59 @@
 {
-  "_comment": "World-map entries. `map` is the Tiled map to load; standIn:true means it still uses the shared test level until that world is built.",
+  "_comment": "World-map entries. `map` = Tiled map; `difficulty` 1-5 (also reflected in the level: enemy count, gap sizes, jump type needed); `mechanic` is the headline rule of that world.",
   "worlds": [
-    { "id": 1, "short": "INTRO",      "name": "WORLD 1: INTRO",      "desc": "WHO IS {name}?",       "map": "test-level", "standIn": true },
-    { "id": 2, "short": "EDUCATION",  "name": "WORLD 2: EDUCATION",  "desc": "DEGREES & LEARNING",   "map": "test-level", "standIn": true },
-    { "id": 3, "short": "EXPERIENCE", "name": "WORLD 3: EXPERIENCE", "desc": "ONE FLOOR PER JOB",    "map": "test-level", "standIn": true },
-    { "id": 4, "short": "SKILLS",     "name": "WORLD 4: SKILLS",     "desc": "COINS BECOME XP",      "map": "test-level", "standIn": true },
-    { "id": 5, "short": "AWARDS",     "name": "WORLD 5: AWARDS",     "desc": "CERTS IN ? BLOCKS",    "map": "test-level", "standIn": true },
-    { "id": 6, "short": "CONTACT",    "name": "WORLD 6: CONTACT",    "desc": "ROOFTOP: SAY HELLO",   "map": "test-level", "standIn": true }
+    {
+      "id": 1,
+      "short": "INTRO",
+      "name": "WORLD 1: INTRO",
+      "desc": "WHO IS {name}?",
+      "mechanic": "FIND 10 FACT COINS",
+      "map": "world1",
+      "difficulty": 1
+    },
+    {
+      "id": 2,
+      "short": "EDUCATION",
+      "name": "WORLD 2: EDUCATION",
+      "desc": "DEGREES & LEARNING",
+      "mechanic": "EARN 3 DEGREES",
+      "map": "world2",
+      "difficulty": 2
+    },
+    {
+      "id": 3,
+      "short": "EXPERIENCE",
+      "name": "WORLD 3: EXPERIENCE",
+      "desc": "ONE FLOOR PER JOB",
+      "mechanic": "BEAT 3 MINI-BOSSES",
+      "map": "world3",
+      "difficulty": 3
+    },
+    {
+      "id": 4,
+      "short": "SKILLS",
+      "name": "WORLD 4: SKILLS",
+      "desc": "COINS BECOME XP",
+      "mechanic": "FILL 4 SKILL BARS",
+      "map": "world4",
+      "difficulty": 4
+    },
+    {
+      "id": 5,
+      "short": "AWARDS",
+      "name": "WORLD 5: AWARDS",
+      "desc": "CERTS IN ? BLOCKS",
+      "mechanic": "BUMP ? BLOCKS",
+      "map": "world5",
+      "difficulty": 5
+    },
+    {
+      "id": 6,
+      "short": "CONTACT",
+      "name": "WORLD 6: CONTACT",
+      "desc": "ROOFTOP: SAY HELLO",
+      "mechanic": "GET HIRED!",
+      "map": "world6",
+      "difficulty": 1
+    }
   ]
 }

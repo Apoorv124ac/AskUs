@@ -24,7 +24,7 @@ export class EntranceScene extends Phaser.Scene {
     this.hero = this.add.sprite(-20, 198, `hero_t${sv.state.tier}`, 0).setOrigin(0.5, 1).setDepth(5);
     if (!calm) this.tweens.add({ targets: this.recep, y: 189, duration: 900, yoyo: true, repeat: -1 });
 
-    this.box = new DialogueBox(this, sv, { y: 8, vars: { name: resume.meta.name.toUpperCase() } });
+    this.box = new DialogueBox(this, sv, { y: 6, vars: { name: resume.meta.name.toUpperCase() } });
     text(this, 214, 214, dialogue.ui.skipIntro, { size: 8, color: C.white, backing: true });
 
     if (calm) { this.hero.x = 96; this.#talk(); }

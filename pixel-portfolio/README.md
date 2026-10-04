@@ -9,6 +9,23 @@ Tiled-JSON maps, everything configurable from `src/config.js`.
 > locked/unlocked worlds, Recruiter Mode, finish flag that clears a world. Worlds 1-6 still use the shared
 > test level as a stand-in; enemies, NPCs and credits come in later segments.
 
+## The six worlds (each is its own level, theme and mechanic)
+
+| # | world | theme | mission | difficulty |
+|---|---|---|---|---|
+| 1 | Intro | city | exactly 10 gold coins, each reveals an about-me fact; 2 bugs | 1 |
+| 2 | Education | campus | 3 classroom tasks (collect books / stomp bugs / pull lever) earn 3 degrees and open gates | 2 |
+| 3 | Experience | office | 3 floors, each ends in a mini-boss (3 stomps) that reveals a real achievement | 3 |
+| 4 | Skills | server room | 4 coloured coin zones fill 4 skill bars; moving platforms, long jumps, 2 bonus pipe rooms | 4 |
+| 5 | Awards | gallery | bump `?` blocks for certificates; printers, gaps, trophy hall | 5 |
+| 6 | Contact | rooftop sunset | link terminals (Enter), HIRE ME flag, rolling credits | 1 (victory lap) |
+
+Enemies: Bug, Deadline Clock, Meeting Invite, Spam Email, Printer Jam (stomp them; a hit costs 3 coins and sends you to the
+last checkpoint - no game over). Enemy speed also scales with world difficulty (`ENEMIES` in `config.js`).
+`node tools/validate-maps.mjs` proves every level is beatable (worlds 1-3 and 6 with normal jumps, 4-5 need the long jump) and
+that every coin / `?` block / book is reachable, so information is never gated behind difficulty (also run by `npm test`).
+Edit layouts in `tools/gen-maps.mjs` (then `node tools/gen-maps.mjs`). Fill in your real content in `src/data/resume.json`.
+
 ## The flow
 
 `Title` -> `Entrance` (cutscene, Esc skips) -> `Login` (e-mail or SKIP) -> `WorldMap` -> `Level` (world n) -> finish flag -> `WorldMap`.

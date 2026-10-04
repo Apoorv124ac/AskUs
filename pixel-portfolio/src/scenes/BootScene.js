@@ -19,7 +19,7 @@ export class BootScene extends Phaser.Scene {
 
   create() {
     for (const [key, a] of Object.entries({ ...SPRITESHEETS, ...IMAGES })) {
-      if (!this.textures.exists(key)) generatePlaceholder(this, a.generator, key);
+      if (!this.textures.exists(key)) generatePlaceholder(this, a.generator, key, a.args);
     }
     for (let t = 0; t < HERO.tiers; t++) if (!this.textures.exists(`hero_t${t}`)) generateHero(this, `hero_t${t}`, t);
 

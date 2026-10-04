@@ -74,6 +74,14 @@ export class AudioSystem {
       case 'checkpoint': [659, 784, 988].forEach((f, i) => this.#tone(f, 0.1, { delay: i * 0.07, vol: 0.16 })); break;
       case 'levelup':  [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this.#tone(f, 0.14, { delay: i * 0.08, vol: 0.2 })); break;
       case 'respawn':  this.#tone(500, 0.4, { slide: -420, vol: 0.2 }); break;
+      case 'stomp':    this.#tone(220, 0.09, { slide: -120, vol: 0.22 }); this.#noise(0.05, 0.1); break;
+      case 'hurt':     this.#tone(330, 0.3, { slide: -260, type: 'sawtooth', vol: 0.18 }); break;
+      case 'unlock':   [440, 554, 659, 880].forEach((f, i) => this.#tone(f, 0.1, { delay: i * 0.06, vol: 0.17 })); break;
+      case 'degree':   [523, 659, 784, 1047, 1319].forEach((f, i) => this.#tone(f, 0.18, { delay: i * 0.09, vol: 0.2, type: 'triangle' })); break;
+      case 'cert':     [784, 988, 1175, 1568].forEach((f, i) => this.#tone(f, 0.14, { delay: i * 0.07, vol: 0.18 })); break;
+      case 'boss':     this.#tone(110, 0.2, { vol: 0.25, type: 'sawtooth' }); this.#tone(82, 0.3, { vol: 0.25, type: 'sawtooth', delay: 0.15 }); break;
+      case 'lever':    this.#tone(180, 0.08, { vol: 0.2 }); this.#tone(360, 0.1, { vol: 0.2, delay: 0.08 }); break;
+      case 'fact':     this.#tone(880, 0.08, { vol: 0.16 }); this.#tone(1320, 0.14, { vol: 0.16, delay: 0.08 }); this.#tone(1760, 0.2, { vol: 0.14, delay: 0.16 }); break;
       case 'blip':     this.#tone(740 + Math.random() * 80, 0.03, { vol: 0.07 }); break;
       case 'grant':    [392, 523, 659, 784, 1047].forEach((f, i) => this.#tone(f, 0.16, { delay: i * 0.07, vol: 0.18, type: 'triangle' })); break;
       case 'deny':     this.#tone(200, 0.12, { vol: 0.2 }); this.#tone(150, 0.2, { vol: 0.2, delay: 0.12 }); break;

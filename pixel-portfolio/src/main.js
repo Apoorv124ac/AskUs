@@ -1,6 +1,7 @@
 import '@fontsource/press-start-2p/index.css';
 import Phaser from 'phaser';
 import { GAME } from './config.js';
+import resume from './data/resume.json';
 import { SaveSystem } from './systems/SaveSystem.js';
 import { InputSystem } from './systems/InputSystem.js';
 import { AudioSystem } from './systems/AudioSystem.js';
@@ -15,6 +16,7 @@ import { PauseScene } from './scenes/PauseScene.js';
 import { EntranceScene } from './scenes/EntranceScene.js';
 import { LoginScene } from './scenes/LoginScene.js';
 import { WorldMapScene } from './scenes/WorldMapScene.js';
+import { CreditsScene } from './scenes/CreditsScene.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -42,7 +44,7 @@ async function start() {
     scale: { mode: Phaser.Scale.NONE },
     physics: { default: 'arcade', arcade: { gravity: { y: 0 }, fps: 60, debug: params.has('physics') } },
     fps: { target: 60 },
-    scene: [BootScene, TitleScene, EntranceScene, LoginScene, WorldMapScene, LevelScene, HUDScene, PauseScene],
+    scene: [BootScene, TitleScene, EntranceScene, LoginScene, WorldMapScene, LevelScene, HUDScene, PauseScene, CreditsScene],
   });
 
   const display = setupDisplay(game, save);
@@ -53,7 +55,7 @@ async function start() {
   game.events.on(Phaser.Core.Events.POST_STEP, () => input.endFrame());
 
   document.getElementById('boot')?.classList.add('hide');
-  if (params.has('debug') || import.meta.env.DEV) window.__oq = { game };
+  if (params.has('debug') || import.meta.env.DEV) window.__oq = { game, resume };
 }
 
 start();

@@ -17,7 +17,20 @@ export class GameState extends Phaser.Events.EventEmitter {
     this.coffeeMs = 0;
     this.checkpoint = null;      // { map, x, y }
     this.worlds = new Set(p.worlds);
+    this.earned = { degrees: new Set(p.earned?.degrees), bosses: new Set(p.earned?.bosses), awards: new Set(p.earned?.awards) };
     this.lastWorld = p.lastWorld ?? 1;
+  }
+
+  /** Mark a degree / boss achievement / certificate as earned (kind: 'degrees' | 'bosses' | 'awards'). */
+  earn(kind, index) { const fresh = !this.earned[kind].has(index); this.earned[kind].add(index); this.persist(); return fresh; }
+  earnedCount(kind) { return this.earned[kind].size; }
+  /** How many collected ids contain `marker` (e.g. ':fact:' or ':skill:2:'). */
+  countCollected(marker) { let n = 0; for (const id of this.collected) if (id.includes(marker)) n++; return n; }
+  /** The final flag: jump straight to the top of the career ladder. */
+  promoteHired() {
+    const top = PROGRESSION.levels[PROGRESSION.levels.length - 1].xp;
+    if (this.xp < top) { this.xp = top; this.emit('xp', this.xp); this.emit('tier', this.tier); this.emit('levelup', this.tier); }
+    this.persist();
   }
 
   get recruiter() { return !!this.saveSys.settings.recruiter; }
@@ -79,12 +92,14 @@ export class GameState extends Phaser.Events.EventEmitter {
     const p = this.saveSys.progress;
     p.coins = this.coins; p.xp = this.xp; p.collected = [...this.collected];
     p.worlds = [...this.worlds]; p.lastWorld = this.lastWorld;
+    p.earned = { degrees: [...this.earned.degrees], bosses: [...this.earned.bosses], awards: [...this.earned.awards] };
     this.saveSys.save();
   }
   reset() {
     this.saveSys.reset();
     this.coins = 0; this.xp = 0; this.collected.clear(); this.coffeeMs = 0; this.checkpoint = null;
     this.worlds.clear(); this.lastWorld = 1;
+    for (const k of Object.keys(this.earned)) this.earned[k].clear();
     this.emit('coins', 0); this.emit('xp', 0); this.emit('tier', 0);
   }
 }

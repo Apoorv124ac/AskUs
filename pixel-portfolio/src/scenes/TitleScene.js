@@ -32,6 +32,7 @@ export class TitleScene extends Phaser.Scene {
       { label: dialogue.ui.recruiter, run: () => { sv.state.setRecruiter(true); goMap(); } },
     ];
     if (save.flags.introSeen) this.items.push({ label: dialogue.ui.replayIntro, run: () => this.go('Entrance') });
+    if (new URLSearchParams(location.search).has('lab')) this.items.push({ label: 'MOVEMENT LAB', run: () => { this.starting = true; sv.audio.startMusic(); this.scene.start('Level', { map: 'test-level' }); } });
     this.sel = 0;
     this.rows = this.items.map((it, i) => text(this, 128, 126 + i * 15, it.label, { size: 8, backing: true, shadow: false })
       .setInteractive({ useHandCursor: true })

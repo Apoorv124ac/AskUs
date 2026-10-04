@@ -22,35 +22,118 @@
   },
   "education": [
     {
-      "degree": "Degree",
-      "school": "School",
-      "years": "YYYY-YYYY",
-      "task": "Short in-level task idea"
+      "degree": "PLACEHOLDER DEGREE 1",
+      "school": "SCHOOL ONE",
+      "years": "YYYY-YYYY"
+    },
+    {
+      "degree": "PLACEHOLDER DEGREE 2",
+      "school": "SCHOOL TWO",
+      "years": "YYYY-YYYY"
+    },
+    {
+      "degree": "PLACEHOLDER DEGREE 3",
+      "school": "SCHOOL THREE",
+      "years": "YYYY-YYYY"
     }
   ],
   "experience": [
     {
-      "company": "Company",
-      "role": "Role",
+      "company": "COMPANY ONE",
+      "role": "ROLE ONE",
       "years": "YYYY-YYYY",
-      "achievement": "Real achievement the mini-boss is linked to"
+      "achievement": "PLACEHOLDER: a real achievement from this job goes here (a number, a result, a win)."
+    },
+    {
+      "company": "COMPANY TWO",
+      "role": "ROLE TWO",
+      "years": "YYYY-YYYY",
+      "achievement": "PLACEHOLDER: a real achievement from the second job goes here."
+    },
+    {
+      "company": "COMPANY THREE",
+      "role": "ROLE THREE",
+      "years": "YYYY-YYYY",
+      "achievement": "PLACEHOLDER: a real achievement from the third job goes here."
     }
   ],
   "skills": [
     {
-      "category": "Category",
+      "category": "CATEGORY ONE",
+      "color": "#F83800",
       "items": [
         {
-          "name": "Skill",
+          "name": "Skill A",
+          "level": 0.9
+        },
+        {
+          "name": "Skill B",
           "level": 0.8
+        }
+      ]
+    },
+    {
+      "category": "CATEGORY TWO",
+      "color": "#58D854",
+      "items": [
+        {
+          "name": "Skill C",
+          "level": 0.85
+        },
+        {
+          "name": "Skill D",
+          "level": 0.7
+        }
+      ]
+    },
+    {
+      "category": "CATEGORY THREE",
+      "color": "#00B8F8",
+      "items": [
+        {
+          "name": "Skill E",
+          "level": 0.8
+        },
+        {
+          "name": "Skill F",
+          "level": 0.75
+        }
+      ]
+    },
+    {
+      "category": "CATEGORY FOUR",
+      "color": "#F8D878",
+      "items": [
+        {
+          "name": "Skill G",
+          "level": 0.7
+        },
+        {
+          "name": "Skill H",
+          "level": 0.65
         }
       ]
     }
   ],
   "awards": [
     {
-      "title": "Certificate / award",
-      "issuer": "Issuer",
+      "title": "PLACEHOLDER CERTIFICATE 1",
+      "issuer": "ISSUER",
+      "year": "YYYY"
+    },
+    {
+      "title": "PLACEHOLDER CERTIFICATE 2",
+      "issuer": "ISSUER",
+      "year": "YYYY"
+    },
+    {
+      "title": "PLACEHOLDER AWARD 3",
+      "issuer": "ISSUER",
+      "year": "YYYY"
+    },
+    {
+      "title": "PLACEHOLDER AWARD 4",
+      "issuer": "ISSUER",
       "year": "YYYY"
     }
   ],
@@ -62,7 +145,15 @@
     "resumePdf": ""
   },
   "credits": [
-    "Design & code: YOU",
-    "Built with Phaser 3 + Vite"
+    "DESIGN & CODE",
+    "APOORV",
+    "",
+    "BUILT WITH",
+    "PHASER 3 + VITE",
+    "",
+    "ART & MUSIC",
+    "ORIGINAL, MADE FOR THIS GAME",
+    "",
+    "THANK YOU FOR PLAYING!"
   ]
 }

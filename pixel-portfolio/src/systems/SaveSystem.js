@@ -7,7 +7,7 @@ const reducedMotionPref = () => {
 const defaults = () => ({
   version: 1,
   settings: { muted: false, crt: false, reducedMotion: reducedMotionPref(), recruiter: false },
-  progress: { coins: 0, xp: 0, collected: [], worlds: [], lastWorld: 1 },
+  progress: { coins: 0, xp: 0, collected: [], worlds: [], lastWorld: 1, earned: { degrees: [], bosses: [], awards: [] } },
   flags: { introSeen: false, guest: false },
   email: null,
   emailAt: null,

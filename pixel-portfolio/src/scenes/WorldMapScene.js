@@ -6,7 +6,7 @@ import worldData from '../data/worlds.json';
 import { text, drawBox, fadeTo, fmt, disc } from '../systems/UI.js';
 
 const WORLDS = worldData.worlds;
-const NODES = [[30, 148], [68, 112], [110, 146], [150, 106], [192, 142], [226, 100]];
+const NODES = [[30, 134], [68, 102], [110, 132], [150, 98], [192, 126], [226, 100]];
 const WALK = [1, 0, 2, 0];
 const hex = (s) => parseInt(s.slice(1), 16);
 
@@ -51,13 +51,15 @@ export class WorldMapScene extends Phaser.Scene {
     this.btnResume = text(this, 250, 52, '[V] ' + W.resume, { size: 8, color: C.cyan, backing: true, shadow: false, origin: [1, 0.5] }).setDepth(7).setInteractive({ useHandCursor: true });
     this.btnResume.on('pointerdown', () => this.#openResume());
 
-    // info panel
-    const box = this.add.graphics().setDepth(8); drawBox(box, 8, 160, 240, 58);
-    this.pName = text(this, 18, 173, '', { size: 8, color: C.yellow, origin: [0, 0.5], shadow: false }).setDepth(9);
-    this.pDesc = text(this, 18, 185, '', { size: 8, origin: [0, 0.5], shadow: false }).setDepth(9);
-    this.pStat = text(this, 18, 197, '', { size: 8, origin: [0, 0.5], shadow: false }).setDepth(9);
-    this.pStand = text(this, 240, 197, 'PLACEHOLDER LEVEL', { size: 8, color: C.lgrey, origin: [1, 0.5], shadow: false }).setDepth(9);
-    text(this, 18, 209, W.hint, { size: 8, color: C.lgrey, origin: [0, 0.5], shadow: false }).setDepth(9);
+    // info panel: name, description + difficulty, mission, status, hint
+    const box = this.add.graphics().setDepth(8); drawBox(box, 8, 152, 240, 68);
+    this.pName = text(this, 18, 164, '', { size: 8, color: C.yellow, origin: [0, 0.5], shadow: false }).setDepth(9);
+    this.pDesc = text(this, 18, 176, '', { size: 8, origin: [0, 0.5], shadow: false }).setDepth(9);
+    this.pMission = text(this, 18, 188, '', { size: 8, color: C.cyan, origin: [0, 0.5], shadow: false }).setDepth(9);
+    this.pStat = text(this, 18, 200, '', { size: 8, origin: [0, 0.5], shadow: false }).setDepth(9);
+    text(this, 18, 212, W.hint, { size: 8, color: C.lgrey, origin: [0, 0.5], shadow: false }).setDepth(9);
+    this.diffLabel = text(this, 198, 176, 'LVL', { size: 8, color: C.lgrey, origin: [1, 0.5], shadow: false }).setDepth(9);
+    this.diffG = this.add.graphics().setDepth(9);
 
     if (cleared) this.#banner(fmt(W.cleared_banner, { n: cleared }));
     this.refresh();
@@ -115,8 +117,10 @@ export class WorldMapScene extends Phaser.Scene {
     this.pName.setText(w.name);
     this.pDesc.setText(fmt(w.desc, this.vars));
     const unlocked = state.isUnlocked(w.id), done = state.worlds.has(w.id);
+    this.pMission.setText('MISSION: ' + w.mechanic);
+    const dg = this.diffG; dg.clear();
+    for (let i = 0; i < 5; i++) { dg.fillStyle(hex(i < w.difficulty ? (w.difficulty >= 4 ? C.red : w.difficulty >= 3 ? C.orange : C.yellow) : C.grey)).fillRect(204 + i * 7, 172, 5, 8); }
     this.pStat.setText(done ? W.cleared : unlocked ? W.ready : fmt(W.locked, { prev: w.id - 1 })).setColor(done ? C.lime : unlocked ? C.yellow : C.red);
-    this.pStand.setVisible(!!w.standIn && unlocked);
     this.btnRec.setText(state.recruiter ? W.recruiterOn : W.recruiterOff).setColor(state.recruiter ? C.lime : C.white);
     this.btnContact.setVisible(state.recruiter); this.btnResume.setVisible(state.recruiter);
     this.topRight.setText(`x${String(state.coins).padStart(3, '0')} ${state.tierTitle}`);

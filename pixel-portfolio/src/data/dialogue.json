@@ -6,7 +6,8 @@
     "longjump": "SHIFT + UP\n= LONG JUMP",
     "coffee": "COFFEE: SPEED\n+ DOUBLE JUMP",
     "bonus": "BONUS ROOM!",
-    "goal": "FINISH FLAG!"
+    "goal": "FINISH FLAG!",
+    "bugs": "JUMP ON BUGS!\nTOUCHING = -COINS"
   },
   "ui": {
     "pressStart": "PRESS ENTER",
@@ -61,5 +62,72 @@
     "resume": "RESUME",
     "noResume": "SET classicResumeUrl IN resume.json",
     "cleared_banner": "WORLD {n} CLEARED!"
+  },
+  "worldIntro": {
+    "world1": [
+      {
+        "who": "WORLD 1: INTRO",
+        "text": "Collect the 10 gold coins. Each one tells you a fact about {name}!"
+      },
+      {
+        "who": "TIP",
+        "text": "Jump on bugs to squash them. Touching one costs coins and sends you back to the last checkpoint."
+      }
+    ],
+    "world2": [
+      {
+        "who": "WORLD 2: EDUCATION",
+        "text": "Finish each classroom task to earn a degree and open the gate."
+      },
+      {
+        "who": "TASKS",
+        "text": "Collect books, stomp bugs, pull the lever. There is no timer."
+      }
+    ],
+    "world3": [
+      {
+        "who": "WORLD 3: EXPERIENCE",
+        "text": "One floor per job. Beat the floor boss to reveal a real achievement."
+      },
+      {
+        "who": "TIP",
+        "text": "Stomp a boss three times. It gets faster after every hit!"
+      }
+    ],
+    "world4": [
+      {
+        "who": "WORLD 4: SKILLS",
+        "text": "Skill coins come in four colours. Fill all four skill bars at the bottom."
+      },
+      {
+        "who": "TIP",
+        "text": "Pipes lead to bonus rooms (press DOWN). Hold SHIFT + UP for a long jump."
+      }
+    ],
+    "world5": [
+      {
+        "who": "WORLD 5: AWARDS",
+        "text": "Walk under a ? block and jump to bump it. Certificates pop out!"
+      },
+      {
+        "who": "TIP",
+        "text": "Printer Jams shoot paper: stomp them or time your run. The trophy hall waits at the end."
+      }
+    ],
+    "world6": [
+      {
+        "who": "WORLD 6: CONTACT",
+        "text": "The rooftop at sunset. Stand by a terminal and press ENTER to get in touch."
+      },
+      {
+        "who": "FINAL STEP",
+        "text": "Run to the HIRE ME flag at the end to finish the game."
+      }
+    ]
+  },
+  "credits": {
+    "thanks": "THANK YOU FOR PLAYING!",
+    "hired": "FINAL RANK: HIRED!",
+    "continue": "ENTER: BACK TO MAP"
   }
 }

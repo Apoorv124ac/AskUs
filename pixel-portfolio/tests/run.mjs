@@ -4,6 +4,8 @@ import { MovementController } from '../src/systems/MovementController.js';
 import { PHYSICS as P } from '../src/config.js';
 import { validateEmail, submitEmail } from '../src/systems/LoginSystem.js';
 import { isWorldUnlocked, nextWorldToPlay } from '../src/systems/Worlds.js';
+import { analyse } from '../tools/validate-maps.mjs';
+import { readFileSync } from 'node:fs';
 
 const DT = 1 / 60;
 const NO = { speedMult: 1, canAirJump: false };
@@ -168,6 +170,61 @@ test('world unlock rules + recruiter mode', () => {
   for (let i = 1; i <= 6; i++) assert.ok(isWorldUnlocked(i, none, true), 'recruiter unlocks ' + i);
   assert.equal(nextWorldToPlay(none, false), 1);
   assert.equal(nextWorldToPlay(new Set([1, 2]), false), 3);
+});
+
+
+const WORLD_JSON = JSON.parse(readFileSync(new URL('../src/data/worlds.json', import.meta.url), 'utf8')).worlds;
+const R = {};
+for (const n of ['world1', 'world2', 'world3', 'world4', 'world5', 'world6', 'bonus-skills-a', 'bonus-skills-b']) R[n] = analyse(n);
+const objsOf = (n, t) => R[n].objs.filter((o) => o.type === t);
+const pv = (o, k) => (o.properties ?? []).find((p) => p.name === k)?.value;
+const themeOf = (n) => R[n].map.properties.find((p) => p.name === 'theme').value;
+
+test('every world is its own level: distinct maps + themes, difficulty 1-5 rising then a victory lap', () => {
+  const maps = WORLD_JSON.map((w) => w.map);
+  assert.equal(new Set(maps).size, 6, 'six different maps');
+  assert.equal(new Set(maps.map(themeOf)).size, 6, 'six different themes');
+  assert.deepEqual(WORLD_JSON.map((w) => w.difficulty), [1, 2, 3, 4, 5, 1]);
+  const hz = [1, 2, 3, 4, 5].map((i) => R['world' + i].hazards);
+  console.log('      hazards (enemies+pits+movers) worlds 1-5:', hz.join(' < '));
+  assert.ok(hz.every((h, i) => i === 0 || h > hz[i - 1]), 'hazards strictly increase from world 1 to 5');
+});
+
+test('every level is beatable, with the right jump skill for its difficulty', () => {
+  for (const n of Object.keys(R)) assert.deepEqual(R[n].issues, [], n + ': ' + R[n].issues.join('; '));
+  for (const n of ['world1', 'world2', 'world3', 'world6']) assert.equal(R[n].goalReach, 'normal', n + ' needs only normal jumps');
+  for (const n of ['world4', 'world5']) assert.equal(R[n].goalReach, 'long', n + ' requires the Shift+Up long jump');
+});
+
+test('world mechanics are present in the maps', () => {
+  const coins1 = objsOf('world1', 'coin');
+  assert.equal(coins1.length, 10, 'world 1 has exactly 10 coins');
+  assert.deepEqual(coins1.map((c) => pv(c, 'fact')).sort((a, b) => a - b), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 'each coin reveals a different fact');
+  const tasks = objsOf('world2', 'task');
+  assert.equal(tasks.length, 3);
+  assert.equal(objsOf('world2', 'book').length, 5);
+  assert.equal(objsOf('world2', 'enemy').filter((e) => pv(e, 'task')).length, 3);
+  assert.equal(objsOf('world2', 'lever').length, 1);
+  for (const t of tasks) assert.ok(objsOf('world2', 'gate').some((g) => pv(g, 'id') === pv(t, 'gate')), 'each task opens a gate');
+  const bosses = objsOf('world3', 'enemy').filter((e) => pv(e, 'boss') !== undefined);
+  assert.equal(bosses.length, 3);
+  for (const b of bosses) assert.ok(objsOf('world3', 'gate').some((g) => pv(g, 'id') === pv(b, 'gate')), 'each boss guards a gate');
+  const perCat = [0, 1, 2, 3].map((c) => ['world4', 'bonus-skills-a', 'bonus-skills-b'].reduce((n, m) => n + objsOf(m, 'coin').filter((o) => pv(o, 'cat') === c).length, 0));
+  assert.deepEqual(perCat, [7, 7, 7, 7], 'each skill bar is fed by 7 coins (matches the HUD)');
+  assert.equal(objsOf('world4', 'pipe').length, 2, 'two bonus pipes');
+  assert.equal(objsOf('world5', 'qblock').length, 4);
+  assert.equal(objsOf('world5', 'trophy').length, 4);
+  assert.equal(objsOf('world6', 'link').length, 5);
+  assert.ok(objsOf('world6', 'goal').some((g) => pv(g, 'hire')), 'world 6 ends on the HIRE ME flag');
+  const kinds = (n) => new Set(objsOf(n, 'enemy').map((e) => pv(e, 'kind')));
+  assert.deepEqual([...kinds('world1')], ['bug']);
+  assert.ok(kinds('world3').has('invite') && kinds('world3').has('spam') && kinds('world5').has('printer'));
+});
+
+test('XP ladder matches the coins available (a full run reaches HIRED!)', () => {
+  const coins = ['world1', 'world2', 'world3', 'world4', 'bonus-skills-a', 'bonus-skills-b', 'world5', 'world6'].reduce((n, m) => n + objsOf(m, 'coin').length, 0) + objsOf('world5', 'qblock').length;
+  console.log('      total XP available:', coins);
+  assert.ok(coins >= 85, 'enough coins to reach the HIRED! threshold (85)');
 });
 
 for (const [name, fn] of queue) { await fn(); n++; console.log('  ok  ' + name); }

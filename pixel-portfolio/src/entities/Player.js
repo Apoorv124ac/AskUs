@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PHYSICS as P, COFFEE, FX as FXCFG } from '../config.js';
+import { PHYSICS as P, COFFEE, FX as FXCFG, ENEMIES } from '../config.js';
 import { MovementController } from '../systems/MovementController.js';
 
 const WALK_CYCLE = [1, 0, 2, 0];
@@ -34,12 +34,16 @@ export class Player {
     this.facing = 1;
     this.wasOnGround = false;
     this.dustTimer = 0;
+    this.platformContact = false; // set by the moving-platform collider each physics step
+    this.invulnUntil = 0;
   }
 
   get x() { return this.body.center.x; }
   get feetY() { return this.body.bottom; }
-  // blocked.down is set only by solid tiles; touching.down would also be set by pickup overlaps
-  get onGround() { return this.body.blocked.down; }
+  // blocked.down is set only by solid tiles; touching.down would also be set by pickup overlaps.
+  // Moving platforms are bodies, not tiles, so they report contact through `platformContact`.
+  get onGround() { return this.body.blocked.down || this.platformContact; }
+  get invulnerable() { return this.scene.time.now < this.invulnUntil; }
   get coffee() { return this.sv.state.coffeeActive; }
 
   setTier(tier) {
@@ -90,6 +94,10 @@ export class Player {
     this.sprite.setScale(calm ? 1 : this.sx, calm ? 1 : this.sy);
     this.sprite.setPosition(Math.round(this.x), Math.round(this.feetY) + this.yOffset);
 
+    // blink while invulnerable after a respawn
+    this.sprite.setAlpha(this.invulnerable ? (calm ? 0.6 : (Math.floor(this.scene.time.now / 80) % 2 ? 0.35 : 1)) : 1);
+    this.platformContact = false;
+
     // coffee glow
     this.aura.setVisible(coffee && !this.locked);
     if (coffee) {
@@ -125,6 +133,14 @@ export class Player {
       case 'bump': audio.sfx('bump'); break;
       default: break;
     }
+  }
+
+  /** Bounce off a stomped enemy; holding jump bounces higher. */
+  bounce(held) {
+    this.body.setVelocityY(-(held ? ENEMIES.stompBounceHeld : ENEMIES.stompBounce));
+    // without jump held the bounce is a fixed hop (no variable-height cut); holding jump lets you cut it short by releasing
+    this.ctrl.jumping = true; this.ctrl.cutDone = !held; this.ctrl.coyote = 0; this.ctrl.airJumpUsed = false;
+    if (FXCFG.squash) { this.sx = 0.8; this.sy = 1.25; }
   }
 
   /** Stand still, no collisions (cutscenes, pipes, transitions). */
