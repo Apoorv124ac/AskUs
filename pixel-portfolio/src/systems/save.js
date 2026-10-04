@@ -12,6 +12,7 @@ const DEFAULTS = {
   level: 0,
   collected: [],
   lastWorld: 0,
+  storySeen: false,
 };
 
 function read() {
@@ -39,8 +40,8 @@ export function resetSave() {
 
 export const isValidEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
 
-// "sarah.jones92@acme.com" -> "SARAH"
-export function nameFromEmail(email) {
-  const local = (email.split('@')[0] || '').split(/[^a-zA-Z]+/).find(Boolean) || 'GUEST';
-  return local.slice(0, 12).toUpperCase();
+// Display name: letters, spaces, apostrophes, hyphens, dots; 1-16 chars; upper-cased.
+export function cleanName(raw) {
+  const n = raw.replace(/[^\p{L}\p{M} '.\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+  return n.toUpperCase();
 }

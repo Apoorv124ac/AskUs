@@ -1,11 +1,9 @@
-import { OWNER_NAME } from '../config.js';
-
 // One entry per portfolio section. `ready:false` worlds are built on later days.
 export const WORLDS = [
   { id: 1, name: 'RECEPTION', topic: 'INTRO / ABOUT ME', color: 0xf83800, ready: true, room: 'world1',
-    desc: `MEET ${OWNER_NAME}. FIND 10 FACT COINS AND GRAB COFFEE.` },
+    chapter: 'THE LOBBY', desc: 'THE STORY STARTS HERE. FIND 10 FACT COINS, MEET THE TEAM, GRAB A COFFEE.' },
   { id: 2, name: 'TRAINING CAMPUS', topic: 'EDUCATION', color: 0x0058f8, ready: false, day: 5,
-    desc: 'ONE TASK PER DEGREE. COMPLETE IT TO EARN THE SCROLL.' },
+    desc: 'LEARNING YEARS. ONE TASK PER DEGREE TO EARN THE SCROLL.' },
   { id: 3, name: 'OFFICE FLOORS', topic: 'EXPERIENCE', color: 0xfca044, ready: false, day: 6,
     desc: 'CLIMB THE FLOORS. ONE BOSS FIGHT PER JOB.' },
   { id: 4, name: 'SKILL ARCADE', topic: 'SKILLS', color: 0x6844fc, ready: false, day: 7,

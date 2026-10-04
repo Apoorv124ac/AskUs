@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { txt, panel, go, skyline, groundStrip } from '../ui/pixel.js';
+import { txt, panel, go, skyline, groundStrip, popIn } from '../ui/pixel.js';
 
 // Cutscene: Apoorv's guest arrives at the office and badges in.
 export default class EntranceScene extends Phaser.Scene {
@@ -24,8 +24,8 @@ export default class EntranceScene extends Phaser.Scene {
         g.fillStyle(Math.random() > 0.35 ? 0xf8d878 : 0xa4c4fc).fillRect(x, y, 12, 10);
       }
     }
-    panel(this, 150, 42, 92, 14, { fill: 0x0f0f1b, depth: 3 });
-    txt(this, 196, 49, 'THE OFFICE', { origin: 0.5, color: '#f8d878' });
+    panel(this, 156, 42, 80, 13, { fill: 0x0f0f1b, depth: 3 });
+    txt(this, 196, 48, 'THE OFFICE', { origin: 0.5, color: '#f8d878', bold: true });
 
     // glass doors + badge reader
     const door = this.add.graphics().setDepth(3);
@@ -37,8 +37,10 @@ export default class EntranceScene extends Phaser.Scene {
     this.add.rectangle(160, 160, 8, 14, 0x0f0f1b).setOrigin(0).setDepth(4);
     this.led = this.add.rectangle(162, 163, 4, 3, 0xf83800).setOrigin(0).setDepth(5);
 
-    txt(this, 8, 8, 'MONDAY  9:00 AM', { color: '#fcfcfc' });
-    txt(this, 8, 20, 'INTERVIEW DAY', { color: '#f8d878' });
+    const t1 = txt(this, 8, 8, 'MONDAY  9:00 AM', { color: '#fcfcfc', bold: true });
+    const t2 = txt(this, 8, 19, 'THE BIG DAY', { color: '#f8d878' });
+    popIn(this, t1, { delay: 200 });
+    popIn(this, t2, { delay: 400 });
     txt(this, 248, 214, 'ENTER: SKIP', { origin: [1, 0], color: '#bcbcbc' });
 
     const skip = () => go(this, 'Login');
@@ -55,7 +57,8 @@ export default class EntranceScene extends Phaser.Scene {
       duration: 3200,
       onComplete: () => {
         hero.anims.play('idle');
-        const beep = txt(this, 150, 138, 'BEEP!', { origin: 0.5, color: '#58d854' });
+        const beep = txt(this, 150, 138, 'BEEP!', { origin: 0.5, color: '#58d854', bold: true });
+        popIn(this, beep, { duration: 220 });
         this.led.setFillStyle(0x58d854);
         this.tweens.add({ targets: beep, y: 124, alpha: 0, delay: 500, duration: 700 });
         this.time.delayedCall(650, () => {

@@ -14,16 +14,56 @@
     "summary": "Specialist Graphic Designer at WSP with 12+ years of design experience, including 9+ years in employed roles across WSP, JLL, Deloitte Digital and Bhoomi Educational Consultancy. Combines hands-on design expertise with team leadership, brand stewardship and stakeholder collaboration."
   },
   "introFacts": [
-    "12+ YEARS IN DESIGN, AND STILL LEARNING. 9+ OF THEM IN EMPLOYED ROLES.",
-    "I STARTED FREELANCING IN 2013 AND NEVER STOPPED CREATING.",
-    "I STUDIED JOURNALISM AND MASS COMMUNICATION, SO I DESIGN WITH STORIES.",
-    "AT DELOITTE DIGITAL I DESIGNED NEWSPAPER CAMPAIGNS FOR US, UK AND AUSTRALIA.",
-    "AT JLL I LED A DESIGN TEAM MAKING MARKETING MATERIALS FOR CUSTOMERS.",
-    "I KEPT ONE BRAND CONSISTENT ACROSS US MARKETS.",
-    "TODAY I'M A SPECIALIST GRAPHIC DESIGNER AT WSP CONSULTANTS INDIA.",
-    "I DESIGN PRESENTATIONS FOR GLOBAL LEADERSHIP, INCLUDING THE CEO TEAM.",
-    "I'VE LEARNED DESIGN, INNOVATION AND ENTREPRENEURSHIP AT IIT DELHI.",
-    "MY TOOLKIT: INDESIGN, ILLUSTRATOR, PHOTOSHOP, AFTER EFFECTS AND XD."
+    {
+      "tag": "12+",
+      "label": "YEARS",
+      "text": "*12+ YEARS* OF DESIGN. THIS GAME IS HOW I TELL THE STORY."
+    },
+    {
+      "tag": "2013",
+      "label": "THE START",
+      "text": "I STARTED AS A *FREELANCE DESIGNER* AND NEVER STOPPED CREATING."
+    },
+    {
+      "tag": "2016",
+      "label": "FIRST JOB",
+      "text": "MY FIRST FULL-TIME ROLE: *BRANDS, WEBSITES* AND LEARNING MATERIAL."
+    },
+    {
+      "tag": "2018",
+      "label": "STORYTELLING",
+      "text": "I STUDIED *JOURNALISM*, SO I LEARNED TO DESIGN WITH STORIES."
+    },
+    {
+      "tag": "2021",
+      "label": "DELOITTE",
+      "text": "AT *DELOITTE DIGITAL*: NEWSPAPER CAMPAIGNS FOR THE US, UK AND AUSTRALIA."
+    },
+    {
+      "tag": "2021",
+      "label": "IIT DELHI",
+      "text": "I LEARNED *DESIGN, INNOVATION & ENTREPRENEURSHIP* AT IIT DELHI."
+    },
+    {
+      "tag": "2022",
+      "label": "JLL",
+      "text": "AT *JLL* I LED A DESIGN TEAM AND KEPT ONE BRAND CONSISTENT ACROSS US MARKETS."
+    },
+    {
+      "tag": "2024",
+      "label": "WSP",
+      "text": "AT *WSP* I DESIGN PRESENTATIONS FOR GLOBAL LEADERSHIP, INCLUDING THE CEO TEAM."
+    },
+    {
+      "tag": "IDEAS",
+      "label": "MY CRAFT",
+      "text": "I TURN *COMPLEX IDEAS* INTO CLEAR, COMPELLING VISUAL STORIES."
+    },
+    {
+      "tag": "TOOLS",
+      "label": "TOOLKIT",
+      "text": "*INDESIGN, ILLUSTRATOR, PHOTOSHOP, AFTER EFFECTS* AND *XD*."
+    }
   ],
   "toolkit": [
     "ADOBE INDESIGN",

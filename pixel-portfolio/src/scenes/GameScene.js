@@ -4,6 +4,8 @@ import { LEVELS, items, WORLD1_FACTS, countFacts } from '../levels.js';
 import resume from '../data/resume.json';
 import dialogue from '../data/dialogue.json';
 import { save, persist } from '../systems/save.js';
+import { WORLDS } from '../data/worlds.js';
+import { txt, burst } from '../ui/pixel.js';
 
 const TILE_TEX = {
   '#': 'tile-ground',
@@ -81,6 +83,10 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-SPACE', () => (this.interactPressed = true));
 
     if (!this.scene.isActive('UI')) this.scene.launch('UI');
+    const w = WORLDS[L.world];
+    if (w && !this.viaPipe && L.room !== 'bonus') {
+      this.time.delayedCall(450, () => this.game.events.emit('chapter', { title: `CHAPTER ${w.id}`, sub: w.chapter || w.name }));
+    }
   }
 
   // --- world building ------------------------------------------------------
@@ -110,10 +116,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
     L.labels.forEach((l) => {
-      this.add
-        .text(l.x, l.y, l.text, { fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#fcfcfc' })
-        .setShadow(1, 1, '#0f0f1b', 0)
-        .setDepth(2);
+      txt(this, l.x, l.y, l.text, { color: '#fcfcfc', depth: 2 });
     });
   }
 
@@ -234,10 +237,9 @@ export default class GameScene extends Phaser.Scene {
     this.popText(it.x, it.y - 8, `FACT ${n + 1}`);
     it.destroy();
     this.registry.set('facts', countFacts(this.collected));
-    this.game.events.emit('fact', {
-      title: `FACT ${n + 1}/${WORLD1_FACTS.length}`,
-      text: resume.introFacts[n] || '',
-    });
+    const f = resume.introFacts[n] || { tag: '?', label: '', text: '' };
+    this.game.events.emit('fact', { title: `FACT ${n + 1}/${WORLD1_FACTS.length}`, ...f });
+    burst(this, it.x, it.y, { n: 12 });
     this.lockAnim('celebrate', 500);
     this.award();
   }
@@ -270,18 +272,14 @@ export default class GameScene extends Phaser.Scene {
     this.level.npcs.forEach((d) => {
       const spr = this.add.sprite(d.x, d.bottom - 16, 'npcs', 0).setDepth(4).setFlipX(d.face < 0);
       spr.anims.play(`${d.id}-idle`);
-      const mark = this.add
-        .text(d.x, d.bottom - 40, '!', { fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#f8d878' })
-        .setOrigin(0.5)
-        .setDepth(8)
-        .setVisible(false);
+      const mark = txt(this, d.x, d.bottom - 40, '!', { color: '#f8d878', bold: true, origin: 0.5, depth: 8 }).setVisible(false);
       this.tweens.add({ targets: mark, y: mark.y - 3, yoyo: true, repeat: -1, duration: 400 });
       this.npcs.push({ ...d, spr, mark, talked: false });
     });
   }
 
   fmt(str) {
-    return str.replace('{name}', save.name || 'FRIEND');
+    return str.replace(/\{name\}/g, save.name || 'FRIEND');
   }
 
   startTalk(npc) {
@@ -296,7 +294,9 @@ export default class GameScene extends Phaser.Scene {
   showLine() {
     const t = this.talking;
     this.game.events.emit('dialogue', {
-      title: `${t.d.name}  ${t.d.role}`,
+      id: t.npc.id,
+      color: t.d.color,
+      title: `${t.d.name} · ${t.d.role}`,
       text: this.fmt(t.lines[t.i]),
       page: `${t.i + 1}/${t.lines.length}`,
     });
@@ -354,11 +354,10 @@ export default class GameScene extends Phaser.Scene {
   }
 
   popText(x, y, msg) {
-    const t = this.add
-      .text(x, y, msg, { fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#f8d878' })
-      .setOrigin(0.5)
-      .setDepth(20);
-    this.tweens.add({ targets: t, y: y - 14, alpha: 0, duration: 600, onComplete: () => t.destroy() });
+    const t = txt(this, x, y, msg, { color: '#f8d878', bold: true, origin: 0.5, depth: 20 });
+    t.setScale(0.4);
+    this.tweens.add({ targets: t, scale: 1.2, duration: 160, ease: 'Back.out' });
+    this.tweens.add({ targets: t, y: y - 16, alpha: 0, delay: 350, duration: 450, onComplete: () => t.destroy() });
   }
 
   dust(x, y, n = 4) {

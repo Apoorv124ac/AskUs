@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import '@fontsource/press-start-2p';
+import '@fontsource/silkscreen/400.css';
+import '@fontsource/silkscreen/700.css';
 import { GAME_W, GAME_H, PHYSICS } from './config.js';
 import PreloadScene from './scenes/PreloadScene.js';
 import GameScene from './scenes/GameScene.js';
@@ -8,6 +10,7 @@ import TitleScene from './scenes/TitleScene.js';
 import EntranceScene from './scenes/EntranceScene.js';
 import LoginScene from './scenes/LoginScene.js';
 import MenuScene from './scenes/MenuScene.js';
+import StoryScene from './scenes/StoryScene.js';
 
 const debug = new URLSearchParams(location.search).has('debug');
 
@@ -25,13 +28,16 @@ function start() {
       default: 'arcade',
       arcade: { gravity: { y: PHYSICS.gravity }, debug },
     },
-    scene: [PreloadScene, TitleScene, EntranceScene, LoginScene, MenuScene, GameScene, UIScene],
+    scene: [PreloadScene, TitleScene, EntranceScene, LoginScene, StoryScene, MenuScene, GameScene, UIScene],
   });
   window.__game = game; // handy for debugging / automated tests
 }
 
 // make sure the pixel font is ready before any text is drawn
-document.fonts
-  .load('8px "Press Start 2P"')
+Promise.all([
+  document.fonts.load('8px "Press Start 2P"'),
+  document.fonts.load('8px Silkscreen'),
+  document.fonts.load('bold 8px Silkscreen'),
+])
   .catch(() => {})
   .finally(start);

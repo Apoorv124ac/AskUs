@@ -2,10 +2,10 @@ import Phaser from 'phaser';
 import { CLASSIC_RESUME_URL } from '../config.js';
 import { WORLDS } from '../data/worlds.js';
 import { save, persist } from '../systems/save.js';
-import { txt, panel, go, skyline } from '../ui/pixel.js';
+import { txt, panel, go, skyline, popIn, burst, COLORS } from '../ui/pixel.js';
 
 const NODE_X = [28, 68, 108, 148, 188, 228];
-const NODE_Y = [98, 72, 98, 72, 98, 72];
+const NODE_Y = [96, 68, 96, 68, 96, 68];
 
 // World map: jump to any unlocked world with < > (or A/D), Enter to play.
 export default class MenuScene extends Phaser.Scene {
@@ -23,16 +23,16 @@ export default class MenuScene extends Phaser.Scene {
     this.sel = Phaser.Math.Clamp(save.lastWorld || 0, 0, WORLDS.length - 1);
 
     // top bar
-    this.add.rectangle(0, 0, 256, 16, 0x0f0f1b, 0.7).setOrigin(0).setDepth(8);
-    txt(this, 6, 4, `HELLO, ${save.name || 'GUEST'}!`, { color: '#f8d878' });
-    this.coinText = txt(this, 250, 4, '', { origin: [1, 0] });
+    this.add.rectangle(0, 0, 256, 14, 0x0f0f1b, 0.72).setOrigin(0).setDepth(8);
+    txt(this, 6, 7, `HELLO, ${save.name || 'GUEST'}!`, { color: COLORS.gold, bold: true, origin: [0, 0.5], depth: 9 });
+    this.coinText = txt(this, 250, 7, '', { origin: [1, 0.5], depth: 9, bold: true });
+    txt(this, 128, 28, 'CHOOSE A WORLD', { display: true, origin: 0.5, depth: 9 });
 
     // dotted path between nodes
     const path = this.add.graphics().setDepth(4);
     for (let i = 0; i < NODE_X.length - 1; i++) {
-      const steps = 9;
-      for (let s = 1; s < steps; s++) {
-        const t = s / steps;
+      for (let s = 1; s < 9; s++) {
+        const t = s / 9;
         path.fillStyle(0xfcfcfc).fillRect(
           Math.round(NODE_X[i] + (NODE_X[i + 1] - NODE_X[i]) * t),
           Math.round(NODE_Y[i] + (NODE_Y[i + 1] - NODE_Y[i]) * t),
@@ -49,32 +49,34 @@ export default class MenuScene extends Phaser.Scene {
       const ring = this.add.rectangle(x, y, 28, 28, 0xfcfcfc).setDepth(5).setVisible(false);
       const ink = this.add.rectangle(x, y, 24, 24, 0x0f0f1b).setDepth(6).setInteractive({ useHandCursor: true });
       const fill = this.add.rectangle(x, y, 20, 20, w.color).setDepth(7);
-      const num = txt(this, x, y + 1, String(w.id), { origin: 0.5, depth: 9 });
-      const badge = txt(this, x + 9, y - 14, '', { origin: 0.5, depth: 9, size: 8 });
+      const num = txt(this, x, y + 1, String(w.id), { display: true, origin: 0.5, depth: 9 });
+      const badge = txt(this, x + 10, y - 14, '', { origin: 0.5, depth: 9, bold: true });
       ink.on('pointerdown', () => (this.sel === i ? this.play() : this.select(i)));
+      popIn(this, num, { delay: 150 + i * 70 });
+      this.tweens.add({ targets: [ink, fill], scale: { from: 0, to: 1 }, delay: 100 + i * 70, duration: 300, ease: 'Back.out' });
       return { ring, ink, fill, num, badge, w };
     });
 
     // hero marker
     this.hero = this.add.sprite(NODE_X[this.sel], NODE_Y[this.sel] - 30, 'hero', 0).setDepth(9);
     this.hero.anims.play('idle');
-    this.bob = this.tweens.add({ targets: this.hero, y: '+=3', yoyo: true, repeat: -1, duration: 500, ease: 'Sine.inOut' });
+    this.bob = null;
 
     // prev / next arrows
-    this.prevBtn = txt(this, 3, 106, '<', { size: 16, depth: 9 }).setInteractive({ useHandCursor: true });
-    this.nextBtn = txt(this, 238, 106, '>', { size: 16, depth: 9 }).setInteractive({ useHandCursor: true });
+    this.prevBtn = txt(this, 4, 110, '<', { display: true, size: 16, depth: 9 }).setInteractive({ useHandCursor: true });
+    this.nextBtn = txt(this, 238, 110, '>', { display: true, size: 16, depth: 9 }).setInteractive({ useHandCursor: true });
     this.prevBtn.on('pointerdown', () => this.select(this.sel - 1));
     this.nextBtn.on('pointerdown', () => this.select(this.sel + 1));
 
     // info panel
-    panel(this, 6, 126, 244, 94);
-    this.title = txt(this, 14, 133, '', { color: '#f8d878' });
-    this.topic = txt(this, 14, 145, '', { color: '#58d854' });
-    this.desc = txt(this, 14, 159, '', { wrap: 228, color: '#fcfcfc' });
-    this.status = txt(this, 14, 184, '', { color: '#bcbcbc' });
-    txt(this, 14, 197, '< >  SELECT      ENTER  PLAY', { color: '#7c7c7c', shadow: false });
-    this.recruiterBtn = txt(this, 14, 208, '', { color: '#fcfcfc', shadow: false }).setInteractive({ useHandCursor: true });
-    this.resumeBtn = txt(this, 246, 208, 'C: RESUME', { origin: [1, 0], shadow: false }).setInteractive({ useHandCursor: true });
+    panel(this, 6, 138, 244, 80);
+    this.title = txt(this, 14, 145, '', { display: true, color: COLORS.gold });
+    this.topic = txt(this, 14, 158, '', { color: COLORS.green, bold: true });
+    this.desc = txt(this, 14, 170, '', { wrap: 228 });
+    this.status = txt(this, 14, 192, '', { bold: true });
+    txt(this, 14, 206, '< >  MOVE   ENTER  PLAY', { color: COLORS.dim, shadow: false });
+    this.recruiterBtn = txt(this, 244, 206, '', { shadow: false, origin: [1, 0] }).setInteractive({ useHandCursor: true });
+    this.resumeBtn = txt(this, 244, 192, 'C  RESUME', { origin: [1, 0], shadow: false }).setInteractive({ useHandCursor: true });
     this.recruiterBtn.on('pointerdown', () => this.toggleRecruiter());
     this.resumeBtn.on('pointerdown', () => this.openResume());
 
@@ -116,12 +118,14 @@ export default class MenuScene extends Phaser.Scene {
     if (st === 'locked') return this.flash(`LOCKED. FINISH WORLD ${this.sel} FIRST.`);
     if (!w.ready) return this.flash(`COMING SOON (BUILD DAY ${w.day}).`);
     this.registry.remove('checkpoint');
+    burst(this, NODE_X[this.sel], NODE_Y[this.sel], { n: 14, spread: 34 });
     go(this, 'Game', { room: w.room });
   }
 
   flash(msg) {
     this.status.setText(msg).setColor('#f83800');
     this.cameras.main.shake(100, 0.003);
+    this.tweens.add({ targets: this.status, scale: { from: 1.25, to: 1 }, duration: 220, ease: 'Back.out' });
     this.time.delayedCall(1400, () => this.refresh());
   }
 
@@ -145,30 +149,34 @@ export default class MenuScene extends Phaser.Scene {
       n.num.setText(st === 'locked' ? '?' : String(n.w.id));
       n.badge.setText(st === 'done' ? 'OK' : '').setColor('#58d854');
       n.ring.setVisible(i === this.sel);
-      this.tweens.add({ targets: [n.ink, n.fill, n.num], scale: i === this.sel ? 1.15 : 1, duration: 120 });
+      this.tweens.add({ targets: [n.ink, n.fill], scale: i === this.sel ? 1.15 : 1, duration: 140, ease: 'Back.out' });
     });
 
     const x = NODE_X[this.sel];
     const y = NODE_Y[this.sel] - 30;
-    this.bob.stop();
+    if (this.bob) this.bob.stop();
+    this.tweens.killTweensOf(this.hero);
     if (instant) this.hero.setPosition(x, y);
     this.tweens.add({
       targets: this.hero,
       x,
       y,
-      duration: instant ? 0 : 220,
-      ease: 'Sine.out',
+      duration: instant ? 0 : 240,
+      ease: 'Back.out',
       onComplete: () => {
-        this.bob = this.tweens.add({ targets: this.hero, y: '+=3', yoyo: true, repeat: -1, duration: 500, ease: 'Sine.inOut' });
+        this.bob = this.tweens.add({ targets: this.hero, y: y + 3, yoyo: true, repeat: -1, duration: 500, ease: 'Sine.inOut' });
       },
     });
-    this.hero.setFlipX(false);
 
     const w = WORLDS[this.sel];
     const st = this.stateOf(this.sel);
-    this.title.setText(`WORLD ${w.id}: ${w.name}`);
-    this.topic.setText(w.topic);
+    this.title.setText(`WORLD ${w.id}`);
+    this.topic.setText(`${w.name}  ·  ${w.topic}`);
     this.desc.setText(w.desc);
+    [this.title, this.topic].forEach((t) => {
+      t.setScale(0.9);
+      this.tweens.add({ targets: t, scale: 1, duration: 200, ease: 'Back.out' });
+    });
     const label = {
       done: ['COMPLETED!', '#58d854'],
       open: ['READY. PRESS ENTER!', '#f8d878'],
@@ -178,9 +186,9 @@ export default class MenuScene extends Phaser.Scene {
     this.status.setText(label[0]).setColor(label[1]);
     this.prevBtn.setAlpha(this.sel > 0 ? 1 : 0.25);
     this.nextBtn.setAlpha(this.sel < WORLDS.length - 1 ? 1 : 0.25);
-    this.recruiterBtn.setText(`R: RECRUITER ${save.recruiter ? 'ON' : 'OFF'}`);
+    this.recruiterBtn.setText(`R  RECRUITER: ${save.recruiter ? 'ON' : 'OFF'}`);
     this.recruiterBtn.setColor(save.recruiter ? '#58d854' : '#fcfcfc');
-    this.resumeBtn.setText(CLASSIC_RESUME_URL ? 'C: CLASSIC RESUME' : 'RESUME: SOON');
+    this.resumeBtn.setText(CLASSIC_RESUME_URL ? 'C  CLASSIC RESUME' : 'RESUME: SOON');
     this.resumeBtn.setAlpha(CLASSIC_RESUME_URL ? 1 : 0.4);
   }
 

@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
-import { OWNER_NAME } from '../config.js';
-import { save, persist, isValidEmail, nameFromEmail } from '../systems/save.js';
+import { save, persist, isValidEmail, cleanName } from '../systems/save.js';
 import { sendEmail } from '../systems/email.js';
-import { txt, panel, go } from '../ui/pixel.js';
+import { txt, panel, go, popIn, burst, COLORS } from '../ui/pixel.js';
 
 const GREEN = '#58d854';
 
-// Login at the desk. A hidden <input> does the typing, so paste, phone
-// keyboards and international layouts all work; Phaser just draws the text.
+// Login at the desk, in two steps: your NAME (used throughout the game), then
+// your EMAIL. A hidden <input> does the typing, so paste, phone keyboards and
+// international layouts all work; Phaser just draws the text.
 export default class LoginScene extends Phaser.Scene {
   constructor() {
     super('Login');
@@ -23,7 +23,7 @@ export default class LoginScene extends Phaser.Scene {
     // room: carpet + desk behind the seated hero
     this.add.tileSprite(0, 192, 256, 16, 'tile-ground').setOrigin(0);
     this.add.tileSprite(0, 208, 256, 16, 'tile-dirt').setOrigin(0);
-    this.add.rectangle(0, 136, 256, 56, 0x3c4c8c).setOrigin(0).setDepth(0);
+    this.add.rectangle(0, 120, 256, 72, 0x3c4c8c).setOrigin(0).setDepth(0);
     this.add.rectangle(24, 183, 96, 4, 0xfca044).setOrigin(0).setDepth(1);
     this.add.rectangle(24, 187, 96, 5, 0x8c5c00).setOrigin(0).setDepth(1);
 
@@ -32,35 +32,29 @@ export default class LoginScene extends Phaser.Scene {
     this.hero.anims.pause();
 
     // terminal
-    panel(this, 8, 10, 240, 120, { fill: 0x0f0f1b, frame: 0x58d854 });
-    txt(this, 18, 20, 'OFFICE QUEST OS v1.0', { color: GREEN, shadow: false });
-    txt(this, 18, 31, '-----------------------------', { color: '#006c00', shadow: false });
-    this.msg = txt(this, 18, 44, '', { color: GREEN, shadow: false, wrap: 220 });
-    this.line = txt(this, 18, 70, '', { color: '#fcfcfc', shadow: false });
-    this.err = txt(this, 18, 86, '', { color: '#f83800', shadow: false });
-    txt(this, 18, 104, 'ONLY USED SO APOORV KNOWS\nWHO PLAYED. NO SPAM.'.replace('APOORV', OWNER_NAME), {
-      color: '#7c7c7c',
-      shadow: false,
-    });
-    this.hint = txt(this, 240, 118, 'ENTER', { origin: [1, 0], color: '#f8d878', shadow: false });
+    this.term = this.add.container(0, 0).setDepth(6);
+    this.term.add(panel(this, 14, 14, 228, 98, { fill: 0x0f0f1b, frame: 0x58d854, depth: 0 }));
+    this.term.add(txt(this, 24, 22, 'OFFICE QUEST OS  v1.0', { color: GREEN, bold: true, shadow: false, depth: 0 }));
+    this.term.add(this.add.rectangle(24, 33, 208, 1, 0x006c00).setOrigin(0));
+    this.msg = txt(this, 24, 40, '', { color: GREEN, shadow: false, depth: 0, lineSpacing: 3 });
+    this.line = txt(this, 24, 66, '', { color: '#fcfcfc', bold: true, shadow: false, depth: 0 });
+    this.err = txt(this, 24, 80, '', { color: '#f83800', shadow: false, depth: 0 });
+    this.note = txt(this, 24, 94, '', { color: COLORS.dim, shadow: false, depth: 0 });
+    this.hint = txt(this, 232, 100, 'PRESS ENTER', { origin: [1, 0], color: COLORS.gold, shadow: false, depth: 0 });
+    this.term.add([this.msg, this.line, this.err, this.note, this.hint]);
     this.tweens.add({ targets: this.hint, alpha: 0.2, yoyo: true, repeat: -1, duration: 500 });
-
-    const returning = !!save.email;
-    this.msg.setText(returning ? `WELCOME BACK, ${save.name}.\nPRESS ENTER TO LOG IN.` : 'LOGIN REQUIRED.\nENTER YOUR EMAIL:');
+    popIn(this, this.term, { from: 0.92, duration: 280 });
+    this.term.setPosition(0, 0);
 
     // hidden input
     const el = document.createElement('input');
     el.type = 'text';
-    el.inputMode = 'email';
+    el.inputMode = 'text';
     el.autocomplete = 'off';
     el.autocapitalize = 'off';
     el.spellcheck = false;
-    el.maxLength = 60;
-    el.setAttribute('aria-label', 'Email address');
     Object.assign(el.style, { position: 'fixed', left: '0', top: '0', width: '1px', height: '1px', opacity: '0', border: '0', padding: '0' });
     document.body.appendChild(el);
-    el.value = save.email || '';
-    el.focus();
     this.el = el;
     el.addEventListener('input', () => {
       this.err.setText('');
@@ -68,53 +62,108 @@ export default class LoginScene extends Phaser.Scene {
       this.time.delayedCall(350, () => this.hero.anims.pause());
     });
     el.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' || e.repeat) return;
-      e.preventDefault();
-      if (this.time.now - this.createdAt > 500) this.submit();
+      if (e.repeat) return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (this.time.now - this.createdAt > 500) this.submit();
+      } else if (e.key === 'Escape' && this.step === 'welcome') {
+        this.step = 'name';
+        this.enterStep();
+      }
     });
     this.input.on('pointerdown', () => el.focus());
     this.events.once('shutdown', () => el.remove());
     this.events.once('destroy', () => el.remove());
+
+    this.step = save.email && save.name ? 'welcome' : 'name';
+    this.enterStep();
+  }
+
+  // set up the terminal for the current step
+  enterStep() {
+    const el = this.el;
+    this.err.setText('');
+    this.pending = this.pending || {};
+    if (this.step === 'welcome') {
+      el.value = '';
+      this.msg.setText(`WELCOME BACK, *${save.name}*.`.replace(/\*/g, '') + '\nPRESS ENTER TO LOG IN.');
+      this.note.setText('NOT YOU? PRESS ESC.');
+      this.hint.setText('ENTER');
+    } else if (this.step === 'name') {
+      el.value = '';
+      el.maxLength = 16;
+      this.msg.setText('NEW VISITOR DETECTED.\nWHAT SHOULD I CALL YOU?');
+      this.note.setText('YOUR NAME IS USED THROUGHOUT THE GAME.');
+      this.hint.setText('ENTER');
+    } else {
+      el.value = save.email || '';
+      el.maxLength = 60;
+      this.msg.setText(`NICE TO MEET YOU, ${this.pending.name}.\nLOG IN WITH YOUR EMAIL:`);
+      this.note.setText('ONLY USED SO I KNOW WHO PLAYED. NO SPAM.');
+      this.hint.setText('ENTER');
+    }
+    el.focus();
+    this.tweens.add({ targets: this.msg, alpha: { from: 0, to: 1 }, duration: 250 });
   }
 
   submit() {
     if (this.done) return;
-    const email = this.el.value.trim();
-    if (!isValidEmail(email)) {
-      this.err.setText('INVALID EMAIL. TRY AGAIN.');
-      this.cameras.main.shake(120, 0.004);
-      return;
+    if (this.step === 'welcome') return this.finish();
+
+    const val = this.el.value.trim();
+    if (this.step === 'name') {
+      const name = cleanName(val);
+      if (!name) return this.fail('PLEASE TYPE YOUR NAME.');
+      this.pending = { name };
+      this.step = 'email';
+      return this.enterStep();
     }
-    this.done = true;
-    this.el.disabled = true;
-    save.email = email;
-    save.name = nameFromEmail(email);
+
+    if (!isValidEmail(val)) return this.fail('INVALID EMAIL. TRY AGAIN.');
+    save.name = this.pending.name;
+    save.email = val;
     persist();
-    if (save.emailSent !== email) {
-      sendEmail({ email, name: save.name }).then((ok) => {
+    if (save.emailSent !== val) {
+      sendEmail({ email: val, name: save.name }).then((ok) => {
         if (ok) {
-          save.emailSent = email;
+          save.emailSent = val;
           persist();
         }
       });
     }
+    this.finish();
+  }
 
+  fail(msg) {
+    this.err.setText(msg);
+    this.cameras.main.shake(120, 0.004);
+    this.tweens.add({ targets: this.err, scale: { from: 1.3, to: 1 }, duration: 200, ease: 'Back.out' });
+  }
+
+  finish() {
+    this.done = true;
+    this.el.disabled = true;
     this.msg.setText('');
     this.err.setText('');
+    this.note.setText('');
     this.hint.setVisible(false);
     this.line.setText('');
-    txt(this, 128, 52, 'ACCESS GRANTED', { size: 16, origin: 0.5, color: '#f8d878' });
-    txt(this, 128, 82, `WELCOME, ${save.name}!`, { origin: 0.5, color: GREEN, shadow: false });
+    const a = txt(this, 128, 52, 'ACCESS GRANTED', { display: true, origin: 0.5, color: COLORS.gold, depth: 10 });
+    const b = txt(this, 128, 74, `WELCOME, ${save.name}!`, { origin: 0.5, color: GREEN, bold: true, depth: 10 });
+    popIn(this, a, { duration: 380 });
+    popIn(this, b, { delay: 220, duration: 320 });
+    burst(this, 128, 60, { n: 14, spread: 50, colors: [0x58d854, 0xf8d878, 0xfcfcfc] });
     this.hero.anims.stop();
     this.hero.setPosition(40, 176).anims.play('celebrate');
     this.cameras.main.flash(180, 88, 216, 84);
-    this.time.delayedCall(1700, () => go(this, 'Menu'));
+    this.time.delayedCall(1800, () => go(this, save.storySeen ? 'Menu' : 'Story'));
   }
 
   update(time) {
     if (this.done) return;
-    const v = this.el.value;
-    const tail = v.length > 26 ? v.slice(-26) : v;
+    const showing = this.step === 'welcome' ? '' : this.el.value;
+    if (this.step === 'welcome') return this.line.setText('');
+    const tail = showing.length > 34 ? showing.slice(-34) : showing;
     this.line.setText(`> ${tail}${Math.floor(time / 450) % 2 ? '_' : ' '}`);
   }
 }
