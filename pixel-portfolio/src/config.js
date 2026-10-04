@@ -1,0 +1,45 @@
+// Everything you might want to tune lives here.
+export const GAME_W = 256;
+export const GAME_H = 224;
+export const TILE = 16;
+
+// Movement feel. Distances assume TILE = 16px.
+export const PHYSICS = {
+  gravity: 900,
+  fallExtraGravity: 500, // extra gravity while falling = snappier landings
+  maxFallSpeed: 380,
+
+  walkSpeed: 90,
+  runSpeed: 150, // Shift + Left/Right
+  longJumpSpeed: 185, // horizontal speed locked in during a long jump
+  accel: 700,
+  friction: 900, // ground deceleration when no key is held
+  airDrag: 120,
+  airControl: 0.6, // fraction of accel available in mid-air
+  skidMultiplier: 1.8, // faster accel when reversing direction
+
+  jumpVelocity: -310, // ~3.3 tiles high
+  longJumpVelocity: -340, // Shift + Up: higher AND farther
+  jumpCutFactor: 0.45, // release Up early = shorter hop
+  coyoteMs: 100, // grace period after walking off a ledge
+  jumpBufferMs: 110, // Up pressed slightly before landing still counts
+
+  coffeeMs: 15000,
+  coffeeSpeedBoost: 1.3,
+  coffeeAirJumps: 1, // double jump while caffeinated
+  coffeeJumpBoost: 1.08,
+
+  pitCoinPenalty: 3, // coins lost when you fall in a pit
+};
+
+// Coins are skill XP; level titles mirror a career ladder.
+export const PROGRESSION = {
+  thresholds: [0, 10, 25, 45, 70, 100],
+  titles: ['INTERN', 'JUNIOR', 'ASSOCIATE', 'SENIOR', 'LEAD', 'HIRED!'],
+};
+
+export const COLORS = {
+  ink: '#0F0F1B',
+  white: '#FCFCFC',
+  gold: '#F8D878',
+};
