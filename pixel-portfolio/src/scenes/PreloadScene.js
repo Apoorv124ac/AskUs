@@ -4,6 +4,7 @@
 import Phaser from 'phaser';
 import { FW, FH, HERO_ANIMS, frameIndex } from '../heroFrames.js';
 import { save, persist, resetSave } from '../systems/save.js';
+import { NPC_ORDER, NPC_ANIMS } from '../npcFrames.js';
 
 function canvasTex(scene, key, w, h, draw) {
   const tex = scene.textures.createCanvas(key, w, h);
@@ -94,6 +95,31 @@ function drawDoor(ctx) {
   fill(ctx, '#f8d878', 11, 16, 2, 2);
 }
 
+const QMARK = ['.XXX.', 'X...X', '....X', '..XX.', '..X..', '.....', '..X..'];
+function drawFactCoins(ctx) {
+  [10, 6, 2, 6].forEach((w, i) => {
+    const x = i * 16 + 8 - w / 2;
+    fill(ctx, '#0f0f1b', x - 1, 1, w + 2, 14);
+    fill(ctx, '#f8d878', x, 2, w, 12);
+    if (w > 4) fill(ctx, '#fcfcfc', x + 1, 3, 1, 3); // glint
+    if (w === 10) QMARK.forEach((row, ry) => [...row].forEach((ch, rx) => ch === 'X' && fill(ctx, '#ac4040', x + 2 + rx, 4 + ry, 1, 1)));
+  });
+}
+function drawPlant(ctx) {
+  fill(ctx, '#0f0f1b', 4, 9, 8, 7);
+  fill(ctx, '#ac7c00', 5, 10, 6, 5);
+  fill(ctx, '#0f0f1b', 3, 1, 10, 9);
+  fill(ctx, '#00a800', 4, 2, 8, 7);
+  fill(ctx, '#58d854', 5, 3, 2, 3);
+  fill(ctx, '#005800', 9, 5, 2, 3);
+}
+function drawCounter(ctx) {
+  fill(ctx, '#0f0f1b', 0, 0, 16, 16);
+  fill(ctx, '#fca044', 0, 1, 16, 3);
+  fill(ctx, '#ac7c00', 0, 4, 16, 12);
+  fill(ctx, '#8c5c00', 2, 6, 12, 8);
+}
+
 // --- Parallax skyline (tiles horizontally) ---------------------------------
 function drawSkyline(ctx, base, windowCol, seed, minH, maxH) {
   let s = seed;
@@ -121,6 +147,7 @@ export default class PreloadScene extends Phaser.Scene {
   preload() {
     // Hero sprite sheet: made by tools/make-hero.mjs (replace with your own art any time)
     this.load.spritesheet('hero', 'assets/hero.png', { frameWidth: FW, frameHeight: FH });
+    this.load.spritesheet('npcs', 'assets/npcs.png', { frameWidth: FW, frameHeight: FH });
   }
 
   create() {
@@ -140,12 +167,22 @@ export default class PreloadScene extends Phaser.Scene {
     canvasTex(this, 'flag-off', 16, 32, (c) => drawFlag(c, false));
     canvasTex(this, 'flag-on', 16, 32, (c) => drawFlag(c, true));
     canvasTex(this, 'door', 16, 32, drawDoor);
+    const fact = canvasTex(this, 'fact', 64, 16, drawFactCoins);
+    for (let i = 0; i < 4; i++) fact.add(i, 0, i * 16, 0, 16, 16);
+    canvasTex(this, 'plant', 16, 16, drawPlant);
+    canvasTex(this, 'counter', 16, 16, drawCounter);
 
     canvasTex(this, 'skyline-far', 256, 224, (c) => drawSkyline(c, '#6888fc', '#a4c4fc', 7, 70, 130));
     canvasTex(this, 'skyline-near', 256, 224, (c) => drawSkyline(c, '#3858c8', '#f8d878', 13, 40, 90));
     t.get('skyline-far'); // keep reference quiet for bundlers
 
     const a = this.anims;
+    NPC_ORDER.forEach((id) =>
+      Object.entries(NPC_ANIMS(id)).forEach(([key, def]) =>
+        a.create({ key, frames: def.frames.map((frame) => ({ key: 'npcs', frame })), frameRate: def.fps, repeat: def.repeat })
+      )
+    );
+    a.create({ key: 'fact-spin', frames: [0, 1, 2, 3].map((frame) => ({ key: 'fact', frame })), frameRate: 6, repeat: -1 });
     Object.entries(HERO_ANIMS).forEach(([key, def]) => {
       a.create({
         key,
@@ -183,7 +220,7 @@ export default class PreloadScene extends Phaser.Scene {
 
     // ?scene=Game jumps straight into gameplay (handy while developing)
     const only = params.get('scene');
-    if (only === 'Game') this.scene.start('Game', { room: 'main' });
+    if (only === 'Game') this.scene.start('Game', { room: 'world1' });
     else this.scene.start(only || 'Title');
 
   }

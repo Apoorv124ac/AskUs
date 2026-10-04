@@ -1,0 +1,137 @@
+{
+  "profile": {
+    "name": "Apoorv Chaurasia",
+    "firstName": "Apoorv",
+    "title": "Specialist - Graphics Design",
+    "company": "WSP Consultants India",
+    "location": "Lucknow, India",
+    "yearsInDesign": "12+",
+    "tagline": [
+      "BRAND THINKING",
+      "CLEAR COMMUNICATION",
+      "CREATIVE LEADERSHIP"
+    ],
+    "summary": "Specialist Graphic Designer at WSP with 12+ years of design experience, including 9+ years in employed roles across WSP, JLL, Deloitte Digital and Bhoomi Educational Consultancy. Combines hands-on design expertise with team leadership, brand stewardship and stakeholder collaboration."
+  },
+  "introFacts": [
+    "12+ YEARS IN DESIGN, AND STILL LEARNING. 9+ OF THEM IN EMPLOYED ROLES.",
+    "I STARTED FREELANCING IN 2013 AND NEVER STOPPED CREATING.",
+    "I STUDIED JOURNALISM AND MASS COMMUNICATION, SO I DESIGN WITH STORIES.",
+    "AT DELOITTE DIGITAL I DESIGNED NEWSPAPER CAMPAIGNS FOR US, UK AND AUSTRALIA.",
+    "AT JLL I LED A DESIGN TEAM MAKING MARKETING MATERIALS FOR CUSTOMERS.",
+    "I KEPT ONE BRAND CONSISTENT ACROSS US MARKETS.",
+    "TODAY I'M A SPECIALIST GRAPHIC DESIGNER AT WSP CONSULTANTS INDIA.",
+    "I DESIGN PRESENTATIONS FOR GLOBAL LEADERSHIP, INCLUDING THE CEO TEAM.",
+    "I'VE LEARNED DESIGN, INNOVATION AND ENTREPRENEURSHIP AT IIT DELHI.",
+    "MY TOOLKIT: INDESIGN, ILLUSTRATOR, PHOTOSHOP, AFTER EFFECTS AND XD."
+  ],
+  "toolkit": [
+    "ADOBE INDESIGN",
+    "ILLUSTRATOR",
+    "PHOTOSHOP",
+    "AFTER EFFECTS",
+    "ADOBE XD"
+  ],
+  "experience": [
+    {
+      "role": "Specialist Graphic Designer",
+      "company": "WSP Consultants India",
+      "dates": "Aug 2024 - Present",
+      "bullets": [
+        "Design presentations for global leadership, including the CEO team, supporting strategic communications and executive meetings.",
+        "Develop internal communication visuals for cross-functional teams to support employee engagement and information sharing.",
+        "Create marketing collateral supporting WSP India's brand visibility and business development."
+      ]
+    },
+    {
+      "role": "Senior Graphic Designer",
+      "company": "JLL",
+      "dates": "Apr 2022 - Aug 2024",
+      "bullets": [
+        "Led a design team producing marketing materials and visual assets to support customer engagement.",
+        "Developed and maintained brand consistency across US markets, translating services into clear client-facing communications.",
+        "Partnered with cross-functional teams on a new brand identity and created presentations and marketing collateral."
+      ]
+    },
+    {
+      "role": "Executive Graphic Designer",
+      "company": "Deloitte Digital",
+      "dates": "Jun 2021 - Apr 2022",
+      "bullets": [
+        "Collaborated on newspaper advertising campaigns for US, UK and Australian clients, applying design thinking to visuals and messaging.",
+        "Worked with copywriters and the creative director to deliver on-brand illustrations, logos and final layouts."
+      ]
+    },
+    {
+      "role": "Graphic Designer",
+      "company": "Bhoomi Educational Consultancy",
+      "dates": "Nov 2016 - Dec 2020",
+      "bullets": [
+        "Created branding, educational materials, website graphics and social content, from concept through final layout.",
+        "Translated client briefs into design concepts and refined work through feedback to meet project objectives."
+      ]
+    },
+    {
+      "role": "Freelancer - Graphic Designer",
+      "company": "Bhoomi Educational Consultancy, Vibaanta, Global Education, 13Jugaad.com",
+      "dates": "Aug 2013 - Oct 2016",
+      "bullets": []
+    }
+  ],
+  "education": [
+    {
+      "title": "Certificate: Data Science - AI & ML",
+      "school": "IIT Guwahati",
+      "years": "2023-2024"
+    },
+    {
+      "title": "Industrial Design, Innovation & Entrepreneurship",
+      "school": "IIT Delhi",
+      "years": "2021-2022"
+    },
+    {
+      "title": "MA, Journalism & Mass Communication",
+      "school": "BBAU Central University",
+      "years": "2018-2020"
+    },
+    {
+      "title": "BSc, Multimedia",
+      "school": "Himalayan University",
+      "years": "2013-2016"
+    }
+  ],
+  "capabilities": [
+    "Brand identity & consistency",
+    "Creative team leadership",
+    "Stakeholder collaboration",
+    "Executive presentations",
+    "Marketing & campaign design",
+    "Visual storytelling",
+    "Typography & layout",
+    "Data visualization",
+    "User-centered interface design"
+  ],
+  "certifications": [
+    {
+      "title": "Adobe XD: Design & Prototype",
+      "issuer": "LinkedIn",
+      "year": 2022
+    },
+    {
+      "title": "Illustrator: Graphic Design",
+      "issuer": "LinkedIn",
+      "year": 2022
+    },
+    {
+      "title": "Visual Storytelling in PowerPoint",
+      "issuer": "LinkedIn",
+      "year": 2022
+    }
+  ],
+  "contact": {
+    "linkedin": "linkedin.com/in/apoorv-chaurasia-152b51228",
+    "location": "Lucknow, India",
+    "email": "",
+    "phone": ""
+  }
+}

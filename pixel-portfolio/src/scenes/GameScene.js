@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { TILE, PHYSICS as P, PROGRESSION } from '../config.js';
-import { LEVELS } from '../levels.js';
+import { LEVELS, items, WORLD1_FACTS, countFacts } from '../levels.js';
+import resume from '../data/resume.json';
+import dialogue from '../data/dialogue.json';
 import { save, persist } from '../systems/save.js';
 
 const TILE_TEX = {
@@ -23,7 +25,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   init(data) {
-    this.roomKey = data.room || 'main';
+    this.roomKey = data.room || 'world1';
     this.viaPipe = data.viaPipe || null;
   }
 
@@ -55,15 +57,28 @@ export default class GameScene extends Phaser.Scene {
     this.wasGrounded = true;
     this.prevVy = 0;
     this.animLock = { key: null, until: 0 };
+    this.talking = null;
+    this.npcs = [];
     this.idleSince = 0;
 
     this.buildBackground();
     this.buildTiles();
     this.buildObjects();
     this.buildPlayer();
+    this.buildNpcs();
+    this.input.on('pointerdown', () => this.talking && this.advanceTalk());
+    this.events.once('shutdown', () => this.game.events.emit('dialogue-end'));
+    if (L.world === 0) {
+      reg.set('factsTotal', WORLD1_FACTS.length);
+      reg.set('facts', countFacts(this.collected));
+    } else reg.set('factsTotal', 0);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+    // event-based (not polled) so even a very quick tap of Enter/Space registers
+    this.interactPressed = false;
+    this.input.keyboard.on('keydown-ENTER', () => (this.interactPressed = true));
+    this.input.keyboard.on('keydown-SPACE', () => (this.interactPressed = true));
 
     if (!this.scene.isActive('UI')) this.scene.launch('UI');
   }
@@ -83,7 +98,12 @@ export default class GameScene extends Phaser.Scene {
     this.solids = this.physics.add.staticGroup();
     for (let r = 0; r < L.h; r++) {
       for (let c = 0; c < L.w; c++) {
-        const tex = TILE_TEX[L.grid[r][c]];
+        const ch = L.grid[r][c];
+        if (ch === 'T' || ch === 'D') {
+          this.add.image(c * TILE + 8, r * TILE + 8, ch === 'T' ? 'plant' : 'counter').setDepth(2);
+          continue;
+        }
+        const tex = TILE_TEX[ch];
         if (!tex) continue;
         const t = this.solids.create(c * TILE + 8, r * TILE + 8, tex);
         t.setDepth(PIPE_CHARS.has(L.grid[r][c]) ? 6 : 3);
@@ -103,6 +123,10 @@ export default class GameScene extends Phaser.Scene {
     this.coffees = this.physics.add.staticGroup();
     this.flags = this.physics.add.staticGroup();
     this.goals = this.physics.add.staticGroup();
+    this.factItems = this.physics.add.staticGroup();
+    this.toolItems = this.physics.add.staticGroup();
+    const factIdx = new Map(items(L, 'f').map((f) => [f.id, f.n]));
+    const toolIdx = new Map(items(L, 't').map((f) => [f.id, f.n]));
 
     for (let r = 0; r < L.h; r++) {
       for (let c = 0; c < L.w; c++) {
@@ -110,13 +134,27 @@ export default class GameScene extends Phaser.Scene {
         const id = `${this.roomKey}:${c},${r}`;
         const x = c * TILE + 8;
         const y = r * TILE + 8;
-        if ((ch === 'o' || ch === 'c') && this.collected.has(id)) continue;
+        if ('ocft'.includes(ch) && ch !== '.' && this.collected.has(id)) continue;
         if (ch === 'o') {
           const s = this.coins.create(x, y, 'coin', 0).setDepth(4);
           s.setSize(10, 12);
           s.itemId = id;
           s.anims.play('coin-spin');
           s.anims.setProgress((c % 4) / 4);
+        } else if (ch === 'f') {
+          const s = this.factItems.create(x, y, 'fact', 0).setDepth(4);
+          s.setSize(12, 14);
+          s.itemId = id;
+          s.n = factIdx.get(id);
+          s.anims.play('fact-spin');
+          s.anims.setProgress((c % 4) / 4);
+          this.tweens.add({ targets: s, y: y - 2, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.inOut' });
+        } else if (ch === 't') {
+          const s = this.toolItems.create(x, y, 'coin', 0).setDepth(4).setTint(0x58d8ff);
+          s.setSize(10, 12);
+          s.itemId = id;
+          s.n = toolIdx.get(id);
+          s.anims.play('coin-spin');
         } else if (ch === 'c') {
           const s = this.coffees.create(x, y, 'coffee').setDepth(4);
           s.itemId = id;
@@ -161,16 +199,16 @@ export default class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(p, this.solids);
     this.physics.add.overlap(p, this.coins, (_, coin) => this.collectCoin(coin));
+    this.physics.add.overlap(p, this.factItems, (_, it) => this.collectFact(it));
+    this.physics.add.overlap(p, this.toolItems, (_, it) => this.collectTool(it));
     this.physics.add.overlap(p, this.coffees, (_, cup) => this.collectCoffee(cup));
     this.physics.add.overlap(p, this.flags, (_, flag) => this.hitCheckpoint(flag));
     this.physics.add.overlap(p, this.goals, () => this.hitGoal());
   }
 
   // --- pickups -------------------------------------------------------------
-  collectCoin(coin) {
-    this.collected.add(coin.itemId);
-    this.popText(coin.x, coin.y - 6, '+1');
-    coin.destroy();
+  // +1 coin and +1 XP; may level the hero up
+  award() {
     const reg = this.registry;
     reg.set('coins', reg.get('coins') + 1);
     const xp = reg.get('xp') + 1;
@@ -183,14 +221,113 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  collectCoin(coin) {
+    this.collected.add(coin.itemId);
+    this.popText(coin.x, coin.y - 6, '+1');
+    coin.destroy();
+    this.award();
+  }
+
+  collectFact(it) {
+    this.collected.add(it.itemId);
+    const n = it.n;
+    this.popText(it.x, it.y - 8, `FACT ${n + 1}`);
+    it.destroy();
+    this.registry.set('facts', countFacts(this.collected));
+    this.game.events.emit('fact', {
+      title: `FACT ${n + 1}/${WORLD1_FACTS.length}`,
+      text: resume.introFacts[n] || '',
+    });
+    this.lockAnim('celebrate', 500);
+    this.award();
+  }
+
+  collectTool(it) {
+    this.collected.add(it.itemId);
+    const tool = resume.toolkit[it.n] || 'TOOL';
+    this.popText(it.x, it.y - 8, '+1');
+    it.destroy();
+    this.game.events.emit('banner', `${tool}\nTOOL UNLOCKED`);
+    this.award();
+  }
+
   collectCoffee(cup) {
     this.collected.add(cup.itemId);
     this.popText(cup.x, cup.y - 8, 'COFFEE!');
     cup.destroy();
+    this.powerUp();
+  }
+
+  powerUp() {
     this.coffeeMs = P.coffeeMs;
     this.game.events.emit('banner', 'CAFFEINATED!\nFASTER + DOUBLE JUMP');
     this.cameras.main.shake(120, 0.004);
     this.lockAnim('sip', 700);
+  }
+
+  // --- NPCs + dialogue -----------------------------------------------------
+  buildNpcs() {
+    this.level.npcs.forEach((d) => {
+      const spr = this.add.sprite(d.x, d.bottom - 16, 'npcs', 0).setDepth(4).setFlipX(d.face < 0);
+      spr.anims.play(`${d.id}-idle`);
+      const mark = this.add
+        .text(d.x, d.bottom - 40, '!', { fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#f8d878' })
+        .setOrigin(0.5)
+        .setDepth(8)
+        .setVisible(false);
+      this.tweens.add({ targets: mark, y: mark.y - 3, yoyo: true, repeat: -1, duration: 400 });
+      this.npcs.push({ ...d, spr, mark, talked: false });
+    });
+  }
+
+  fmt(str) {
+    return str.replace('{name}', save.name || 'FRIEND');
+  }
+
+  startTalk(npc) {
+    const d = dialogue[npc.id];
+    this.talking = { npc, lines: npc.talked && d.again ? d.again : d.lines, i: 0, d };
+    npc.talked = true;
+    npc.mark.setVisible(false);
+    npc.spr.anims.play(`${npc.id}-talk`);
+    this.showLine();
+  }
+
+  showLine() {
+    const t = this.talking;
+    this.game.events.emit('dialogue', {
+      title: `${t.d.name}  ${t.d.role}`,
+      text: this.fmt(t.lines[t.i]),
+      page: `${t.i + 1}/${t.lines.length}`,
+    });
+  }
+
+  advanceTalk() {
+    const t = this.talking;
+    if (!t) return;
+    t.i++;
+    if (t.i < t.lines.length) return this.showLine();
+    this.talking = null;
+    t.npc.spr.anims.play(`${t.npc.id}-idle`);
+    this.game.events.emit('dialogue-end');
+    if (t.d.giveCoffee) this.powerUp();
+  }
+
+  updateNpcs() {
+    const p = this.player;
+    const pressed = this.interactPressed;
+    this.interactPressed = false;
+    if (this.talking) {
+      if (pressed) this.advanceTalk();
+      return;
+    }
+    for (const n of this.npcs) {
+      const near = Math.abs(p.x - n.x) < 34 && Math.abs(p.y - (n.bottom - 16)) < 24;
+      n.mark.setVisible(near);
+      if (!near) continue;
+      n.spr.setFlipX(p.x < n.x);
+      if ((!n.talked && n.autoTalk && p.body.blocked.down) || pressed) return this.startTalk(n);
+    }
   }
 
   hitCheckpoint(flag) {
@@ -206,7 +343,8 @@ export default class GameScene extends Phaser.Scene {
     save.completed[this.level.world] = true;
     save.lastWorld = Math.min(this.level.world + 1, 5);
     persist();
-    this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!`);
+    const f = this.level.world === 0 ? `\nFACTS ${countFacts(this.collected)}/${WORLD1_FACTS.length}` : '';
+    this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!${f}`);
     this.lockAnim('celebrate', 2400);
     this.time.delayedCall(2600, () => {
       this.scene.stop('UI');
@@ -293,8 +431,9 @@ export default class GameScene extends Phaser.Scene {
     const c = this.cursors;
     const shift = this.shift.isDown;
     const grounded = b.blocked.down;
-    const crouching = grounded && c.down.isDown;
-    const dir = crouching ? 0 : (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
+    const crouching = grounded && c.down.isDown && !this.talking;
+    const frozen = !!this.talking;
+    const dir = crouching || frozen ? 0 : (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
 
     // coffee timer + HUD value
     this.coffeeMs = Math.max(0, this.coffeeMs - delta);
@@ -322,7 +461,7 @@ export default class GameScene extends Phaser.Scene {
 
     // jumping: buffer + coyote + coffee double jump
     let fresh = false;
-    if (Phaser.Input.Keyboard.JustDown(c.up)) {
+    if (Phaser.Input.Keyboard.JustDown(c.up) && !frozen) {
       this.jumpPressedAt = time;
       fresh = true;
     }
@@ -383,6 +522,7 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.setFollowOffset(-Phaser.Math.Clamp(vx * 0.15, -24, 24), 0);
 
     this.tryEnterPipe();
+    this.updateNpcs();
 
     if (p.y > this.worldH + 30) this.respawn();
 

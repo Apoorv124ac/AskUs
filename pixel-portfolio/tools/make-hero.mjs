@@ -2,11 +2,10 @@
 // Run:  node tools/make-hero.mjs        (no dependencies)
 // Optional: node tools/make-hero.mjs --preview <out.png>  (8x contact sheet)
 import fs from 'node:fs';
-import zlib from 'node:zlib';
+import { hex, Frame, limb, part, png } from './lib/raster.mjs';
 import { FW, FH, COLS, HERO_FRAMES } from '../src/heroFrames.js';
 
 // --- palette ---------------------------------------------------------------
-const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const C = {
   K: hex('#0f0f1b'), // outline
   E: hex('#0f0f1b'), // eye
@@ -60,33 +59,6 @@ function headRows(kind) {
   return r;
 }
 
-// --- tiny raster helpers ---------------------------------------------------
-class Frame {
-  constructor() {
-    this.p = new Array(FW * FH).fill(null);
-  }
-  set(x, y, c) {
-    if (x >= 0 && y >= 0 && x < FW && y < FH) this.p[y * FW + x] = c;
-  }
-  rect(x, y, w, h, c) {
-    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) this.set(x + i, y + j, c);
-  }
-}
-const brushPath = (x0, y0, x1, y1) => {
-  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-  const pts = [];
-  for (let i = 0; i <= n; i++) {
-    const t = n ? i / n : 0;
-    pts.push([Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t)]);
-  }
-  return pts;
-};
-const limb = (x0, y0, x1, y1, w) => brushPath(x0, y0, x1, y1).map(([x, y]) => [x, y, w, w]);
-// outline first (1px around every rect), then fill => clean separation between parts
-function part(f, rects, color) {
-  for (const [x, y, w, h] of rects) f.rect(x - 1, y - 1, w + 2, h + 2, C.K);
-  for (const [x, y, w, h] of rects) f.rect(x, y, w, h, color);
-}
 function drawHead(f, x, y, kind) {
   headRows(kind).forEach((row, j) =>
     [...row].forEach((ch, i) => {
@@ -117,7 +89,7 @@ function leg(f, x, hip, { dx = 0, lift = 0 } = {}) {
 }
 
 function compose(o = {}) {
-  const f = new Frame();
+  const f = new Frame(FW, FH);
   const lean = o.lean || 0;
   const hd = o.headDy || 0;
   const hip = o.hip ?? 23;
@@ -260,43 +232,6 @@ function buildSheet() {
     });
   });
   return { W, H, rgba };
-}
-
-function crc32(buf) {
-  let c;
-  let crc = ~0;
-  for (let n = 0; n < buf.length; n++) {
-    c = (crc ^ buf[n]) & 0xff;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    crc = (crc >>> 8) ^ c;
-  }
-  return ~crc >>> 0;
-}
-function chunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const td = Buffer.concat([Buffer.from(type), data]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(td));
-  return Buffer.concat([len, td, crc]);
-}
-function png(W, H, rgba) {
-  const raw = Buffer.alloc((W * 4 + 1) * H);
-  for (let y = 0; y < H; y++) {
-    raw[y * (W * 4 + 1)] = 0;
-    Buffer.from(rgba.buffer, y * W * 4, W * 4).copy(raw, y * (W * 4 + 1) + 1);
-  }
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(W, 0);
-  ihdr.writeUInt32BE(H, 4);
-  ihdr[8] = 8;
-  ihdr[9] = 6;
-  return Buffer.concat([
-    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', zlib.deflateSync(raw)),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
 }
 
 const { W, H, rgba } = buildSheet();

@@ -1,4 +1,4 @@
-# Office Quest — Days 1–2
+# Office Quest — Days 1–4
 
 Playable engine demo: controls, movement feel, pickups, pipes, HUD, and the pixel
 hero (Apoorv). Level art is still placeholder (generated in code).
@@ -37,3 +37,11 @@ coffee duration, level thresholds).
   frame order listed in `src/heroFrames.js`, save over `hero.png`.
 - In-game extras: coffee sip, level-up celebrate, hurt on pit fall, crouch (hold ↓),
   wave after 4 s idle, golden aura while caffeinated.
+
+## Content lives in one place (Day 4)
+- `src/data/resume.json` — your profile, the 10 World-1 facts (`introFacts`), toolkit,
+  experience, education, certifications. Edit text here; no code needed.
+- `src/data/dialogue.json` — what Rita, Raju and Meera say (`{name}` = the visitor's name).
+- Regenerate NPC art: `npm run npcs` (`tools/make-npcs.mjs`), or paint `public/assets/npcs.png`
+  yourself (24x32 frames, 4 per row, order in `src/npcFrames.js`).
+- Dev shortcuts: `?reset` clears saved progress, `?scene=Game` jumps into World 1.

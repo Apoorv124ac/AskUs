@@ -2,8 +2,8 @@ import { OWNER_NAME } from '../config.js';
 
 // One entry per portfolio section. `ready:false` worlds are built on later days.
 export const WORLDS = [
-  { id: 1, name: 'RECEPTION', topic: 'INTRO / ABOUT ME', color: 0xf83800, ready: true, room: 'main',
-    desc: `MEET ${OWNER_NAME}. COLLECT COINS AND GRAB COFFEE.` },
+  { id: 1, name: 'RECEPTION', topic: 'INTRO / ABOUT ME', color: 0xf83800, ready: true, room: 'world1',
+    desc: `MEET ${OWNER_NAME}. FIND 10 FACT COINS AND GRAB COFFEE.` },
   { id: 2, name: 'TRAINING CAMPUS', topic: 'EDUCATION', color: 0x0058f8, ready: false, day: 5,
     desc: 'ONE TASK PER DEGREE. COMPLETE IT TO EARN THE SCROLL.' },
   { id: 3, name: 'OFFICE FLOORS', topic: 'EXPERIENCE', color: 0xfca044, ready: false, day: 6,

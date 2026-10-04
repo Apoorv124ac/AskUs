@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PROGRESSION } from '../config.js';
+import { panel } from '../ui/pixel.js';
 
 const FONT = '"Press Start 2P"';
 const style = (color = '#fcfcfc') => ({ fontFamily: FONT, fontSize: '8px', color });
@@ -17,11 +18,12 @@ export default class UIScene extends Phaser.Scene {
     this.titleText = this.add.text(250, 4, '', style()).setOrigin(1, 0);
 
     this.xpBar = this.add.graphics();
-    this.coffeeIcon = this.add.image(142, 18, 'coffee').setScale(0.5).setVisible(false);
+    this.factText = this.add.text(80, 14, '', style('#58d854'));
+    this.coffeeIcon = this.add.image(184, 18, 'coffee').setScale(0.5).setVisible(false);
     this.coffeeBar = this.add.graphics();
 
     this.banner = this.add
-      .text(128, 80, '', { ...style('#f8d878'), align: 'center', lineSpacing: 4 })
+      .text(128, 112, '', { ...style('#f8d878'), align: 'center', lineSpacing: 4 })
       .setOrigin(0.5)
       .setShadow(1, 1, '#0f0f1b', 0)
       .setAlpha(0)
@@ -32,12 +34,32 @@ export default class UIScene extends Phaser.Scene {
       .setVisible(false)
       .setDepth(11);
 
+    // info card (facts + NPC dialogue), top of the screen so the hero stays visible
+    this.card = this.add.container(0, 0).setDepth(12).setVisible(false);
+    const cardPanel = panel(this, 6, 26, 244, 70, { depth: 12 });
+    this.cardTitle = this.add.text(14, 33, '', style('#f8d878'));
+    this.cardBody = this.add.text(14, 46, '', { ...style(), wordWrap: { width: 228 }, lineSpacing: 3 });
+    this.cardHint = this.add.text(242, 86, '', style('#bcbcbc')).setOrigin(1, 0);
+    this.cardPage = this.add.text(14, 86, '', style('#7c7c7c'));
+    this.card.add([cardPanel, this.cardTitle, this.cardBody, this.cardHint, this.cardPage]);
+    cardPanel.setDepth(0);
+    this.cardTimer = null;
+    this.onFact = ({ title, text }) => this.showCard(title, text, { auto: 7000 });
+    this.onDialogue = ({ title, text, page }) => this.showCard(title, text, { page, hint: 'ENTER >' });
+    this.onDialogueEnd = () => this.hideCard();
+    this.game.events.on('fact', this.onFact);
+    this.game.events.on('dialogue', this.onDialogue);
+    this.game.events.on('dialogue-end', this.onDialogueEnd);
+
     this.onChange = () => this.refresh();
     reg.events.on('changedata', this.onChange);
     this.game.events.on('banner', this.showBanner, this);
     this.events.once('shutdown', () => {
       reg.events.off('changedata', this.onChange);
       this.game.events.off('banner', this.showBanner, this);
+      this.game.events.off('fact', this.onFact);
+      this.game.events.off('dialogue', this.onDialogue);
+      this.game.events.off('dialogue-end', this.onDialogueEnd);
     });
 
     const kb = this.input.keyboard;
@@ -58,6 +80,22 @@ export default class UIScene extends Phaser.Scene {
     if (paused) this.scene.resume('Game');
     else this.scene.pause('Game');
     this.pauseText.setVisible(!paused);
+  }
+
+  showCard(title, text, { auto = 0, page = '', hint = '' } = {}) {
+    this.cardTitle.setText(title);
+    this.cardBody.setText(text);
+    this.cardPage.setText(page);
+    this.cardHint.setText(hint);
+    this.card.setVisible(true);
+    if (this.cardTimer) this.cardTimer.remove();
+    this.cardTimer = auto ? this.time.delayedCall(auto, () => this.hideCard()) : null;
+  }
+
+  hideCard() {
+    this.card.setVisible(false);
+    if (this.cardTimer) this.cardTimer.remove();
+    this.cardTimer = null;
   }
 
   showBanner(msg) {
@@ -83,12 +121,15 @@ export default class UIScene extends Phaser.Scene {
     this.xpBar.fillStyle(0x0f0f1b).fillRect(6, 15, 66, 6);
     this.xpBar.fillStyle(0x58d854).fillRect(7, 16, Math.floor(64 * frac), 4);
 
+    const total = reg.get('factsTotal') || 0;
+    this.factText.setText(total ? `FACTS ${reg.get('facts') || 0}/${total}` : '');
+
     const cf = reg.get('coffee') || 0;
     this.coffeeIcon.setVisible(cf > 0);
     this.coffeeBar.clear();
     if (cf > 0) {
-      this.coffeeBar.fillStyle(0x0f0f1b).fillRect(150, 15, 50, 6);
-      this.coffeeBar.fillStyle(0xfca044).fillRect(151, 16, Math.floor(48 * cf), 4);
+      this.coffeeBar.fillStyle(0x0f0f1b).fillRect(192, 15, 50, 6);
+      this.coffeeBar.fillStyle(0xfca044).fillRect(193, 16, Math.floor(48 * cf), 4);
     }
   }
 }
