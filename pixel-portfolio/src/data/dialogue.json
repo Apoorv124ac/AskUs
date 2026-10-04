@@ -45,5 +45,30 @@
     "again": [
       "THE DOOR IS RIGHT THERE, {name}. NO MORE EXCUSES!"
     ]
+  },
+  "prof": {
+    "name": "PROF. DAS",
+    "role": "CAMPUS",
+    "color": "#d8a870",
+    "lines": [
+      "WELCOME TO THE *TRAINING CAMPUS*, {name}! I'M PROF. DAS.",
+      "FOUR DEGREES, FOUR CLASSROOMS. FINISH EACH *TASK* TO OPEN THE GATE AND EARN THE *SCROLL*.",
+      "RELAX, NO EXAMS. THIS IS WHERE I LEARNED TO *THINK*, NOT JUST DRAW."
+    ],
+    "again": [
+      "FOUR GATES, {name}. START WITH THE COLOUR LAB!"
+    ]
+  },
+  "profEnd": {
+    "name": "PROF. DAS",
+    "role": "CAMPUS",
+    "color": "#d8a870",
+    "lines": [
+      "FOUR SCROLLS, *{name}*! THAT'S A LOT OF LEARNING.",
+      "NEXT: THE *OFFICE FLOORS*, WHERE ALL OF THIS GOT PUT TO WORK."
+    ],
+    "again": [
+      "THE DOOR IS OPEN, {name}. OFF YOU GO!"
+    ]
   }
 }

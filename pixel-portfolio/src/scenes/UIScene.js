@@ -97,6 +97,11 @@ export default class UIScene extends Phaser.Scene {
 
   // small "CHAPTER 1 / THE LOBBY" title that slides in at the start of a world
   showChapter({ title, sub }) {
+    // wait for any open card to close first, so the two never overlap
+    if (this.cardBox) {
+      this.pendingChapter = { title, sub };
+      return;
+    }
     const c = this.add.container(128, 46).setDepth(30);
     const a = txt(this, 0, -8, title, { origin: 0.5, color: COLORS.gold, bold: true, depth: 31 });
     const b = txt(this, 0, 4, sub, { display: true, origin: 0.5, depth: 31 });
@@ -146,16 +151,21 @@ export default class UIScene extends Phaser.Scene {
     if (!box) return;
     this.cardBox = null;
     this.tweens.add({ targets: box, y: -70, alpha: 0, duration: 220, ease: 'Cubic.in', onComplete: () => box.destroy() });
+    if (this.pendingChapter) {
+      const c = this.pendingChapter;
+      this.pendingChapter = null;
+      this.time.delayedCall(300, () => this.showChapter(c));
+    }
   }
 
-  showFact({ label, tag, text, title }) {
+  showFact({ label, tag, text, title, icon = 'fact' }) {
     this.buildCard({
       label: `${title} · ${label}`,
       text,
       auto: 7500,
       left: (box, cx, cy) => {
-        const coin = this.add.sprite(cx, cy - 9, 'fact', 0).setScale(1);
-        coin.anims.play('fact-spin');
+        const coin = this.add.sprite(cx, cy - 9, icon, 0).setScale(1);
+        if (icon === 'fact') coin.anims.play('fact-spin');
         const t = txt(this, cx, cy + 8, tag, { display: true, origin: 0.5, color: COLORS.gold, depth: 0 });
         box.add([coin, t]);
         [coin, t].forEach((o, i) => {
@@ -217,7 +227,7 @@ export default class UIScene extends Phaser.Scene {
 
     const total = reg.get('factsTotal') || 0;
     const facts = reg.get('facts') || 0;
-    this.factText.setText(total ? `FACTS ${facts}/${total}` : '');
+    this.factText.setText(total ? `FACTS ${facts}/${total}` : reg.get('hudInfo') || '');
     if (this.shown.facts !== null && facts > this.shown.facts) bump(this, this.factText, 1.4);
     this.shown.facts = facts;
 

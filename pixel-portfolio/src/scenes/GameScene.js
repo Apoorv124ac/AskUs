@@ -6,6 +6,7 @@ import dialogue from '../data/dialogue.json';
 import { save, persist } from '../systems/save.js';
 import { WORLDS } from '../data/worlds.js';
 import { txt, burst } from '../ui/pixel.js';
+import { CampusTasks } from '../systems/campus.js';
 
 const TILE_TEX = {
   '#': 'tile-ground',
@@ -62,18 +63,22 @@ export default class GameScene extends Phaser.Scene {
     this.talking = null;
     this.npcs = [];
     this.idleSince = 0;
+    this.invulUntil = 0;
+    this.campus = null;
 
     this.buildBackground();
     this.buildTiles();
     this.buildObjects();
     this.buildPlayer();
     this.buildNpcs();
+    if (L.campus || L.forceStation !== undefined) this.campus = new CampusTasks(this);
     this.input.on('pointerdown', () => this.talking && this.advanceTalk());
     this.events.once('shutdown', () => this.game.events.emit('dialogue-end'));
     if (L.world === 0) {
       reg.set('factsTotal', WORLD1_FACTS.length);
       reg.set('facts', countFacts(this.collected));
     } else reg.set('factsTotal', 0);
+    if (L.world === 0) reg.set('hudInfo', '');
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
@@ -105,8 +110,8 @@ export default class GameScene extends Phaser.Scene {
     for (let r = 0; r < L.h; r++) {
       for (let c = 0; c < L.w; c++) {
         const ch = L.grid[r][c];
-        if (ch === 'T' || ch === 'D') {
-          this.add.image(c * TILE + 8, r * TILE + 8, ch === 'T' ? 'plant' : 'counter').setDepth(2);
+        if (ch === 'T' || ch === 'D' || ch === 'K') {
+          this.add.image(c * TILE + 8, r * TILE + 8, { T: 'plant', D: 'counter', K: 'bookshelf' }[ch]).setDepth(2);
           continue;
         }
         const tex = TILE_TEX[ch];
@@ -283,7 +288,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   startTalk(npc) {
-    const d = dialogue[npc.id];
+    const d = dialogue[npc.dlg || npc.id];
     this.talking = { npc, lines: npc.talked && d.again ? d.again : d.lines, i: 0, d };
     npc.talked = true;
     npc.mark.setVisible(false);
@@ -343,7 +348,12 @@ export default class GameScene extends Phaser.Scene {
     save.completed[this.level.world] = true;
     save.lastWorld = Math.min(this.level.world + 1, 5);
     persist();
-    const f = this.level.world === 0 ? `\nFACTS ${countFacts(this.collected)}/${WORLD1_FACTS.length}` : '';
+    const f =
+      this.level.world === 0
+        ? `\nFACTS ${countFacts(this.collected)}/${WORLD1_FACTS.length}`
+        : this.level.world === 1
+          ? `\nDEGREES ${save.degrees.filter(Boolean).length}/4`
+          : '';
     this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!${f}`);
     this.lockAnim('celebrate', 2400);
     this.time.delayedCall(2600, () => {
@@ -406,6 +416,21 @@ export default class GameScene extends Phaser.Scene {
         );
       },
     });
+  }
+
+  // enemy contact: lose a coin, bounce back, brief invulnerability
+  hurtPlayer(fromX) {
+    const now = this.time.now;
+    if (now < this.invulUntil || this.entering) return;
+    this.invulUntil = now + 1200;
+    const reg = this.registry;
+    if (reg.get('coins') > 0) reg.set('coins', reg.get('coins') - 1);
+    const p = this.player;
+    this.popText(p.x, p.y - 20, '-1');
+    p.setVelocity(p.x < fromX ? -130 : 130, -170);
+    this.lockAnim('hurt', 450, now);
+    this.cameras.main.shake(100, 0.004);
+    this.tweens.add({ targets: p, alpha: 0.35, yoyo: true, repeat: 5, duration: 100, onComplete: () => p.setAlpha(1) });
   }
 
   respawn() {
@@ -522,6 +547,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.tryEnterPipe();
     this.updateNpcs();
+    if (this.campus) this.campus.update();
 
     if (p.y > this.worldH + 30) this.respawn();
 

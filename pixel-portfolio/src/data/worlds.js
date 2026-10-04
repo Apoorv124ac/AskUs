@@ -2,8 +2,8 @@
 export const WORLDS = [
   { id: 1, name: 'RECEPTION', topic: 'INTRO / ABOUT ME', color: 0xf83800, ready: true, room: 'world1',
     chapter: 'THE LOBBY', desc: 'THE STORY STARTS HERE. FIND 10 FACT COINS, MEET THE TEAM, GRAB A COFFEE.' },
-  { id: 2, name: 'TRAINING CAMPUS', topic: 'EDUCATION', color: 0x0058f8, ready: false, day: 5,
-    desc: 'LEARNING YEARS. ONE TASK PER DEGREE TO EARN THE SCROLL.' },
+  { id: 2, name: 'TRAINING CAMPUS', topic: 'EDUCATION', color: 0x0058f8, ready: true, room: 'world2',
+    chapter: 'THE CAMPUS', desc: 'FOUR DEGREES, FOUR CLASSROOMS. FINISH A TASK IN EACH TO EARN THE SCROLL.' },
   { id: 3, name: 'OFFICE FLOORS', topic: 'EXPERIENCE', color: 0xfca044, ready: false, day: 6,
     desc: 'CLIMB THE FLOORS. ONE BOSS FIGHT PER JOB.' },
   { id: 4, name: 'SKILL ARCADE', topic: 'SKILLS', color: 0x6844fc, ready: false, day: 7,

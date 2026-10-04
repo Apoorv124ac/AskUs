@@ -13,6 +13,7 @@ const DEFAULTS = {
   collected: [],
   lastWorld: 0,
   storySeen: false,
+  degrees: [false, false, false, false],
 };
 
 function read() {

@@ -1,4 +1,4 @@
-# Office Quest — Days 1–4
+# Office Quest — Days 1–5 (Worlds 1 and 2)
 
 Playable engine demo: controls, movement feel, pickups, pipes, HUD, and the pixel
 hero (Apoorv). Level art is still placeholder (generated in code).
@@ -45,3 +45,10 @@ coffee duration, level thresholds).
 - Regenerate NPC art: `npm run npcs` (`tools/make-npcs.mjs`), or paint `public/assets/npcs.png`
   yourself (24x32 frames, 4 per row, order in `src/npcFrames.js`).
 - Dev shortcuts: `?reset` clears saved progress, `?scene=Game` jumps into World 1.
+
+## World 2 — Training Campus (Day 5)
+Four classrooms, one per degree, each with a task that opens a gate and awards a scroll:
+colour swatches (BSc Multimedia), stomp typo bugs (MA Journalism), find ideas incl. a secret
+room (IIT Delhi), collect data nodes in order 1-2-3-4 (Data Science). Task logic: `src/systems/campus.js`;
+level layout: `buildWorld2()` in `src/levels.js`; degree text: `education` in `src/data/resume.json`.
+Typography: Silkscreen for text, Press Start 2P for headlines (`src/ui/pixel.js`).

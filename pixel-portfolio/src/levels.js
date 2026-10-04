@@ -3,7 +3,8 @@
 //
 // Grid characters:  . empty   # carpet(top)   d carpet(under)   B desk block
 //   p q l r pipe pieces   o coin   f FACT coin   t TOOL coin   c coffee
-//   F checkpoint   G goal door   T plant (decor)   D counter (decor)
+//   F checkpoint   G goal door   T plant (decor)   D counter (decor)   K bookshelf (decor)
+//   World 2 tasks: s swatch   b typo bug   i idea bulb   1 2 3 4 data nodes (collect in order)
 import { TILE } from './config.js';
 
 const GROUND_ROW = 12; // rows 12-13 are floor; row 11 is the first walkable row
@@ -52,9 +53,9 @@ function label(L, col, row, text) {
   L.labels.push({ x: col * TILE, y: row * TILE, text });
 }
 
-// face: -1 = looks left (towards the player arriving from the left)
-function npc(L, id, col, face = -1, autoTalk = true) {
-  L.npcs.push({ id, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face, autoTalk });
+// face: -1 = looks left (towards the player arriving from the left); dlg = key in dialogue.json
+function npc(L, id, col, face = -1, autoTalk = true, dlg = id) {
+  L.npcs.push({ id, dlg, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face, autoTalk });
 }
 
 // World 1 "Reception": tutorial + 10 fact coins + a toolkit bonus room.
@@ -125,7 +126,103 @@ function buildBonus() {
   return L;
 }
 
-export const LEVELS = { world1: buildWorld1(), bonus: buildBonus() };
+// World 2 "Training Campus": four classrooms, one per degree, each with a task + a gate.
+function buildWorld2() {
+  const L = newLevel(136, 14, { room: 'world2', world: 1, bg: 0xa4e4fc });
+  ground(L);
+  L.campus = true;
+  L.stations = [
+    { name: 'COLORS', title: 'BSC MULTIMEDIA', years: '2013-2016', from: 10, to: 35, gateCol: 35, kind: 'swatch',
+      objective: 'COLLECT 3 COLOUR SWATCHES' },
+    { name: 'BUGS', title: 'MA JOURNALISM', years: '2018-2020', from: 36, to: 63, gateCol: 63, kind: 'bug',
+      objective: 'STOMP 3 TYPO BUGS' },
+    { name: 'IDEAS', title: 'IIT DELHI', years: '2021-2022', from: 64, to: 93, gateCol: 93, kind: 'bulb',
+      objective: 'FIND 3 IDEAS (ONE IS HIDDEN)' },
+    { name: 'DATA', title: 'DATA SCIENCE', years: '2023-2024', from: 94, to: 123, gateCol: 123, kind: 'node',
+      objective: 'COLLECT NODES IN ORDER 1-2-3-4' },
+  ];
+
+  // Entrance
+  npc(L, 'prof', 6, -1, true, 'prof');
+  put(L, 3, 11, 'K');
+  put(L, 4, 11, 'K');
+  put(L, 9, 11, 'T');
+
+  // Classroom 1: colour lab
+  label(L, 12, 3, 'DEGREE 1/4');
+  label(L, 12, 4, 'BSC MULTIMEDIA');
+  put(L, 12, 11, 'K');
+  span(L, 10, 14, 17, 'B');
+  put(L, 15, 9, 's');
+  span(L, 8, 21, 24, 'B');
+  put(L, 22, 7, 's');
+  span(L, 10, 28, 31, 'B');
+  put(L, 29, 9, 's');
+  put(L, 33, 11, 'T');
+  put(L, 36, 11, 'F');
+
+  // Classroom 2: newsroom (bugs patrol between two low walls)
+  label(L, 39, 3, 'DEGREE 2/4');
+  label(L, 39, 4, 'MA JOURNALISM');
+  put(L, 38, 11, 'B');
+  put(L, 61, 11, 'B');
+  [44, 50, 56].forEach((c) => put(L, c, 11, 'b'));
+  span(L, 10, 46, 49, 'B');
+  span(L, 8, 52, 55, 'B');
+
+  // Classroom 3: idea lab (one bulb is up high, one is in the secret room)
+  label(L, 66, 3, 'DEGREE 3/4');
+  label(L, 66, 4, 'IIT DELHI');
+  put(L, 65, 11, 'F');
+  span(L, 10, 67, 70, 'B');
+  put(L, 68, 9, 'i');
+  span(L, 10, 74, 76, 'B');
+  span(L, 8, 77, 79, 'B');
+  span(L, 6, 80, 82, 'B');
+  put(L, 81, 5, 'i');
+  label(L, 84, 8, 'SECRET ROOM');
+  pipe(L, 86, 2, 'a', { room: 'lab', pipe: 'b' });
+  put(L, 90, 11, 'T');
+
+  // Classroom 4: data centre (collect 1-2-3-4 in order; 2 hides behind 3)
+  label(L, 96, 3, 'DEGREE 4/4');
+  label(L, 96, 4, 'DATA SCIENCE');
+  put(L, 95, 11, 'F');
+  span(L, 10, 97, 100, 'B');
+  put(L, 98, 9, '1');
+  span(L, 8, 104, 107, 'B');
+  put(L, 105, 7, '3');
+  span(L, 10, 109, 112, 'B');
+  put(L, 110, 9, '2');
+  span(L, 10, 114, 116, 'B');
+  span(L, 8, 117, 120, 'B');
+  put(L, 119, 7, '4');
+
+  // Graduation
+  npc(L, 'prof', 127, -1, true, 'profEnd');
+  put(L, 125, 11, 'T');
+  put(L, 130, 11, 'K');
+  put(L, 133, 11, 'G');
+  return L;
+}
+
+// Secret idea-lab room (belongs to classroom 3)
+function buildLab() {
+  const L = newLevel(20, 14, { bg: 0x101830, theme: 'underground', room: 'lab', world: 1 });
+  ground(L);
+  L.forceStation = 2;
+  span(L, 0, 0, 19, 'B');
+  span(L, 1, 0, 19, 'B');
+  label(L, 2, 3, 'THE SECRET IDEA LAB');
+  label(L, 2, 4, 'GOOD IDEAS HIDE IN ODD PLACES');
+  put(L, 8, 10, 'B');
+  put(L, 9, 10, 'B');
+  put(L, 8, 9, 'i');
+  pipe(L, 16, 2, 'b', { room: 'world2', pipe: 'a' });
+  return L;
+}
+
+export const LEVELS = { world1: buildWorld1(), bonus: buildBonus(), world2: buildWorld2(), lab: buildLab() };
 
 // All collectible items of one kind, left to right (so "fact 1" is always the first one you meet).
 export function items(L, ch) {

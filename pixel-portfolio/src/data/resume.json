@@ -122,22 +122,30 @@
     {
       "title": "Certificate: Data Science - AI & ML",
       "school": "IIT Guwahati",
-      "years": "2023-2024"
+      "years": "2023-2024",
+      "short": "DATA SCIENCE",
+      "story": "WHERE I LEARNED TO LET DATA TELL THE STORY."
     },
     {
       "title": "Industrial Design, Innovation & Entrepreneurship",
       "school": "IIT Delhi",
-      "years": "2021-2022"
+      "years": "2021-2022",
+      "short": "IIT DELHI",
+      "story": "WHERE I LEARNED TO TURN IDEAS INTO REAL PRODUCTS."
     },
     {
       "title": "MA, Journalism & Mass Communication",
       "school": "BBAU Central University",
-      "years": "2018-2020"
+      "years": "2018-2020",
+      "short": "MA JOURNALISM",
+      "story": "WHERE I LEARNED TO TELL STORIES PEOPLE ACTUALLY READ."
     },
     {
       "title": "BSc, Multimedia",
       "school": "Himalayan University",
-      "years": "2013-2016"
+      "years": "2013-2016",
+      "short": "BSC MULTIMEDIA",
+      "story": "WHERE I LEARNED TO MAKE THINGS LOOK GOOD, AND MOVE."
     }
   ],
   "capabilities": [
