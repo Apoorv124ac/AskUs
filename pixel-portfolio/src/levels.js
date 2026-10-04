@@ -4,6 +4,7 @@
 // Grid characters:  . empty   # carpet(top)   d carpet(under)   B desk block
 //   p q l r pipe pieces   o coin   f FACT coin   t TOOL coin   c coffee
 //   F checkpoint   G goal door   T plant (decor)   D counter (decor)   K bookshelf (decor)
+//   World 3 floors: k client badge   E elevator (decor)
 //   World 2 tasks: s swatch   b typo bug   i idea bulb   1 2 3 4 data nodes (collect in order)
 import { TILE } from './config.js';
 
@@ -222,7 +223,80 @@ function buildLab() {
   return L;
 }
 
-export const LEVELS = { world1: buildWorld1(), bonus: buildBonus(), world2: buildWorld2(), lab: buildLab() };
+// World 3 "Office Floors": one room per role, climbed by elevator. Floor 1 = collect client
+// badges; floors 2-5 = a boss tied to a real achievement (each stomp reveals one resume bullet).
+const FLOOR_BG = [0x3cbcfc, 0x58b0f8, 0x6888fc, 0xf8a060, 0x6844fc];
+const FLOOR_SPEC = [
+  { w: 72, gate: 62, plats: [[10, 13, 16], [8, 25, 28], [10, 37, 40], [10, 45, 47], [8, 48, 50], [6, 51, 53]], npc: 'sam',
+    skill: 'STAKEHOLDER COLLABORATION', badges: [[14, 9], [26, 7], [38, 9], [52, 5]] },
+  { w: 84, gate: 72, arena: [51, 69], boss: { col: 60, hp: 2, name: 'THE VAGUE BRIEF' },
+    plats: [[10, 12, 15], [8, 20, 23], [10, 28, 31], [8, 35, 38], [10, 42, 44]], coffee: [22, 7], npc: 'meera',
+    skill: 'BRAND IDENTITY' },
+  { w: 84, gate: 72, arena: [51, 69], boss: { col: 60, hp: 2, name: 'THE DEADLINE CLOCK' },
+    plats: [[10, 12, 15], [8, 18, 21], [6, 24, 27], [8, 30, 33], [10, 36, 40], [8, 43, 46]], coffee: [26, 5], npc: 'rita',
+    skill: 'MARKETING & CAMPAIGN DESIGN' },
+  { w: 84, gate: 72, arena: [51, 69], boss: { col: 60, hp: 3, name: 'THE OFF-BRAND BEAST' },
+    plats: [[10, 12, 14], [8, 17, 20], [10, 23, 26], [7, 29, 33], [10, 36, 39], [8, 42, 45]], coffee: [31, 6], npc: 'sam',
+    team: true, skill: 'CREATIVE TEAM LEADERSHIP' },
+  { w: 90, gate: 74, arena: [52, 70], boss: { col: 61, hp: 3, name: 'THE 100-SLIDE DECK' },
+    plats: [[10, 12, 15], [8, 19, 22], [6, 26, 29], [8, 33, 36], [10, 39, 42], [8, 45, 48]], coffee: [27, 5], npc: 'ceo',
+    skill: 'EXECUTIVE PRESENTATIONS', goal: true },
+];
+
+function buildFloor(k) {
+  const f = FLOOR_SPEC[k];
+  const L = newLevel(f.w, 14, { room: `floor${k + 1}`, world: 2, bg: FLOOR_BG[k] });
+  ground(L);
+  const dlg = `floor${k + 1}`;
+  npc(L, f.npc, 7, -1, true, dlg);
+  if (f.team) npc(L, 'rita', 11, -1, false, 'cheer');
+  put(L, 4, 11, k % 2 ? 'K' : 'T');
+  put(L, 10, 11, 'D');
+  f.plats.forEach(([row, c1, c2]) => {
+    span(L, row, c1, c2, 'B');
+    if (!f.badges) for (let c = c1 + 1; c < c2; c += 2) put(L, c, row - 1, 'o');
+  });
+  if (f.coffee) put(L, f.coffee[0], f.coffee[1], 'c');
+  (f.badges || []).forEach(([c, r]) => put(L, c, r, 'k'));
+  if (f.badges) {
+    [[18, 11], [30, 11], [42, 11]].forEach(([c, r]) => put(L, c, r, 'o'));
+    label(L, 12, 5, 'FREELANCE  2013-2016');
+  }
+  put(L, f.gate - 6, 11, 'F');
+  if (f.arena) {
+    const [a, b] = f.arena;
+    put(L, a, 11, 'B');
+    put(L, a, 10, 'B');
+    put(L, b, 11, 'B');
+    put(L, b, 10, 'B');
+    label(L, a + 2, 5, f.boss.name);
+  }
+  put(L, f.gate + 3, 11, 'E');
+  L.office = {
+    floor: k,
+    kind: f.badges ? 'clients' : 'boss',
+    gateCol: f.gate,
+    elevCol: f.gate + 3,
+    boss: f.boss,
+    skill: f.skill,
+    goal: !!f.goal,
+  };
+  if (f.goal) {
+    put(L, f.gate + 8, 11, 'G');
+    npc(L, 'ceo', f.gate + 5, -1, true, 'floor5End');
+    L.grid[11][f.gate + 3] = '.'; // top floor: no elevator, just the exit door
+    L.office.elevCol = null;
+  }
+  return L;
+}
+
+export const LEVELS = {
+  world1: buildWorld1(),
+  bonus: buildBonus(),
+  world2: buildWorld2(),
+  lab: buildLab(),
+  ...Object.fromEntries([0, 1, 2, 3, 4].map((k) => [`floor${k + 1}`, buildFloor(k)])),
+};
 
 // All collectible items of one kind, left to right (so "fact 1" is always the first one you meet).
 export function items(L, ch) {

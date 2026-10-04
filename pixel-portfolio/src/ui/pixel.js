@@ -84,11 +84,13 @@ export function burst(scene, x, y, { n = 10, colors = [0xf8d878, 0xfcfcfc, 0xfca
 export function richText(scene, x, y, str, { width = 200, color = COLORS.white, hi = COLORS.gold, lineH = 10, depth = 12, popMs = 38 } = {}) {
   const container = scene.add.container(x, y).setDepth(depth);
   const tokens = [];
+  let prevEndsSpace = true;
   str.split('*').forEach((chunk, i) => {
     const words = chunk.split(/\s+/).filter(Boolean);
-    // punctuation right after a *highlight* sticks to it (no gap)
-    const glue = i > 0 && !/^\s/.test(chunk);
+    // punctuation touching a *highlight* sticks to it (no gap); a real space keeps its gap
+    const glue = tokens.length > 0 && !prevEndsSpace && !/^\s/.test(chunk);
     words.forEach((w, k) => tokens.push({ w, hi: i % 2 === 1, glue: glue && k === 0 }));
+    if (chunk.length) prevEndsSpace = /\s$/.test(chunk);
   });
   const words = [];
   const space = 4;

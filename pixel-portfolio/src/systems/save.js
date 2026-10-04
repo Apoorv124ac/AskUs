@@ -14,6 +14,7 @@ const DEFAULTS = {
   lastWorld: 0,
   storySeen: false,
   degrees: [false, false, false, false],
+  floors: [false, false, false, false, false],
 };
 
 function read() {

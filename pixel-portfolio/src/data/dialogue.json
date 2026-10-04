@@ -70,5 +70,89 @@
     "again": [
       "THE DOOR IS OPEN, {name}. OFF YOU GO!"
     ]
+  },
+  "floor1": {
+    "name": "ZARA",
+    "role": "EARLY CLIENT",
+    "color": "#58d8d8",
+    "lines": [
+      "WELCOME TO THE *FREELANCE* FLOOR, {name}! 2013 TO 2016.",
+      "NO BOSS HERE, JUST *CLIENTS* AND DEADLINES. COLLECT THE 4 CLIENT BADGES TO GET THE ELEVATOR WORKING.",
+      "BHOOMI, VIBAANTA, GLOBAL EDUCATION AND 13JUGAAD.COM. EACH ONE TAUGHT ME SOMETHING."
+    ],
+    "again": [
+      "FOUR BADGES, {name}. THEN TAKE THE ELEVATOR!"
+    ]
+  },
+  "floor2": {
+    "name": "MEERA",
+    "role": "MANAGER",
+    "color": "#f8a0d8",
+    "lines": [
+      "FLOOR 2: *BHOOMI EDUCATIONAL CONSULTANCY*. NOV 2016 TO DEC 2020.",
+      "MY FIRST FULL-TIME ROLE. OUR ENEMY: THE *VAGUE BRIEF*. STOMP IT TO TURN IT INTO A CLEAR DESIGN!"
+    ],
+    "again": [
+      "STOMP THE VAGUE BRIEF, {name}. TWICE SHOULD DO IT!"
+    ]
+  },
+  "floor3": {
+    "name": "ANITA",
+    "role": "CREATIVE DIRECTOR",
+    "color": "#f8d878",
+    "lines": [
+      "I'M THE CREATIVE DIRECTOR. WELCOME TO *DELOITTE DIGITAL*, JUN 2021 TO APR 2022.",
+      "TODAY'S ENEMY: THE *DEADLINE CLOCK*. NEWSPAPER ADS FOR THE US, UK AND AUSTRALIA. STOMP IT!"
+    ],
+    "again": [
+      "TICK TOCK, {name}. STOMP THE CLOCK!"
+    ]
+  },
+  "floor4": {
+    "name": "SAM",
+    "role": "YOUR TEAM",
+    "color": "#bcbcbc",
+    "lines": [
+      "WELCOME TO *JLL*, BOSS! APR 2022 TO AUG 2024. YOU LEAD THIS TEAM.",
+      "ONE BRAND, MANY MARKETS. THE *OFF-BRAND BEAST* KEEPS CHANGING COLOURS. KEEP IT *CONSISTENT*!"
+    ],
+    "again": [
+      "WE'RE BEHIND YOU, {name}. THREE STOMPS!"
+    ]
+  },
+  "floor5": {
+    "name": "THE CEO",
+    "role": "GLOBAL LEADERSHIP",
+    "color": "#d8d8f8",
+    "lines": [
+      "WELCOME TO *WSP*, AUG 2024 TO TODAY. THE LEADERSHIP MEETING STARTS SOON.",
+      "BUT THE *100-SLIDE DECK* IS LOOSE! MAKE IT CLEAR, {name}. STOMP IT!"
+    ],
+    "again": [
+      "THE MEETING IS WAITING, {name}. THREE STOMPS!"
+    ]
+  },
+  "floor5End": {
+    "name": "THE CEO",
+    "role": "GLOBAL LEADERSHIP",
+    "color": "#d8d8f8",
+    "lines": [
+      "NOW *THAT* IS A DECK I CAN PRESENT. WELL DESIGNED, {name}!",
+      "THAT'S MY WHOLE JOURNEY SO FAR. NEXT: THE *SKILL ARCADE*."
+    ],
+    "again": [
+      "GO ON, {name}. THE EXIT IS RIGHT THERE!"
+    ]
+  },
+  "cheer": {
+    "name": "TEAM",
+    "role": "JLL",
+    "color": "#bcbcbc",
+    "lines": [
+      "WE'RE WITH YOU, BOSS!"
+    ],
+    "again": [
+      "GO GET IT, BOSS!"
+    ]
   }
 }

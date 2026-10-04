@@ -119,7 +119,7 @@ export default class MenuScene extends Phaser.Scene {
     if (!w.ready) return this.flash(`COMING SOON (BUILD DAY ${w.day}).`);
     this.registry.remove('checkpoint');
     burst(this, NODE_X[this.sel], NODE_Y[this.sel], { n: 14, spread: 34 });
-    go(this, 'Game', { room: w.room });
+    go(this, 'Game', { room: w.roomFor ? w.roomFor(save) : w.room });
   }
 
   flash(msg) {

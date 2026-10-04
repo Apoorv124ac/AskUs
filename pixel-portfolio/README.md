@@ -1,4 +1,4 @@
-# Office Quest — Days 1–5 (Worlds 1 and 2)
+# Office Quest — Days 1–6 (Worlds 1, 2 and 3)
 
 Playable engine demo: controls, movement feel, pickups, pipes, HUD, and the pixel
 hero (Apoorv). Level art is still placeholder (generated in code).
@@ -52,3 +52,11 @@ colour swatches (BSc Multimedia), stomp typo bugs (MA Journalism), find ideas in
 room (IIT Delhi), collect data nodes in order 1-2-3-4 (Data Science). Task logic: `src/systems/campus.js`;
 level layout: `buildWorld2()` in `src/levels.js`; degree text: `education` in `src/data/resume.json`.
 Typography: Silkscreen for text, Press Start 2P for headlines (`src/ui/pixel.js`).
+
+## World 3 — Office Floors (Day 6)
+Five floors, one per role, climbed by elevator. Floor 1 (freelance): collect 4 client badges.
+Floors 2-5: a boss tied to a real achievement (Vague Brief, Deadline Clock, Off-Brand Beast,
+100-Slide Deck); each stomp reveals one resume bullet. Beating a floor opens its gate and unlocks a
+skill. Logic: `src/systems/office.js`; layouts: `buildFloor()` in `src/levels.js`; the first-person
+bullets are `experience[].short` in `src/data/resume.json`. Re-entering World 3 resumes at the first
+unfinished floor.

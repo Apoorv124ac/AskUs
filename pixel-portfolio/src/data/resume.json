@@ -81,7 +81,13 @@
         "Design presentations for global leadership, including the CEO team, supporting strategic communications and executive meetings.",
         "Develop internal communication visuals for cross-functional teams to support employee engagement and information sharing.",
         "Create marketing collateral supporting WSP India's brand visibility and business development."
-      ]
+      ],
+      "short": [
+        "I DESIGN *PRESENTATIONS FOR GLOBAL LEADERSHIP*, INCLUDING THE CEO TEAM.",
+        "I MAKE *INTERNAL COMMUNICATION VISUALS* THAT KEEP TEAMS ENGAGED AND INFORMED.",
+        "I CREATE *MARKETING COLLATERAL* THAT BOOSTS WSP INDIA'S BRAND VISIBILITY."
+      ],
+      "year": "2024"
     },
     {
       "role": "Senior Graphic Designer",
@@ -91,7 +97,13 @@
         "Led a design team producing marketing materials and visual assets to support customer engagement.",
         "Developed and maintained brand consistency across US markets, translating services into clear client-facing communications.",
         "Partnered with cross-functional teams on a new brand identity and created presentations and marketing collateral."
-      ]
+      ],
+      "short": [
+        "I *LED A DESIGN TEAM* MAKING MARKETING MATERIALS THAT ENGAGE CUSTOMERS.",
+        "I KEPT THE *BRAND CONSISTENT* ACROSS US MARKETS, TURNING SERVICES INTO CLEAR CLIENT COMMS.",
+        "I HELPED LAUNCH A *NEW BRAND IDENTITY* WITH PRESENTATIONS AND COLLATERAL."
+      ],
+      "year": "2022"
     },
     {
       "role": "Executive Graphic Designer",
@@ -100,7 +112,12 @@
       "bullets": [
         "Collaborated on newspaper advertising campaigns for US, UK and Australian clients, applying design thinking to visuals and messaging.",
         "Worked with copywriters and the creative director to deliver on-brand illustrations, logos and final layouts."
-      ]
+      ],
+      "short": [
+        "I DESIGNED *NEWSPAPER AD CAMPAIGNS* FOR CLIENTS IN THE US, UK AND AUSTRALIA.",
+        "I WORKED WITH COPYWRITERS AND THE CREATIVE DIRECTOR ON *ON-BRAND* ILLUSTRATIONS, LOGOS AND LAYOUTS."
+      ],
+      "year": "2021"
     },
     {
       "role": "Graphic Designer",
@@ -109,13 +126,20 @@
       "bullets": [
         "Created branding, educational materials, website graphics and social content, from concept through final layout.",
         "Translated client briefs into design concepts and refined work through feedback to meet project objectives."
-      ]
+      ],
+      "short": [
+        "I CREATED *BRANDING, LEARNING MATERIAL, WEBSITE GRAPHICS AND SOCIAL CONTENT*, FROM CONCEPT TO FINAL LAYOUT.",
+        "I TURNED *CLIENT BRIEFS* INTO DESIGN CONCEPTS AND REFINED THEM WITH FEEDBACK."
+      ],
+      "year": "2016"
     },
     {
       "role": "Freelancer - Graphic Designer",
       "company": "Bhoomi Educational Consultancy, Vibaanta, Global Education, 13Jugaad.com",
       "dates": "Aug 2013 - Oct 2016",
-      "bullets": []
+      "bullets": [],
+      "short": [],
+      "year": "2013"
     }
   ],
   "education": [

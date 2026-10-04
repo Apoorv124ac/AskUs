@@ -7,6 +7,7 @@ import { save, persist } from '../systems/save.js';
 import { WORLDS } from '../data/worlds.js';
 import { txt, burst } from '../ui/pixel.js';
 import { CampusTasks } from '../systems/campus.js';
+import { OfficeTasks } from '../systems/office.js';
 
 const TILE_TEX = {
   '#': 'tile-ground',
@@ -65,6 +66,7 @@ export default class GameScene extends Phaser.Scene {
     this.idleSince = 0;
     this.invulUntil = 0;
     this.campus = null;
+    this.office = null;
 
     this.buildBackground();
     this.buildTiles();
@@ -72,6 +74,7 @@ export default class GameScene extends Phaser.Scene {
     this.buildPlayer();
     this.buildNpcs();
     if (L.campus || L.forceStation !== undefined) this.campus = new CampusTasks(this);
+    if (L.office) this.office = new OfficeTasks(this);
     this.input.on('pointerdown', () => this.talking && this.advanceTalk());
     this.events.once('shutdown', () => this.game.events.emit('dialogue-end'));
     if (L.world === 0) {
@@ -89,7 +92,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (!this.scene.isActive('UI')) this.scene.launch('UI');
     const w = WORLDS[L.world];
-    if (w && !this.viaPipe && L.room !== 'bonus') {
+    if (w && !this.viaPipe && L.room !== 'bonus' && !L.office) {
       this.time.delayedCall(450, () => this.game.events.emit('chapter', { title: `CHAPTER ${w.id}`, sub: w.chapter || w.name }));
     }
   }
@@ -353,7 +356,7 @@ export default class GameScene extends Phaser.Scene {
         ? `\nFACTS ${countFacts(this.collected)}/${WORLD1_FACTS.length}`
         : this.level.world === 1
           ? `\nDEGREES ${save.degrees.filter(Boolean).length}/4`
-          : '';
+          : `\nFLOORS ${save.floors.filter(Boolean).length}/5`;
     this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!${f}`);
     this.lockAnim('celebrate', 2400);
     this.time.delayedCall(2600, () => {
@@ -548,6 +551,7 @@ export default class GameScene extends Phaser.Scene {
     this.tryEnterPipe();
     this.updateNpcs();
     if (this.campus) this.campus.update();
+    if (this.office) this.office.update();
 
     if (p.y > this.worldH + 30) this.respawn();
 

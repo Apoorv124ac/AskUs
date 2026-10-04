@@ -197,6 +197,100 @@ function drawGate(ctx) {
   fill(ctx, '#0f0f1b', 0, 7, 16, 2);
 }
 
+// --- World 3 (office floors): bosses, client badge, elevator
+const disc = (ctx, cx, cy, r, c) => {
+  ctx.fillStyle = c;
+  for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r + r) ctx.fillRect(cx + x, cy + y, 1, 1);
+};
+const eyes = (ctx, o, y, angry = true) => {
+  fill(ctx, '#fcfcfc', o + 8, y, 5, 5);
+  fill(ctx, '#fcfcfc', o + 19, y, 5, 5);
+  fill(ctx, '#0f0f1b', o + 10, y + 2, 2, 3);
+  fill(ctx, '#0f0f1b', o + 20, y + 2, 2, 3);
+  if (angry) {
+    fill(ctx, '#0f0f1b', o + 7, y - 2, 6, 1);
+    fill(ctx, '#0f0f1b', o + 19, y - 2, 6, 1);
+    fill(ctx, '#0f0f1b', o + 12, y - 1, 1, 1);
+    fill(ctx, '#0f0f1b', o + 19, y - 1, 1, 1);
+  }
+};
+function drawBosses(ctx, which) {
+  [0, 1].forEach((f) => {
+    const o = f * 32;
+    const bob = f;
+    if (which === 0) {
+      // THE VAGUE BRIEF: grey cloud with question marks
+      disc(ctx, o + 16, 17 + bob, 13, '#0f0f1b');
+      disc(ctx, o + 16, 17 + bob, 12, '#bcbcbc');
+      disc(ctx, o + 9, 12 + bob, 6, '#bcbcbc');
+      disc(ctx, o + 23, 12 + bob, 6, '#bcbcbc');
+      eyes(ctx, o, 11 + bob);
+      QMARK.forEach((row, ry) => [...row].forEach((ch, rx) => ch === 'X' && fill(ctx, '#7c7c7c', o + 14 + rx, 18 + bob + ry - 1, 1, 1)));
+      fill(ctx, '#0f0f1b', o + 10, 25 + bob, 12, 1);
+    } else if (which === 1) {
+      // THE DEADLINE CLOCK: angry red clock
+      disc(ctx, o + 16, 17 + bob, 13, '#0f0f1b');
+      disc(ctx, o + 16, 17 + bob, 12, '#f83800');
+      disc(ctx, o + 16, 17 + bob, 9, '#fcfcfc');
+      fill(ctx, '#0f0f1b', o + 16, 10 + bob, 1, 8);
+      fill(ctx, '#0f0f1b', o + 16, 17 + bob, 6, 1);
+      fill(ctx, '#f83800', o + 15, 17 + bob, 3, 3);
+      fill(ctx, '#0f0f1b', o + 8, 6 + bob, 6, 2);
+      fill(ctx, '#0f0f1b', o + 18, 6 + bob, 6, 2);
+      fill(ctx, '#0f0f1b', o + 12, 22 + bob, 8, 1);
+    } else if (which === 2) {
+      // THE OFF-BRAND BEAST: mismatched colour blocks
+      fill(ctx, '#0f0f1b', o + 3, 4 + bob, 26, 26);
+      fill(ctx, '#f83800', o + 4, 5 + bob, 12, 12);
+      fill(ctx, '#0058f8', o + 16, 5 + bob, 12, 12);
+      fill(ctx, '#58d854', o + 4, 17 + bob, 12, 12);
+      fill(ctx, '#f8d878', o + 16, 17 + bob, 12, 12);
+      eyes(ctx, o, 10 + bob);
+      fill(ctx, '#0f0f1b', o + 9, 22 + bob, 14, 2);
+      [11, 14, 17, 20].forEach((x) => fill(ctx, '#fcfcfc', o + x, 22 + bob, 2, 2));
+    } else {
+      // THE 100-SLIDE DECK: tower of papers
+      [0, 1, 2].forEach((i) => {
+        fill(ctx, '#0f0f1b', o + 3 + i * 2, 4 + bob + i * 2, 24, 25 - i * 2);
+        fill(ctx, i === 2 ? '#fcfcfc' : '#bcbcbc', o + 4 + i * 2, 5 + bob + i * 2, 22, 23 - i * 2);
+      });
+      eyes(ctx, o, 11 + bob);
+      [[1, 'XXX'], [0, 'X.X']].forEach(() => {});
+      ['.X.', 'XX.', '.X.', '.X.', 'XXX'].forEach((row, ry) => [...row].forEach((ch, rx) => ch === 'X' && fill(ctx, '#f83800', o + 8 + rx, 19 + bob + ry, 1, 1)));
+      ['XXX', 'X.X', 'X.X', 'X.X', 'XXX'].forEach((row, ry) => {
+        [0, 1].forEach((d) => [...row].forEach((ch, rx) => ch === 'X' && fill(ctx, '#f83800', o + 13 + d * 4 + rx, 19 + bob + ry, 1, 1)));
+      });
+    }
+  });
+}
+function drawBadge(ctx) {
+  fill(ctx, '#0f0f1b', 3, 0, 10, 16);
+  fill(ctx, '#fcfcfc', 4, 4, 8, 11);
+  fill(ctx, '#f83800', 4, 1, 8, 3);
+  fill(ctx, '#0f0f1b', 7, 0, 2, 1);
+  fill(ctx, '#bcbcbc', 5, 11, 6, 1);
+  fill(ctx, '#bcbcbc', 5, 13, 4, 1);
+  disc(ctx, 8, 7, 2, '#e0a070');
+}
+function drawElevator(ctx) {
+  [0, 1].forEach((f) => {
+    const o = f * 16;
+    fill(ctx, '#0f0f1b', o, 0, 16, 32);
+    fill(ctx, '#7c7c7c', o + 1, 1, 14, 30);
+    fill(ctx, '#0f0f1b', o + 4, 3, 8, 4); // indicator
+    fill(ctx, f ? '#7c7c7c' : '#58d854', o + 6, 4, 4, 2);
+    if (f === 0) {
+      fill(ctx, '#0f0f1b', o + 3, 9, 10, 22); // open: dark doorway with light
+      fill(ctx, '#f8d878', o + 4, 10, 8, 20);
+      fill(ctx, '#fcfcfc', o + 5, 12, 2, 16);
+    } else {
+      fill(ctx, '#bcbcbc', o + 2, 9, 6, 22);
+      fill(ctx, '#bcbcbc', o + 8, 9, 6, 22);
+      fill(ctx, '#0f0f1b', o + 8, 9, 1, 22);
+    }
+  });
+}
+
 // --- Parallax skyline (tiles horizontally) ---------------------------------
 function drawSkyline(ctx, base, windowCol, seed, minH, maxH) {
   let s = seed;
@@ -255,6 +349,14 @@ export default class PreloadScene extends Phaser.Scene {
     const nodes = canvasTex(this, 'nodes', 64, 16, drawNodes);
     [0, 1, 2, 3].forEach((i) => nodes.add(i, 0, i * 16, 0, 16, 16));
     canvasTex(this, 'scroll', 16, 16, drawScroll);
+    canvasTex(this, 'badge', 16, 16, drawBadge);
+    const lift = canvasTex(this, 'elevator', 32, 32, drawElevator);
+    [0, 1].forEach((i) => lift.add(i, 0, i * 16, 0, 16, 32));
+    [0, 1, 2, 3].forEach((n) => {
+      const b = canvasTex(this, `boss${n}`, 64, 32, (c) => drawBosses(c, n));
+      [0, 1].forEach((i) => b.add(i, 0, i * 32, 0, 32, 32));
+      this.anims.create({ key: `boss${n}-idle`, frames: [0, 1].map((frame) => ({ key: `boss${n}`, frame })), frameRate: 4, repeat: -1 });
+    });
     canvasTex(this, 'bookshelf', 16, 16, drawBookshelf);
     canvasTex(this, 'tile-gate', 16, 16, drawGate);
     canvasTex(this, 'counter', 16, 16, drawCounter);
