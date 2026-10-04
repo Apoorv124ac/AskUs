@@ -175,6 +175,7 @@ export default class UIScene extends Phaser.Scene {
     this.tweens.add({ targets: box, scale: 1, duration: first ? 320 : 160, ease: 'Back.out' });
     this.registry.set('typing', true);
     this.time.delayedCall(first ? 240 : 40, () => {
+      if (this.bubbleRt !== rt) return; // replaced or closed in the meantime
       rt.type(() => {
         this.registry.set('typing', false);
         this.tweens.add({ targets: hint, alpha: 1, duration: 150 });

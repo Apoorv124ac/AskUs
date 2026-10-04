@@ -129,14 +129,21 @@ export function richText(scene, x, y, str, { width = 200, color = COLORS.white, 
   const finish = () => {
     if (timer) timer.remove();
     timer = null;
-    words.forEach((w, i) => w.setText(full[i]).setAlpha(1));
+    words.forEach((w, i) => w.active && w.setText(full[i]).setAlpha(1));
     if (typing) {
       typing = false;
       if (onDoneCb) onDoneCb();
     }
   };
   let onDoneCb = null;
+  // if the popup is destroyed mid-typing, stop quietly (no writes to dead text objects)
+  container.once('destroy', () => {
+    typing = false;
+    if (timer) timer.remove();
+    timer = null;
+  });
   const type = (onDone, cps = 48) => {
+    if (!container.active) return;
     onDoneCb = onDone;
     typing = true;
     words.forEach((w) => w.setText(' ').setAlpha(1));
@@ -144,7 +151,7 @@ export function richText(scene, x, y, str, { width = 200, color = COLORS.white, 
     let ci = 0;
     const base = 1000 / cps;
     const step = () => {
-      if (!typing) return;
+      if (!typing || !container.active) return;
       if (wi >= words.length) return finish();
       ci++;
       words[wi].setText(full[wi].slice(0, ci));

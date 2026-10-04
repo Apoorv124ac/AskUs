@@ -48,7 +48,7 @@ export default class StoryScene extends Phaser.Scene {
     this.box = box;
     this.tweens.add({ targets: box, y: 0, duration: 320, ease: 'Back.out' });
     this.rt = rt;
-    this.time.delayedCall(200, () => rt.type());
+    this.time.delayedCall(200, () => this.rt === rt && rt.type());
     this.hero.anims.play(this.i === lines.length - 1 ? 'wave' : 'idle');
   }
 

@@ -180,5 +180,116 @@
     "again": [
       "YOU HAVE *{skills}/15* SKILLS. ANY MISSING ONES ARE BACK IN THE PIPE ROOMS!"
     ]
+  },
+  "curator": {
+    "name": "MRS. KAPOOR",
+    "role": "CURATOR",
+    "color": "#f8a0d8",
+    "lines": [
+      "WELCOME TO THE *TROPHY HALL*, {name}! I LOOK AFTER THESE SHELVES.",
+      "FIVE CERTIFICATES ARE WAITING. JUMP UP AND *HIT EACH ? BLOCK FROM BELOW* TO RELEASE ONE."
+    ],
+    "again": [
+      "FIVE BLOCKS, {name}. HIT THEM FROM *BELOW*!"
+    ]
+  },
+  "curatorEnd": {
+    "name": "MRS. KAPOOR",
+    "role": "CURATOR",
+    "color": "#f8a0d8",
+    "lines": [
+      "*{certs}/5* CERTIFICATES, {name}! LEARNING NEVER STOPS, AND NEITHER DOES HE.",
+      "THE LAST STOP IS THE *ROOFTOP*. TAKE THE DOOR!"
+    ],
+    "again": [
+      "*{certs}/5* CERTIFICATES SO FAR, {name}. ANY MISSING BLOCKS?"
+    ]
+  },
+  "rooftop": {
+    "name": "MEERA",
+    "role": "MANAGER",
+    "color": "#f8a0d8",
+    "lines": [
+      "YOU MADE IT TO THE *ROOFTOP*, {name}! LOOK WHO CAME TO CHEER.",
+      "THE SIGNS BEHIND ME HAVE *HOW TO REACH ME*. WHEN YOU'RE READY, RAISE THE FLAG!"
+    ],
+    "again": [
+      "SIGNS FIRST, THEN THE FLAG, {name}!"
+    ]
+  },
+  "bLinkedIn": {
+    "name": "LINKEDIN",
+    "role": "FIND ME",
+    "color": "#58b0f8",
+    "lines": [
+      "LET'S CONNECT ON *LINKEDIN*!",
+      "LINKEDIN.COM/IN/APOORV-CHAURASIA-152B51228",
+      "PRESS ENTER AGAIN TO *OPEN* IT."
+    ],
+    "again": [
+      "LET'S CONNECT ON *LINKEDIN*!",
+      "LINKEDIN.COM/IN/APOORV-CHAURASIA-152B51228",
+      "PRESS ENTER AGAIN TO *OPEN* IT."
+    ],
+    "link": "https://www.linkedin.com/in/apoorv-chaurasia-152b51228"
+  },
+  "bEmail": {
+    "name": "EMAIL",
+    "role": "WRITE TO ME",
+    "color": "#ff7070",
+    "lines": [
+      "*EMAIL* ME ANYTIME:",
+      "APOORV.UK@GMAIL.COM",
+      "PRESS ENTER AGAIN TO *OPEN YOUR MAIL APP* AND COPY THE ADDRESS."
+    ],
+    "again": [
+      "*EMAIL* ME ANYTIME:",
+      "APOORV.UK@GMAIL.COM",
+      "PRESS ENTER AGAIN TO *OPEN YOUR MAIL APP* AND COPY THE ADDRESS."
+    ],
+    "link": "mailto:apoorv.uk@gmail.com",
+    "copy": "apoorv.uk@gmail.com"
+  },
+  "bPhone": {
+    "name": "PHONE",
+    "role": "CALL ME",
+    "color": "#58d854",
+    "lines": [
+      "*CALL OR WHATSAPP* ME:",
+      "+91 9044966056",
+      "PRESS ENTER AGAIN TO *COPY THE NUMBER*."
+    ],
+    "again": [
+      "*CALL OR WHATSAPP* ME:",
+      "+91 9044966056",
+      "PRESS ENTER AGAIN TO *COPY THE NUMBER*."
+    ],
+    "copy": "+91 9044966056"
+  },
+  "bHire": {
+    "name": "THE FLAG",
+    "role": "HIRE ME",
+    "color": "#f8d878",
+    "lines": [
+      "THANKS FOR PLAYING, *{name}*!",
+      "*12+ YEARS*, FOUR COMPANIES, ONE DESIGNER, READY FOR THE *NEXT CHAPTER AT WSP*.",
+      "RAISE THE FLAG TO FINISH. THEN LET'S *TALK*!"
+    ],
+    "again": [
+      "RAISE THE FLAG TO FINISH, {name}!"
+    ]
+  },
+  "bResume": {
+    "name": "RESUME",
+    "role": "CLASSIC VERSION",
+    "color": "#bcbcbc",
+    "lines": [
+      "PREFER A *CLASSIC RESUME*?",
+      "PRESS ENTER AGAIN TO *OPEN IT*."
+    ],
+    "again": [
+      "PRESS ENTER AGAIN TO *OPEN* THE RESUME."
+    ],
+    "link": "@resume"
   }
 }

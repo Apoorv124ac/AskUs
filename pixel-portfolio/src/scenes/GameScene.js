@@ -6,10 +6,12 @@ import dialogue from '../data/dialogue.json';
 import { save, persist } from '../systems/save.js';
 import { WORLDS } from '../data/worlds.js';
 import { txt, burst } from '../ui/pixel.js';
-import { ZOOM } from '../config.js';
+import { ZOOM, CLASSIC_RESUME_URL } from '../config.js';
 import { CampusTasks } from '../systems/campus.js';
 import { OfficeTasks } from '../systems/office.js';
 import { ArcadeSkills, countSkills, TOTAL as SKILL_TOTAL } from '../systems/arcade.js';
+import { TrophyHall, countCerts, CERT_ENTRIES } from '../systems/trophies.js';
+import { Rooftop } from '../systems/finale.js';
 
 const TILE_TEX = {
   '#': 'tile-ground',
@@ -71,6 +73,8 @@ export default class GameScene extends Phaser.Scene {
     this.campus = null;
     this.office = null;
     this.arcade = null;
+    this.trophies = null;
+    this.finale = null;
 
     this.buildBackground();
     this.buildTiles();
@@ -81,6 +85,8 @@ export default class GameScene extends Phaser.Scene {
     if (L.office) this.office = new OfficeTasks(this);
     if (L.arcade || L.arcadeRoom) this.arcade = new ArcadeSkills(this);
     else reg.set('skillBars', null);
+    if (L.hall) this.trophies = new TrophyHall(this);
+    if (L.finale) this.finale = new Rooftop(this);
     this.input.on('pointerdown', () => this.talking && this.advanceTalk());
     this.events.once('shutdown', () => this.game.events.emit('dialogue-end'));
     if (L.world === 0) {
@@ -111,6 +117,7 @@ export default class GameScene extends Phaser.Scene {
     [['skyline-far', 0.15], ['skyline-near', 0.4]].forEach(([key, f], i) => {
       // scroll-factor-0 objects ignore the camera scroll, so offset them for the zoomed view
       const ts = this.add.tileSprite(128 * (ZOOM - 1), 112 * (ZOOM - 1), 256, 224, key).setOrigin(0).setScrollFactor(0).setDepth(i);
+      if (this.level.tint) ts.setTint(this.level.tint);
       this.parallax.push([ts, f]);
     });
   }
@@ -123,6 +130,10 @@ export default class GameScene extends Phaser.Scene {
         const ch = L.grid[r][c];
         if (ch === 'T' || ch === 'D' || ch === 'K') {
           this.add.image(c * TILE + 8, r * TILE + 8, { T: 'plant', D: 'counter', K: 'bookshelf' }[ch]).setDepth(2);
+          continue;
+        }
+        if (ch === 'Y' || ch === 'V') {
+          this.add.image(c * TILE + 8, r * TILE + 8, ch === 'Y' ? 'trophy' : 'curtain').setDepth(2);
           continue;
         }
         if (ch === 'M' || ch === 'N' || ch === 'O') {
@@ -290,8 +301,13 @@ export default class GameScene extends Phaser.Scene {
   // --- NPCs + dialogue -----------------------------------------------------
   buildNpcs() {
     this.level.npcs.forEach((d) => {
-      const spr = this.add.sprite(d.x, d.bottom - 16, 'npcs', 0).setDepth(4).setFlipX(d.face < 0);
-      spr.anims.play(`${d.id}-idle`);
+      let spr;
+      if (d.board) {
+        spr = this.add.image(d.x, d.bottom - 16, 'board', d.frame).setDepth(4);
+      } else {
+        spr = this.add.sprite(d.x, d.bottom - 16, 'npcs', 0).setDepth(4).setFlipX(d.face < 0);
+        spr.anims.play(d.cheer ? `${d.id}-wave` : `${d.id}-idle`);
+      }
       const mark = txt(this, d.x, d.bottom - 40, '!', { color: '#f8d878', bold: true, origin: 0.5, depth: 8 }).setVisible(false);
       this.tweens.add({ targets: mark, y: mark.y - 3, yoyo: true, repeat: -1, duration: 400 });
       this.npcs.push({ ...d, spr, mark, talked: false, noticed: false, arming: 0 });
@@ -299,7 +315,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   fmt(str) {
-    return str.replace(/\{name\}/g, save.name || 'FRIEND').replace(/\{skills\}/g, String(countSkills(this.collected)));
+    return str.replace(/\{name\}/g, save.name || 'FRIEND').replace(/\{skills\}/g, String(countSkills(this.collected)))
+      .replace(/\{certs\}/g, String(countCerts(this.collected)));
   }
 
   startTalk(npc) {
@@ -308,7 +325,7 @@ export default class GameScene extends Phaser.Scene {
     this.talking = { npc, lines: npc.talked && d.again ? d.again : d.lines, i: 0, d };
     npc.talked = true;
     npc.mark.setVisible(false);
-    npc.spr.anims.play(`${npc.id}-talk`);
+    if (!npc.board) npc.spr.anims.play(`${npc.id}-talk`);
     this.showLine();
   }
 
@@ -336,9 +353,22 @@ export default class GameScene extends Phaser.Scene {
     t.i++;
     if (t.i < t.lines.length) return this.showLine();
     this.talking = null;
-    t.npc.spr.anims.play(`${t.npc.id}-idle`);
+    if (!t.npc.board) t.npc.spr.anims.play(`${t.npc.id}-idle`);
     this.game.events.emit('dialogue-end');
     if (t.d.giveCoffee) this.powerUp();
+    // contact boards: the LAST page opens the link / copies the text
+    if (t.d.link || t.d.copy) this.contactAction(t.d);
+  }
+
+  contactAction(d) {
+    const link = d.link === '@resume' ? CLASSIC_RESUME_URL : d.link;
+    if (d.copy && navigator.clipboard) {
+      navigator.clipboard.writeText(d.copy).then(
+        () => this.game.events.emit('banner', 'COPIED!\n' + d.copy),
+        () => {}
+      );
+    }
+    if (link) window.open(link, '_blank', 'noopener');
   }
 
   updateNpcs() {
@@ -351,14 +381,15 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
     for (const n of this.npcs) {
+      if (n.cheer) continue;
       const dx = Math.abs(p.x - n.x);
       const dy = Math.abs(p.y - (n.bottom - 16));
       const seen = dx < 78 && dy < 40; // you're approaching: they notice you
       const near = dx < 38 && dy < 24; // close enough to talk
       if (seen && !n.noticed) {
         n.noticed = true;
-        n.spr.setFlipX(p.x < n.x);
-        if (!n.talked) {
+        if (!n.board) n.spr.setFlipX(p.x < n.x);
+        if (!n.talked && !n.board) {
           // greet: little wave + the "!" pops above their head
           n.spr.anims.play(`${n.id}-wave`);
           this.time.delayedCall(900, () => !this.talking && n.spr.anims.play(`${n.id}-idle`));
@@ -371,7 +402,7 @@ export default class GameScene extends Phaser.Scene {
         n.mark.setVisible(false);
       }
       if (!seen) continue;
-      n.spr.setFlipX(p.x < n.x);
+      if (!n.board) n.spr.setFlipX(p.x < n.x);
       if (!near) {
         n.arming = 0;
         continue;
@@ -405,7 +436,9 @@ export default class GameScene extends Phaser.Scene {
           ? `\nDEGREES ${save.degrees.filter(Boolean).length}/4`
           : this.level.world === 2
             ? `\nFLOORS ${save.floors.filter(Boolean).length}/5`
-            : `\nSKILLS ${countSkills(this.collected)}/${SKILL_TOTAL}`;
+            : this.level.world === 3
+              ? `\nSKILLS ${countSkills(this.collected)}/${SKILL_TOTAL}`
+              : `\nCERTS ${countCerts(this.collected)}/${CERT_ENTRIES.length}`;
     this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!${f}`);
     this.lockAnim('celebrate', 2400);
     this.time.delayedCall(2600, () => {

@@ -1,4 +1,4 @@
-# Office Quest — Days 1–7 (Worlds 1 to 4)
+# Office Quest — Days 1–8 (all 6 worlds + credits)
 
 Playable engine demo: controls, movement feel, pickups, pipes, HUD, and the pixel
 hero (Apoorv). Level art is still placeholder (generated in code).
@@ -68,3 +68,12 @@ Skills + proofs: `skillArcade` in `src/data/resume.json`; logic: `src/systems/ar
 
 ## Controls added later
 Up again in mid-air = double jump (coffee = triple). R = back to the last checkpoint (never stuck).
+
+## Worlds 5 and 6 (Day 8)
+- **Trophy Hall:** hit 5 ? blocks from below to release the certificates (`awards` in `src/data/resume.json`).
+- **Rooftop:** contact boards (LinkedIn opens, email opens your mail app and copies, phone copies), the
+  cheering cast, and the "hire me" flagpole. Raising the flag runs fireworks, then the rolling credits
+  with the visitor's final scores (`src/scenes/CreditsScene.js`).
+- **Contact data** lives in `contact` in `src/data/resume.json` (email, phone, LinkedIn). Set
+  `CLASSIC_RESUME_URL` in `src/config.js` to add a resume board. Clear `email`/`phone` to hide them.
+  NOTE: anything in this repo is visible to anyone who can see the repository.

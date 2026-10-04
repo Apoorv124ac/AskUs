@@ -201,10 +201,13 @@
     }
   ],
   "contact": {
-    "linkedin": "linkedin.com/in/apoorv-chaurasia-152b51228",
+    "linkedin": "https://www.linkedin.com/in/apoorv-chaurasia-152b51228",
+    "linkedinShort": "LINKEDIN.COM/IN/APOORV-CHAURASIA-152B51228",
+    "email": "apoorv.uk@gmail.com",
+    "phone": "+91 9044966056",
     "location": "Lucknow, India",
-    "email": "",
-    "phone": ""
+    "resumeUrl": "",
+    "company": "WSP"
   },
   "skillArcade": [
     {
@@ -293,6 +296,43 @@
           "proof": "*VISUAL STORYTELLING IN POWERPOINT* CERTIFIED (LINKEDIN, 2022)."
         }
       ]
+    }
+  ],
+  "awards": [
+    {
+      "title": "ADOBE XD: DESIGN & PROTOTYPE",
+      "issuer": "LINKEDIN LEARNING",
+      "year": "2022",
+      "tag": "2022",
+      "text": "*ADOBE XD: DESIGN & PROTOTYPE*. LINKEDIN LEARNING, 2022. HOW TO TAKE AN INTERFACE FROM IDEA TO CLICKABLE PROTOTYPE."
+    },
+    {
+      "title": "ILLUSTRATOR: GRAPHIC DESIGN",
+      "issuer": "LINKEDIN LEARNING",
+      "year": "2022",
+      "tag": "2022",
+      "text": "*ILLUSTRATOR: GRAPHIC DESIGN*. LINKEDIN LEARNING, 2022. LOGOS, ICONS AND ILLUSTRATIONS, DONE PROPERLY."
+    },
+    {
+      "title": "VISUAL STORYTELLING IN POWERPOINT",
+      "issuer": "LINKEDIN LEARNING",
+      "year": "2022",
+      "tag": "2022",
+      "text": "*VISUAL STORYTELLING IN POWERPOINT*. LINKEDIN LEARNING, 2022. THE SKILL BEHIND MY LEADERSHIP DECKS."
+    },
+    {
+      "title": "INDUSTRIAL DESIGN, INNOVATION & ENTREPRENEURSHIP",
+      "issuer": "IIT DELHI",
+      "year": "2021-22",
+      "tag": "2022",
+      "text": "*DESIGN, INNOVATION & ENTREPRENEURSHIP*. IIT DELHI, 2021 TO 2022."
+    },
+    {
+      "title": "DATA SCIENCE: AI & ML",
+      "issuer": "IIT GUWAHATI",
+      "year": "2023-24",
+      "tag": "2024",
+      "text": "*CERTIFICATE IN DATA SCIENCE: AI & ML*. IIT GUWAHATI, 2023 TO 2024."
     }
   ]
 }

@@ -310,6 +310,70 @@ function drawCabinets(ctx) {
   });
 }
 
+// --- World 5/6 props: ? block, trophy, curtain, contact boards, flag
+function drawQBlocks(ctx) {
+  [0, 1].forEach((f) => {
+    const o = f * 16;
+    fill(ctx, '#0f0f1b', o, 0, 16, 16);
+    fill(ctx, f ? '#8c5c00' : '#f8d878', o + 1, 1, 14, 14);
+    fill(ctx, f ? '#6c4400' : '#fca044', o + 1, 12, 14, 3);
+    fill(ctx, f ? '#6c4400' : '#fcfcfc', o + 2, 2, 2, 2);
+    fill(ctx, f ? '#6c4400' : '#fcfcfc', o + 12, 2, 2, 2);
+    if (!f) QMARK.forEach((row, ry) => [...row].forEach((ch, rx) => ch === 'X' && fill(ctx, '#ac4040', o + 5 + rx, 4 + ry, 1, 1)));
+  });
+}
+function drawTrophy(ctx) {
+  fill(ctx, '#0f0f1b', 4, 1, 8, 7);
+  fill(ctx, '#f8d878', 5, 2, 6, 5);
+  fill(ctx, '#fcfcfc', 6, 3, 1, 2);
+  fill(ctx, '#0f0f1b', 2, 2, 2, 4);
+  fill(ctx, '#0f0f1b', 12, 2, 2, 4);
+  fill(ctx, '#0f0f1b', 7, 8, 2, 3);
+  fill(ctx, '#f8d878', 7, 8, 2, 2);
+  fill(ctx, '#0f0f1b', 4, 11, 8, 4);
+  fill(ctx, '#ac7c00', 5, 12, 6, 2);
+}
+function drawCurtain(ctx) {
+  fill(ctx, '#7c1010', 0, 0, 16, 16);
+  [0, 4, 8, 12].forEach((x) => {
+    fill(ctx, '#a02020', x + 1, 0, 2, 16);
+    fill(ctx, '#500808', x, 0, 1, 16);
+  });
+  fill(ctx, '#f8d878', 0, 14, 16, 2);
+}
+function drawBoards(ctx) {
+  const plate = (o, c) => {
+    fill(ctx, '#0f0f1b', o + 7, 14, 2, 18); // post
+    fill(ctx, '#8c5c00', o + 7, 15, 2, 17);
+    fill(ctx, '#0f0f1b', o + 0, 2, 16, 13);
+    fill(ctx, c, o + 1, 3, 14, 11);
+  };
+  plate(0, '#0a66c2');
+  fill(ctx, '#fcfcfc', 3, 6, 2, 2); fill(ctx, '#fcfcfc', 3, 9, 2, 3);
+  fill(ctx, '#fcfcfc', 7, 9, 2, 3); fill(ctx, '#fcfcfc', 7, 8, 5, 1); fill(ctx, '#fcfcfc', 11, 9, 2, 3);
+  plate(16, '#f83800');
+  fill(ctx, '#fcfcfc', 19, 6, 10, 7); fill(ctx, '#f83800', 20, 7, 8, 5);
+  fill(ctx, '#fcfcfc', 20, 7, 2, 1); fill(ctx, '#fcfcfc', 22, 8, 2, 1); fill(ctx, '#fcfcfc', 24, 8, 2, 1); fill(ctx, '#fcfcfc', 26, 7, 2, 1);
+  plate(32, '#00a800');
+  fill(ctx, '#fcfcfc', 38, 5, 5, 9); fill(ctx, '#00a800', 39, 6, 3, 5); fill(ctx, '#0f0f1b', 40, 12, 1, 1);
+  plate(48, '#bcbcbc');
+  fill(ctx, '#fcfcfc', 53, 4, 8, 10); [6, 8, 10, 12].forEach((y) => fill(ctx, '#7c7c7c', 54, y, 6, 1));
+  plate(64, '#f8d878');
+  [[72, 5, 1, 2], [71, 7, 3, 1], [70, 8, 5, 2], [71, 10, 3, 1], [72, 11, 1, 1]].forEach(([x, y, w, h]) => fill(ctx, '#f83800', x, y, w, h));
+}
+function drawFlagpole(ctx) {
+  fill(ctx, '#0f0f1b', 6, 0, 4, 64);
+  fill(ctx, '#bcbcbc', 7, 4, 2, 60);
+  fill(ctx, '#f8d878', 6, 0, 4, 4);
+}
+function drawHireFlag(ctx) {
+  fill(ctx, '#0f0f1b', 0, 0, 22, 14);
+  fill(ctx, '#f83800', 1, 1, 20, 12);
+  fill(ctx, '#fcfcfc', 1, 5, 20, 4);
+  // "HIRE" in tiny letters on the white band is too small; use a star instead
+  fill(ctx, '#f83800', 9, 5, 4, 4);
+}
+
 // --- Parallax skyline (tiles horizontally) ---------------------------------
 function drawSkyline(ctx, base, windowCol, seed, minH, maxH) {
   let s = seed;
@@ -360,6 +424,14 @@ export default class PreloadScene extends Phaser.Scene {
     const fact = canvasTex(this, 'fact', 64, 16, drawFactCoins);
     for (let i = 0; i < 4; i++) fact.add(i, 0, i * 16, 0, 16, 16);
     canvasTex(this, 'plant', 16, 16, drawPlant);
+    const qb = canvasTex(this, 'qblock', 32, 16, drawQBlocks);
+    [0, 1].forEach((i) => qb.add(i, 0, i * 16, 0, 16, 16));
+    canvasTex(this, 'trophy', 16, 16, drawTrophy);
+    canvasTex(this, 'curtain', 16, 16, drawCurtain);
+    const bd = canvasTex(this, 'board', 80, 32, drawBoards);
+    [0, 1, 2, 3, 4].forEach((i) => bd.add(i, 0, i * 16, 0, 16, 32));
+    canvasTex(this, 'flagpole', 16, 64, drawFlagpole);
+    canvasTex(this, 'hireflag', 22, 14, drawHireFlag);
     const cab = canvasTex(this, 'cabinet', 48, 32, drawCabinets);
     [0, 1, 2].forEach((i) => cab.add(i, 0, i * 16, 0, 16, 32));
     const bug = canvasTex(this, 'bug', 32, 16, drawBug);

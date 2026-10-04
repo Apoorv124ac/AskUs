@@ -1,6 +1,6 @@
 // NPC sprite sheet layout: one row per character, 4 frames per row.
 // Replace public/assets/npcs.png with your own art keeping this order/size.
-export const NPC_ORDER = ['rita', 'raju', 'meera', 'prof', 'ceo', 'sam', 'ravi'];
+export const NPC_ORDER = ['rita', 'raju', 'meera', 'prof', 'ceo', 'sam', 'ravi', 'curator'];
 export const NPC_COLS = 4; // idle0, idle1, talk, wave
 
 export const NPC_ANIMS = (id) => {

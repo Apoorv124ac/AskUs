@@ -4,10 +4,11 @@
 // Grid characters:  . empty   # carpet(top)   d carpet(under)   B desk block
 //   p q l r pipe pieces   o coin   f FACT coin   t TOOL coin   c coffee
 //   F checkpoint   G goal door   T plant (decor)   D counter (decor)   K bookshelf (decor)
+//   World 5: Q ? block (hit from below)   Y trophy   V curtain   World 6: P flagpole
 //   World 4 skill coins: u (design) v (lead) w (tools)   M N O arcade cabinets (decor)
 //   World 3 floors: k client badge   E elevator (decor)
 //   World 2 tasks: s swatch   b typo bug   i idea bulb   1 2 3 4 data nodes (collect in order)
-import { TILE } from './config.js';
+import { TILE, CLASSIC_RESUME_URL } from './config.js';
 
 const GROUND_ROW = 12; // rows 12-13 are floor; row 11 is the first walkable row
 
@@ -369,11 +370,69 @@ function buildArcadeRoom(n, ch, name, count) {
   return L;
 }
 
+// extra NPC kinds: signboards (contact info) and cheering cast
+function board(L, col, frame, dlg, autoTalk = false) {
+  L.npcs.push({ id: 'board', frame, dlg, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face: -1, autoTalk, board: true });
+}
+function cheer(L, id, col) {
+  L.npcs.push({ id, dlg: null, x: col * TILE + 8, bottom: GROUND_ROW * TILE, face: -1, autoTalk: false, cheer: true });
+}
+
+// World 5 "Trophy Hall": hit 5 ? blocks from below to release the certificates.
+function buildWorld5() {
+  const L = newLevel(100, 14, { room: 'world5', world: 4, bg: 0x2a0a22, theme: 'hall' });
+  ground(L);
+  L.hall = true;
+  span(L, 1, 0, 99, 'V'); // velvet valance along the top
+  npc(L, 'curator', 6, -1, true, 'curator');
+  put(L, 3, 11, 'Y');
+  [[16, 8], [30, 7], [44, 8], [58, 7], [72, 8]].forEach(([c, r], i) => {
+    put(L, c, r, 'Q');
+    put(L, c, 11, 'D');
+    put(L, c, 10, 'Y');
+    label(L, c - 2, 3, `CERTIFICATE ${i + 1}/5`);
+  });
+  [[22, 9], [24, 9], [37, 9], [38, 9], [51, 9], [52, 9], [65, 9], [66, 9]].forEach(([c, r]) => put(L, c, r, 'o'));
+  put(L, 34, 11, 'c');
+  put(L, 50, 11, 'F');
+  put(L, 82, 11, 'Y');
+  npc(L, 'curator', 86, -1, true, 'curatorEnd');
+  put(L, 94, 11, 'G');
+  return L;
+}
+
+// World 6 "Rooftop": contact boards, the cheering cast, and the "hire me" flagpole.
+function buildWorld6() {
+  const L = newLevel(122, 14, { room: 'world6', world: 5, bg: 0xf87858, tint: 0xffb878 });
+  ground(L);
+  L.finale = true;
+  npc(L, 'meera', 8, -1, true, 'rooftop');
+  put(L, 4, 11, 'T');
+  board(L, 16, 0, 'bLinkedIn');
+  board(L, 24, 1, 'bEmail');
+  board(L, 32, 2, 'bPhone');
+  if (CLASSIC_RESUME_URL) board(L, 40, 3, 'bResume');
+  [12, 20, 28, 36, 44].forEach((c) => put(L, c, 11, 'T'));
+  [[18, 9], [20, 9], [26, 9], [28, 9], [34, 9], [36, 9]].forEach(([c, r]) => put(L, c, r, 'o'));
+  put(L, 52, 11, 'F');
+  label(L, 54, 6, 'HOW TO REACH ME');
+  span(L, 10, 56, 59, 'B');
+  span(L, 8, 62, 65, 'B');
+  [[57, 9], [58, 9], [63, 7], [64, 7]].forEach(([c, r]) => put(L, c, r, 'o'));
+  board(L, 74, 4, 'bHire', true);
+  ['rita', 'raju', 'prof', 'ceo', 'sam', 'ravi', 'curator'].forEach((id, i) => cheer(L, id, 84 + i * 3));
+  put(L, 108, 11, 'P');
+  label(L, 100, 5, 'RAISE THE FLAG!');
+  return L;
+}
+
 export const LEVELS = {
   world1: buildWorld1(),
   bonus: buildBonus(),
   world2: buildWorld2(),
   lab: buildLab(),
+  world5: buildWorld5(),
+  world6: buildWorld6(),
   world4: buildWorld4(),
   arc1: buildArcadeRoom(1, 'u', 'DESIGN CRAFT', 2),
   arc2: buildArcadeRoom(2, 'v', 'LEADERSHIP & IMPACT', 1),
