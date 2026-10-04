@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { txt, go, skyline, groundStrip, blink, popIn, burst, COLORS } from '../ui/pixel.js';
+import { txt, go, skyline, groundStrip, blink, popIn, burst, COLORS, viewCam } from '../ui/pixel.js';
 
 export default class TitleScene extends Phaser.Scene {
   constructor() {
@@ -7,6 +7,7 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   create() {
+    viewCam(this);
     this._leaving = false;
     this.cameras.main.setBackgroundColor(0x3cbcfc).fadeIn(300, 15, 15, 27);
     this.drift = skyline(this);

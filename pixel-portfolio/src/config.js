@@ -3,6 +3,10 @@ export const GAME_W = 256;
 export const GAME_H = 224;
 export const TILE = 16;
 
+// The game is DRAWN at ZOOM x the logical 256x224 size. Pixel art stays chunky (nearest scaling)
+// but text and edges are rendered at 3x resolution, so everything looks much cleaner.
+export const ZOOM = 3;
+
 // Movement feel. Distances assume TILE = 16px.
 export const PHYSICS = {
   gravity: 900,
@@ -18,15 +22,17 @@ export const PHYSICS = {
   airControl: 0.6, // fraction of accel available in mid-air
   skidMultiplier: 1.8, // faster accel when reversing direction
 
-  jumpVelocity: -310, // ~3.3 tiles high
-  longJumpVelocity: -340, // Shift + Up: higher AND farther
+  jumpVelocity: -335, // ~3.9 tiles high
+  longJumpVelocity: -365, // Shift + Up: higher AND farther
+  baseAirJumps: 1, // everyone gets a double jump (press Up again in mid-air)
+  airJumpFactor: 0.92, // the extra jump is slightly weaker
   jumpCutFactor: 0.45, // release Up early = shorter hop
   coyoteMs: 100, // grace period after walking off a ledge
   jumpBufferMs: 110, // Up pressed slightly before landing still counts
 
   coffeeMs: 15000,
   coffeeSpeedBoost: 1.3,
-  coffeeAirJumps: 1, // double jump while caffeinated
+  coffeeAirJumps: 2, // coffee = triple jump
   coffeeJumpBoost: 1.08,
 
   pitCoinPenalty: 3, // coins lost when you fall in a pit

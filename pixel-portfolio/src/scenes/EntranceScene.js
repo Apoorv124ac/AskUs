@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { txt, panel, go, skyline, groundStrip, popIn } from '../ui/pixel.js';
+import { txt, panel, go, skyline, groundStrip, popIn, viewCam } from '../ui/pixel.js';
 
 // Cutscene: Apoorv's guest arrives at the office and badges in.
 export default class EntranceScene extends Phaser.Scene {
@@ -8,6 +8,7 @@ export default class EntranceScene extends Phaser.Scene {
   }
 
   create() {
+    viewCam(this);
     this._leaving = false;
     this.cameras.main.setBackgroundColor(0x3cbcfc).fadeIn(300, 15, 15, 27);
     this.drift = skyline(this, { near: false });

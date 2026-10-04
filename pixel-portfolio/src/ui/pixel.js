@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { GAME_W, GAME_H, ZOOM } from '../config.js';
 
 // Two fonts: Silkscreen = compact body/label text (crisp at 8px),
 // Press Start 2P = big headlines only.
@@ -16,12 +17,22 @@ export const COLORS = {
   dim: '#7c7c7c',
 };
 
+// Every scene calls this first: zoom the camera so the logical 256x224 space fills the
+// (3x larger) canvas. All coordinates elsewhere stay in the familiar 256x224 units.
+export function viewCam(scene) {
+  const cam = scene.cameras.main;
+  cam.setZoom(ZOOM);
+  cam.setScroll(-(GAME_W / 2) * (ZOOM - 1), -(GAME_H / 2) * (ZOOM - 1));
+  return cam;
+}
+
 // Text with the project defaults. o: size, color, display (Press Start 2P), bold, origin, wrap, align, shadow, depth
 export function txt(scene, x, y, s, o = {}) {
   const t = scene.add.text(x, y, s, {
     fontFamily: o.display ? FONT_DISPLAY : FONT,
     fontStyle: o.bold ? 'bold' : 'normal',
     fontSize: `${o.size || 8}px`,
+    resolution: ZOOM, // rendered at 3x so it stays razor sharp
     color: o.color || COLORS.white,
     align: o.align || 'left',
     lineSpacing: o.lineSpacing ?? 2,
@@ -110,13 +121,53 @@ export function richText(scene, x, y, str, { width = 200, color = COLORS.white, 
   });
   const height = (line + 1) * lineH;
   words.forEach((w) => w.setAlpha(0));
+  // Typewriter: letters appear one by one (pausing a beat at punctuation). Layout is already
+  // fixed, so words never jump around while typing.
+  const full = words.map((w) => w.text);
+  let timer = null;
+  let typing = false;
+  const finish = () => {
+    if (timer) timer.remove();
+    timer = null;
+    words.forEach((w, i) => w.setText(full[i]).setAlpha(1));
+    if (typing) {
+      typing = false;
+      if (onDoneCb) onDoneCb();
+    }
+  };
+  let onDoneCb = null;
+  const type = (onDone, cps = 48) => {
+    onDoneCb = onDone;
+    typing = true;
+    words.forEach((w) => w.setText(' ').setAlpha(1));
+    let wi = 0;
+    let ci = 0;
+    const base = 1000 / cps;
+    const step = () => {
+      if (!typing) return;
+      if (wi >= words.length) return finish();
+      ci++;
+      words[wi].setText(full[wi].slice(0, ci));
+      const ch = full[wi][ci - 1];
+      let delay = base;
+      if (ci >= full[wi].length) {
+        wi++;
+        ci = 0;
+        delay += base * 0.8; // gap between words
+      }
+      if (/[,;:]/.test(ch)) delay += 90;
+      else if (/[.!?]/.test(ch)) delay += 190;
+      timer = scene.time.delayedCall(delay, step);
+    };
+    step();
+  };
   const reveal = () =>
     words.forEach((w, i) => {
       const y0 = w.y;
       w.y = y0 + 4;
       scene.tweens.add({ targets: w, alpha: 1, y: y0, delay: i * popMs, duration: 180, ease: 'Back.out' });
     });
-  return { container, words, height, reveal };
+  return { container, words, height, reveal, type, finish, isTyping: () => typing };
 }
 
 // Fade the camera out, then switch scene (guards against double triggers).

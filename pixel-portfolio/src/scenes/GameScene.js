@@ -6,6 +6,7 @@ import dialogue from '../data/dialogue.json';
 import { save, persist } from '../systems/save.js';
 import { WORLDS } from '../data/worlds.js';
 import { txt, burst } from '../ui/pixel.js';
+import { ZOOM } from '../config.js';
 import { CampusTasks } from '../systems/campus.js';
 import { OfficeTasks } from '../systems/office.js';
 
@@ -43,6 +44,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.worldW, this.worldH + 64);
     this.physics.world.setBoundsCollision(true, true, true, false); // pits are open
     const cam = this.cameras.main;
+    cam.setZoom(ZOOM);
     cam.setBounds(0, 0, this.worldW, this.worldH);
     cam.setBackgroundColor(L.bg);
     cam.fadeIn(250);
@@ -89,6 +91,7 @@ export default class GameScene extends Phaser.Scene {
     this.interactPressed = false;
     this.input.keyboard.on('keydown-ENTER', () => (this.interactPressed = true));
     this.input.keyboard.on('keydown-SPACE', () => (this.interactPressed = true));
+    this.input.keyboard.on('keydown-R', () => this.returnToCheckpoint());
 
     if (!this.scene.isActive('UI')) this.scene.launch('UI');
     const w = WORLDS[L.world];
@@ -102,7 +105,8 @@ export default class GameScene extends Phaser.Scene {
     this.parallax = [];
     if (this.level.theme !== 'office') return;
     [['skyline-far', 0.15], ['skyline-near', 0.4]].forEach(([key, f], i) => {
-      const ts = this.add.tileSprite(0, 0, 256, 224, key).setOrigin(0).setScrollFactor(0).setDepth(i);
+      // scroll-factor-0 objects ignore the camera scroll, so offset them for the zoomed view
+      const ts = this.add.tileSprite(128 * (ZOOM - 1), 112 * (ZOOM - 1), 256, 224, key).setOrigin(0).setScrollFactor(0).setDepth(i);
       this.parallax.push([ts, f]);
     });
   }
@@ -270,7 +274,7 @@ export default class GameScene extends Phaser.Scene {
 
   powerUp() {
     this.coffeeMs = P.coffeeMs;
-    this.game.events.emit('banner', 'CAFFEINATED!\nFASTER + DOUBLE JUMP');
+    this.game.events.emit('banner', 'CAFFEINATED!\nFASTER + TRIPLE JUMP');
     this.cameras.main.shake(120, 0.004);
     this.lockAnim('sip', 700);
   }
@@ -282,7 +286,7 @@ export default class GameScene extends Phaser.Scene {
       spr.anims.play(`${d.id}-idle`);
       const mark = txt(this, d.x, d.bottom - 40, '!', { color: '#f8d878', bold: true, origin: 0.5, depth: 8 }).setVisible(false);
       this.tweens.add({ targets: mark, y: mark.y - 3, yoyo: true, repeat: -1, duration: 400 });
-      this.npcs.push({ ...d, spr, mark, talked: false });
+      this.npcs.push({ ...d, spr, mark, talked: false, noticed: false, arming: 0 });
     });
   }
 
@@ -292,6 +296,7 @@ export default class GameScene extends Phaser.Scene {
 
   startTalk(npc) {
     const d = dialogue[npc.dlg || npc.id];
+    npc.arming = 0;
     this.talking = { npc, lines: npc.talked && d.again ? d.again : d.lines, i: 0, d };
     npc.talked = true;
     npc.mark.setVisible(false);
@@ -304,6 +309,8 @@ export default class GameScene extends Phaser.Scene {
     this.game.events.emit('dialogue', {
       id: t.npc.id,
       color: t.d.color,
+      ax: t.npc.x - this.cameras.main.worldView.x,
+      ay: t.npc.bottom - 34 - this.cameras.main.worldView.y,
       title: `${t.d.name} · ${t.d.role}`,
       text: this.fmt(t.lines[t.i]),
       page: `${t.i + 1}/${t.lines.length}`,
@@ -313,6 +320,11 @@ export default class GameScene extends Phaser.Scene {
   advanceTalk() {
     const t = this.talking;
     if (!t) return;
+    // first press while text is still typing = show the whole line
+    if (this.registry.get('typing')) {
+      this.game.events.emit('dialogue-skip');
+      return;
+    }
     t.i++;
     if (t.i < t.lines.length) return this.showLine();
     this.talking = null;
@@ -323,6 +335,7 @@ export default class GameScene extends Phaser.Scene {
 
   updateNpcs() {
     const p = this.player;
+    const now = this.time.now;
     const pressed = this.interactPressed;
     this.interactPressed = false;
     if (this.talking) {
@@ -330,40 +343,38 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
     for (const n of this.npcs) {
-      const near = Math.abs(p.x - n.x) < 34 && Math.abs(p.y - (n.bottom - 16)) < 24;
-      n.mark.setVisible(near);
-      if (!near) continue;
+      const dx = Math.abs(p.x - n.x);
+      const dy = Math.abs(p.y - (n.bottom - 16));
+      const seen = dx < 78 && dy < 40; // you're approaching: they notice you
+      const near = dx < 38 && dy < 24; // close enough to talk
+      if (seen && !n.noticed) {
+        n.noticed = true;
+        n.spr.setFlipX(p.x < n.x);
+        if (!n.talked) {
+          // greet: little wave + the "!" pops above their head
+          n.spr.anims.play(`${n.id}-wave`);
+          this.time.delayedCall(900, () => !this.talking && n.spr.anims.play(`${n.id}-idle`));
+        }
+        n.mark.setVisible(true).setScale(0);
+        this.tweens.add({ targets: n.mark, scale: 1, duration: 260, ease: 'Back.out' });
+      } else if (!seen && n.noticed) {
+        n.noticed = false;
+        n.arming = 0;
+        n.mark.setVisible(false);
+      }
+      if (!seen) continue;
       n.spr.setFlipX(p.x < n.x);
-      if ((!n.talked && n.autoTalk && p.body.blocked.down) || pressed) return this.startTalk(n);
+      if (!near) {
+        n.arming = 0;
+        continue;
+      }
+      // auto-start once, after a short beat so it never feels like a sudden freeze
+      if (!n.talked && n.autoTalk && p.body.blocked.down) {
+        if (!n.arming) n.arming = now + 450;
+        else if (now >= n.arming) return this.startTalk(n);
+      }
+      if (pressed) return this.startTalk(n);
     }
-  }
-
-  hitCheckpoint(flag) {
-    if (flag.texture.key === 'flag-on') return;
-    flag.setTexture('flag-on');
-    this.registry.set('checkpoint', { room: this.roomKey, ...flag.cp });
-    this.game.events.emit('banner', 'CHECKPOINT!');
-  }
-
-  hitGoal() {
-    if (this.goalShown) return;
-    this.goalShown = true;
-    save.completed[this.level.world] = true;
-    save.lastWorld = Math.min(this.level.world + 1, 5);
-    persist();
-    const f =
-      this.level.world === 0
-        ? `\nFACTS ${countFacts(this.collected)}/${WORLD1_FACTS.length}`
-        : this.level.world === 1
-          ? `\nDEGREES ${save.degrees.filter(Boolean).length}/4`
-          : `\nFLOORS ${save.floors.filter(Boolean).length}/5`;
-    this.game.events.emit('banner', `WORLD ${this.level.world + 1} COMPLETE!${f}`);
-    this.lockAnim('celebrate', 2400);
-    this.time.delayedCall(2600, () => {
-      this.scene.stop('UI');
-      this.cameras.main.fadeOut(250, 15, 15, 27);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Menu'));
-    });
   }
 
   popText(x, y, msg) {
@@ -436,6 +447,16 @@ export default class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: p, alpha: 0.35, yoyo: true, repeat: 5, duration: 100, onComplete: () => p.setAlpha(1) });
   }
 
+  // 'R' (or the pause menu): never stuck. Back to the last checkpoint, no penalty.
+  returnToCheckpoint() {
+    if (this.talking || this.entering) return;
+    const p = this.player;
+    p.setVelocity(0, 0);
+    p.setPosition(this.spawnPoint.x, this.spawnPoint.bottom - 16);
+    this.cameras.main.flash(180, 255, 255, 255);
+    this.game.events.emit('banner', 'BACK AT CHECKPOINT');
+  }
+
   respawn() {
     const reg = this.registry;
     reg.set('coins', Math.max(0, reg.get('coins') - P.pitCoinPenalty));
@@ -477,7 +498,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (grounded) {
       this.lastGrounded = time;
-      this.airJumps = powered ? P.coffeeAirJumps : 0;
+      this.airJumps = powered ? P.coffeeAirJumps : P.baseAirJumps;
       this.longJumping = false;
       this.jumping = false;
       if (!this.wasGrounded && this.prevVy > 150) {
@@ -568,6 +589,7 @@ export default class GameScene extends Phaser.Scene {
     const p = this.player;
     const b = p.body;
     let vy = long ? P.longJumpVelocity : P.jumpVelocity;
+    if (air) vy *= P.airJumpFactor;
     if (powered) vy *= P.coffeeJumpBoost;
     b.setVelocityY(vy);
     if (long) {

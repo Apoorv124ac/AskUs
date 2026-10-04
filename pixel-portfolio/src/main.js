@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import '@fontsource/press-start-2p';
 import '@fontsource/silkscreen/400.css';
 import '@fontsource/silkscreen/700.css';
-import { GAME_W, GAME_H, PHYSICS } from './config.js';
+import { GAME_W, GAME_H, ZOOM, PHYSICS } from './config.js';
 import PreloadScene from './scenes/PreloadScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
@@ -18,8 +18,8 @@ function start() {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
-    width: GAME_W,
-    height: GAME_H,
+    width: GAME_W * ZOOM,
+    height: GAME_H * ZOOM,
     backgroundColor: '#0f0f1b',
     pixelArt: true,
     roundPixels: true,

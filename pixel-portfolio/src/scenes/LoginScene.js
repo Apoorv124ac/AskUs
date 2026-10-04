@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { save, persist, isValidEmail, cleanName } from '../systems/save.js';
 import { sendEmail } from '../systems/email.js';
-import { txt, panel, go, popIn, burst, COLORS } from '../ui/pixel.js';
+import { txt, panel, go, popIn, burst, COLORS, viewCam } from '../ui/pixel.js';
 
 const GREEN = '#58d854';
 
@@ -14,6 +14,7 @@ export default class LoginScene extends Phaser.Scene {
   }
 
   create() {
+    viewCam(this);
     this._leaving = false;
     this.done = false;
     this.createdAt = this.time.now;

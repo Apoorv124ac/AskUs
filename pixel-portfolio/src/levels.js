@@ -76,6 +76,7 @@ function buildWorld1() {
   label(L, 1, 4, 'SHIFT+SIDE  RUN');
   label(L, 1, 5, 'SHIFT+UP  LONG JUMP');
   label(L, 1, 6, 'DOWN ON PIPE  ENTER');
+  label(L, 1, 7, 'UP IN AIR  DOUBLE JUMP');
 
   put(L, 14, 11, 'f'); // fact 1
   span(L, 10, 16, 19, 'B'); // platform A
@@ -180,8 +181,9 @@ function buildWorld2() {
   span(L, 10, 74, 76, 'B');
   span(L, 8, 77, 79, 'B');
   span(L, 6, 80, 82, 'B');
+  span(L, 8, 83, 85, 'B'); // steps back down, so you can always climb again
   put(L, 81, 5, 'i');
-  label(L, 84, 8, 'SECRET ROOM');
+  label(L, 84, 5, 'SECRET ROOM');
   pipe(L, 86, 2, 'a', { room: 'lab', pipe: 'b' });
   put(L, 90, 11, 'T');
 
@@ -197,6 +199,7 @@ function buildWorld2() {
   put(L, 110, 9, '2');
   span(L, 10, 114, 116, 'B');
   span(L, 8, 117, 120, 'B');
+  span(L, 10, 121, 122, 'B'); // step down on the far side
   put(L, 119, 7, '4');
 
   // Graduation
@@ -227,7 +230,7 @@ function buildLab() {
 // badges; floors 2-5 = a boss tied to a real achievement (each stomp reveals one resume bullet).
 const FLOOR_BG = [0x3cbcfc, 0x58b0f8, 0x6888fc, 0xf8a060, 0x6844fc];
 const FLOOR_SPEC = [
-  { w: 72, gate: 62, plats: [[10, 13, 16], [8, 25, 28], [10, 37, 40], [10, 45, 47], [8, 48, 50], [6, 51, 53]], npc: 'sam',
+  { w: 72, gate: 62, plats: [[10, 13, 16], [8, 25, 28], [10, 37, 40], [10, 45, 47], [8, 48, 50], [6, 51, 53], [8, 54, 56], [10, 57, 59]], npc: 'sam',
     skill: 'STAKEHOLDER COLLABORATION', badges: [[14, 9], [26, 7], [38, 9], [52, 5]] },
   { w: 84, gate: 72, arena: [51, 69], boss: { col: 60, hp: 2, name: 'THE VAGUE BRIEF' },
     plats: [[10, 12, 15], [8, 20, 23], [10, 28, 31], [8, 35, 38], [10, 42, 44]], coffee: [22, 7], npc: 'meera',

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import dialogue from '../data/dialogue.json';
 import { save, persist } from '../systems/save.js';
-import { txt, panel, richText, go, skyline, groundStrip, popIn, COLORS } from '../ui/pixel.js';
+import { txt, panel, richText, go, skyline, groundStrip, popIn, COLORS, viewCam } from '../ui/pixel.js';
 
 // First-person prologue: the hero introduces the story before World 1.
 export default class StoryScene extends Phaser.Scene {
@@ -10,6 +10,7 @@ export default class StoryScene extends Phaser.Scene {
   }
 
   create() {
+    viewCam(this);
     this._leaving = false;
     this.i = 0;
     this.cameras.main.setBackgroundColor(0x101830).fadeIn(400, 15, 15, 27);
@@ -46,12 +47,14 @@ export default class StoryScene extends Phaser.Scene {
     box.add(txt(this, 242, 26 + H - 10, `${this.i + 1}/${lines.length}  ENTER >`, { origin: [1, 0], color: COLORS.grey, depth: 0 }));
     this.box = box;
     this.tweens.add({ targets: box, y: 0, duration: 320, ease: 'Back.out' });
-    this.time.delayedCall(180, () => rt.reveal());
+    this.rt = rt;
+    this.time.delayedCall(200, () => rt.type());
     this.hero.anims.play(this.i === lines.length - 1 ? 'wave' : 'idle');
   }
 
   next() {
     if (this._leaving) return;
+    if (this.rt && this.rt.isTyping()) return this.rt.finish(); // first press: show the full line
     if (++this.i >= dialogue.story.length) return this.end();
     this.show();
   }

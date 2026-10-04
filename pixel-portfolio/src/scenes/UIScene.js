@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { PROGRESSION } from '../config.js';
 import { NPC_ORDER, NPC_COLS } from '../npcFrames.js';
-import { txt, panel, richText, burst, bump, COLORS } from '../ui/pixel.js';
+import { txt, panel, richText, burst, bump, viewCam, COLORS } from '../ui/pixel.js';
 
 // HUD overlay: compact top bar, fact/dialogue cards, pop-in banners, pause.
 export default class UIScene extends Phaser.Scene {
@@ -10,6 +10,7 @@ export default class UIScene extends Phaser.Scene {
   }
 
   create() {
+    viewCam(this);
     const reg = this.registry;
     this.shown = { coins: null, facts: null };
 
@@ -24,15 +25,19 @@ export default class UIScene extends Phaser.Scene {
     this.coffeeBar = this.add.graphics().setDepth(2);
 
     this.banner = this.add.container(128, 100).setDepth(30).setVisible(false);
+    this.dim = this.add.rectangle(0, 0, 256, 224, 0x0f0f1b, 0).setOrigin(0).setDepth(20);
+    this.bubble = null;
+    this.chapterBox = null;
     this.cardBox = null;
 
     this.pauseBox = this.add.container(0, 0).setDepth(40).setVisible(false);
     this.pauseBox.add([
       this.add.rectangle(0, 0, 256, 224, 0x0f0f1b, 0.6).setOrigin(0),
-      panel(this, 66, 78, 124, 62, { depth: 0 }),
+      panel(this, 50, 78, 156, 68, { depth: 0 }),
       txt(this, 128, 90, 'PAUSED', { display: true, origin: 0.5, color: COLORS.gold, depth: 41 }),
       txt(this, 128, 108, 'P / ESC   RESUME', { origin: 0.5, depth: 41 }),
-      txt(this, 128, 120, 'Q   WORLD MAP', { origin: 0.5, depth: 41 }),
+      txt(this, 128, 120, 'R   BACK TO CHECKPOINT', { origin: 0.5, depth: 41 }),
+      txt(this, 128, 132, 'Q   WORLD MAP', { origin: 0.5, depth: 41 }),
     ]);
 
     const g = this.game.events;
@@ -40,8 +45,9 @@ export default class UIScene extends Phaser.Scene {
       banner: (m) => this.showBanner(m),
       chapter: (c) => this.showChapter(c),
       fact: (f) => this.showFact(f),
-      dialogue: (d) => this.showDialogue(d),
-      'dialogue-end': () => this.hideCard(),
+      dialogue: (d) => this.showBubble(d),
+      'dialogue-skip': () => this.bubbleRt && this.bubbleRt.finish(),
+      'dialogue-end': () => this.hideBubble(),
     };
     Object.entries(this.handlers).forEach(([k, fn]) => g.on(k, fn));
     this.onChange = () => this.refresh();
@@ -102,7 +108,8 @@ export default class UIScene extends Phaser.Scene {
       this.pendingChapter = { title, sub };
       return;
     }
-    const c = this.add.container(128, 46).setDepth(30);
+    const c = this.add.container(128, 34).setDepth(30);
+    this.chapterBox = c;
     const a = txt(this, 0, -8, title, { origin: 0.5, color: COLORS.gold, bold: true, depth: 31 });
     const b = txt(this, 0, 4, sub, { display: true, origin: 0.5, depth: 31 });
     const line = this.add.rectangle(0, 14, 0, 1, 0xf8d878).setDepth(31);
@@ -110,7 +117,75 @@ export default class UIScene extends Phaser.Scene {
     c.setAlpha(0).setScale(0.6);
     this.tweens.add({ targets: c, alpha: 1, scale: 1, duration: 320, ease: 'Back.out' });
     this.tweens.add({ targets: line, width: Math.max(a.width, b.width) + 16, duration: 500, delay: 200 });
-    this.tweens.add({ targets: c, alpha: 0, y: 38, delay: 2300, duration: 400, onComplete: () => c.destroy() });
+    this.tweens.add({ targets: c, alpha: 0, y: 26, delay: 2300, duration: 400, onComplete: () => c.destroy() });
+  }
+
+  // ---------------------------------------------------------- NPC speech bubble
+  // Pops out of the NPC's head, then types the line. ENTER finishes typing, then moves on.
+  showBubble({ id, title, text, page, color, ax = 128, ay = 120 }) {
+    const first = !this.bubble || this.bubbleId !== id;
+    this.bubbleId = id;
+    if (this.chapterBox && this.chapterBox.active) {
+      this.tweens.killTweensOf(this.chapterBox);
+      this.tweens.add({ targets: this.chapterBox, alpha: 0, duration: 150 });
+    }
+    if (this.bubble) this.bubble.destroy();
+    this.tweens.killTweensOf(this.dim);
+    this.tweens.add({ targets: this.dim, fillAlpha: 0.3, duration: 250 });
+
+    const W = 214;
+    const rt = richText(this, 0, 0, text, { width: W - 18, depth: 0 });
+    const H = Math.max(34, rt.height + 26);
+    const bx = Phaser.Math.Clamp(ax - W / 2, 6, 250 - W);
+    const by = Phaser.Math.Clamp(ay - H - 12, 20, 130);
+    const tx = Phaser.Math.Clamp(ax, bx + 12, bx + W - 12);
+    const ty = by + H + 5; // pivot = the tail tip, so the bubble grows out of the NPC
+    const col = parseInt((color || '#f8d878').slice(1), 16);
+
+    const box = this.add.container(tx, ty).setDepth(25);
+    box.add(panel(this, bx - tx, by - ty, W, H, { depth: 0 }));
+    // tail: little pixel triangle pointing down at the NPC
+    const tail = this.add.graphics();
+    for (let r = 0; r < 4; r++) {
+      tail.fillStyle(0x0f0f1b).fillRect(-(5 - r), -5 + r + 1, 11 - 2 * r, 1);
+      tail.fillStyle(0x1c2250).fillRect(-(4 - r), -5 + r + 1, 9 - 2 * r, 1);
+    }
+    box.add(tail);
+    // name chip
+    const nm = txt(this, bx - tx + 12, by - ty - 2, title, { color, bold: true, shadow: false, depth: 0, origin: [0, 0.5] });
+    const chipW = nm.width + 12;
+    const chip = panel(this, bx - tx + 6, by - ty - 7, chipW, 11, { fill: 0x0f0f1b, frame: col, depth: 0 });
+    box.add([chip, nm]);
+    rt.container.setPosition(bx - tx + 9, by - ty + 9);
+    box.add(rt.container);
+    const pg = txt(this, bx - tx + 9, by - ty + H - 10, page, { color: COLORS.dim, shadow: false, depth: 0 });
+    const hint = txt(this, bx - tx + W - 8, by - ty + H - 10, 'ENTER >', { origin: [1, 0], color: COLORS.gold, shadow: false, depth: 0 });
+    hint.setAlpha(0);
+    box.add([pg, hint]);
+
+    this.bubble = box;
+    this.bubbleRt = rt;
+    box.setScale(first ? 0 : 0.92);
+    this.tweens.add({ targets: box, scale: 1, duration: first ? 320 : 160, ease: 'Back.out' });
+    this.registry.set('typing', true);
+    this.time.delayedCall(first ? 240 : 40, () => {
+      rt.type(() => {
+        this.registry.set('typing', false);
+        this.tweens.add({ targets: hint, alpha: 1, duration: 150 });
+        this.tweens.add({ targets: hint, x: hint.x + 2, yoyo: true, repeat: -1, duration: 400, delay: 150 });
+      });
+    });
+  }
+
+  hideBubble() {
+    this.registry.set('typing', false);
+    this.tweens.add({ targets: this.dim, fillAlpha: 0, duration: 250 });
+    const b = this.bubble;
+    this.bubble = null;
+    this.bubbleRt = null;
+    this.bubbleId = null;
+    if (!b) return;
+    this.tweens.add({ targets: b, scale: 0, alpha: 0, duration: 200, ease: 'Back.in', onComplete: () => b.destroy() });
   }
 
   // ------------------------------------------------------------------ cards

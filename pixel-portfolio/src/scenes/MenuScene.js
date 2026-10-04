@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { CLASSIC_RESUME_URL } from '../config.js';
 import { WORLDS } from '../data/worlds.js';
 import { save, persist } from '../systems/save.js';
-import { txt, panel, go, skyline, popIn, burst, COLORS } from '../ui/pixel.js';
+import { txt, panel, go, skyline, popIn, burst, COLORS, viewCam } from '../ui/pixel.js';
 
 const NODE_X = [28, 68, 108, 148, 188, 228];
 const NODE_Y = [96, 68, 96, 68, 96, 68];
@@ -14,6 +14,7 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   create() {
+    viewCam(this);
     this._leaving = false;
     // the HUD overlay belongs to gameplay only
     if (this.scene.isActive('UI')) this.scene.stop('UI');
