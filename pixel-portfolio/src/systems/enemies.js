@@ -8,6 +8,7 @@
 import Phaser from 'phaser';
 import { save } from './save.js';
 import { burst } from '../ui/pixel.js';
+import { sfx } from './audio.js';
 
 const DIFF = [
   { spd: 0.78, hp: 0 }, // relaxed
@@ -169,6 +170,7 @@ export class Enemies {
 
   bounce() {
     const { s } = this;
+    sfx('stomp');
     s.player.setVelocityY(-240);
     s.refillAirJumps();
     s.hitStop(55);
@@ -211,6 +213,7 @@ export class Enemies {
     const { s } = this;
     if (e.dead) return;
     e.dead = true;
+    sfx('pop');
     e.body.enable = false;
     burst(s, e.x, e.y, { n: 10, colors: [0xf8d878, 0xfcfcfc, 0xf83800] });
     s.popText(e.x, e.y - 12, how === 'squish' ? 'SQUISH!' : 'POW!');

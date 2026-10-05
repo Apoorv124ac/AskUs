@@ -4,6 +4,7 @@
 import { save, persist } from './save.js';
 import resume from '../data/resume.json';
 import { burst } from '../ui/pixel.js';
+import { sfx } from './audio.js';
 
 const EXP = [...resume.experience].reverse(); // chronological: freelance, Bhoomi, Deloitte, JLL, WSP
 const SHORT = ['FREELANCE', 'BHOOMI', 'DELOITTE DIGITAL', 'JLL', 'WSP'];
@@ -109,6 +110,7 @@ export class OfficeTasks {
     const stomp = p.body.velocity.y > -30 && p.body.bottom <= boss.body.top + 12;
     if (!stomp) return s.hurtPlayer(boss.x);
     boss.hp--;
+    sfx('boss');
     this.hits++;
     s.registry.set('bossBar', { name: this.spec.boss.name, hp: boss.hp, max: this.spec.boss.hp });
     this.lastHud = null;

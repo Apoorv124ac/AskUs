@@ -2,6 +2,7 @@
 // Grid chars:  ^ spikes   S spring   C crumbling tile   > < conveyor belt (right / left)
 // Moving platforms come from `L.movers` (see `mover()` in levels.js).
 import { burst } from '../ui/pixel.js';
+import { sfx } from './audio.js';
 
 export class Gimmicks {
   constructor(scene) {
@@ -73,6 +74,7 @@ export class Gimmicks {
     const p = s.player;
     if (p.body.velocity.y < -20 || p.body.bottom > sp.body.top + 10 || sp.busy) return;
     sp.busy = true;
+    sfx('spring');
     p.setVelocityY(-500);
     s.jumping = false;
     s.airJumps = s.coffeeMs > 0 ? 2 : 1;

@@ -163,8 +163,9 @@ function buildBonus() {
   ground(L);
   span(L, 0, 0, 19, 'B');
   span(L, 1, 0, 19, 'B');
-  label(L, 2, 3, 'THE TOOLKIT ROOM');
-  label(L, 2, 4, 'GRAB ALL 5 TOOLS');
+  L.mini = 'memory';
+  L.noBreak = true;
+  label(L, 2, 2, 'THE TOOLKIT ROOM');
   [3, 5, 7, 9, 11].forEach((c) => put(L, c, 9, 't'));
   pipe(L, 16, 2, 'b', { room: 'world1', pipe: 'a' });
   return L;
@@ -267,11 +268,10 @@ function buildLab() {
   L.forceStation = 2;
   span(L, 0, 0, 19, 'B');
   span(L, 1, 0, 19, 'B');
-  label(L, 2, 3, 'THE SECRET IDEA LAB');
-  label(L, 2, 4, 'GOOD IDEAS HIDE IN ODD PLACES');
-  put(L, 8, 10, 'B');
-  put(L, 9, 10, 'B');
-  put(L, 8, 9, 'i');
+  L.mini = 'lights';
+  L.noBreak = true;
+  label(L, 2, 2, 'THE SECRET IDEA LAB');
+  put(L, 8, 9, 'i'); // the reward (revealed when the puzzle is solved)
   pipe(L, 16, 2, 'b', { room: 'world2', pipe: 'a' });
   return L;
 }
@@ -484,8 +484,9 @@ function buildArcadeRoom(n, ch, name, count) {
   L.arcadeRoom = true;
   span(L, 0, 0, 19, 'B');
   span(L, 1, 0, 19, 'B');
-  label(L, 2, 3, 'BONUS ROOM');
-  label(L, 2, 4, name);
+  L.mini = ['whack', 'rope', 'rhythm'][n - 1];
+  L.noBreak = true;
+  label(L, 2, 2, `${['BUG SQUASH', 'DEADLINE ROPE', 'SHORTCUT BEAT'][n - 1]}  -  ${name}`);
   const xs = count === 1 ? [8] : [6, 11];
   xs.forEach((c) => put(L, c, 9, ch));
   pipe(L, 16, 2, 'r', { room: 'world4', pipe: ['a', 'b', 'c'][n - 1] });

@@ -19,6 +19,7 @@ const DEFAULTS = {
   dragonDown: false,
   character: '', // chosen hero id ('' = not chosen yet)
   gender: '',
+  muted: false,
 };
 
 function read() {

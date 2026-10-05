@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { music } from '../systems/audio.js';
 import { GAME_W, GAME_H, ZOOM } from '../config.js';
 
 // Two fonts: Silkscreen = compact body/label text (crisp at 8px),
@@ -23,6 +24,7 @@ export function viewCam(scene) {
   const cam = scene.cameras.main;
   cam.setZoom(ZOOM);
   cam.setScroll(-(GAME_W / 2) * (ZOOM - 1), -(GAME_H / 2) * (ZOOM - 1));
+  if (scene.scene.key !== 'Game' && scene.scene.key !== 'UI') music('theme'); // menus, story, credits
   return cam;
 }
 

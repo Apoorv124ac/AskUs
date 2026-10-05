@@ -16,6 +16,9 @@ import { ArcadeSkills, countSkills, TOTAL as SKILL_TOTAL } from '../systems/arca
 import { TrophyHall, countCerts, CERT_ENTRIES } from '../systems/trophies.js';
 import { Rooftop } from '../systems/finale.js';
 import { MouseControls } from '../systems/mouse.js';
+import { sfx, music, duck } from '../systems/audio.js';
+import { Bricks } from '../systems/bricks.js';
+import { MINIS } from '../systems/minigames.js';
 
 const TILE_TEX = {
   '#': 'tile-ground',
@@ -81,6 +84,7 @@ export default class GameScene extends Phaser.Scene {
     this.enemies = null;
     this.dragon = null;
     this.pointerPower = null;
+    this.mini = null;
     this.star = !!save.recruiter; // recruiter mode: star power (immune, knocks enemies out, faster, triple jump)
     this.nextSpark = 0;
     this.motes = [];
@@ -104,6 +108,7 @@ export default class GameScene extends Phaser.Scene {
     if (L.dragon) this.dragon = new DragonBoss(this);
     if (L.hall) this.trophies = new TrophyHall(this);
     if (L.finale) this.finale = new Rooftop(this);
+    if (L.mini) this.mini = new MINIS[L.mini](this);
     this.input.on('pointerdown', () => this.talking && this.advanceTalk());
     this.events.once('shutdown', () => this.game.events.emit('dialogue-end'));
     if (L.world === 0) {
@@ -113,6 +118,8 @@ export default class GameScene extends Phaser.Scene {
     if (L.world === 0) reg.set('hudInfo', '');
 
     this.mouse = new MouseControls(this);
+    this.pickMusic();
+    this.events.once('shutdown', () => duck(false));
     if (this.star) this.time.delayedCall(2000, () => !this.talking && this.game.events.emit('banner', 'STAR POWER ON!\nRECRUITER MODE'));
     this.cursors = this.input.keyboard.createCursorKeys();
     this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
@@ -163,6 +170,7 @@ export default class GameScene extends Phaser.Scene {
         if (!tex) continue;
         const t = this.solids.create(c * TILE + 8, r * TILE + 8, tex);
         t.setDepth(PIPE_CHARS.has(L.grid[r][c]) ? 6 : 3);
+        if (Bricks.breakable(L, r, c)) t.brick = { c, r };
       }
     }
     L.labels.forEach((l) => {
@@ -256,7 +264,8 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(p, true, 0.12, 0.12);
     this.cameras.main.setDeadzone(8, 40);
 
-    this.physics.add.collider(p, this.solids);
+    this.bricks = new Bricks(this);
+    this.physics.add.collider(p, this.solids, (_, tile) => this.bricks.hit(tile));
     this.physics.add.overlap(p, this.coins, (_, coin) => this.collectCoin(coin));
     this.physics.add.overlap(p, this.factItems, (_, it) => this.collectFact(it));
     this.physics.add.overlap(p, this.toolItems, (_, it) => this.collectTool(it));
@@ -269,12 +278,14 @@ export default class GameScene extends Phaser.Scene {
   // +1 coin and +1 XP; may level the hero up
   award() {
     const reg = this.registry;
+    sfx('coin');
     reg.set('coins', reg.get('coins') + 1);
     const xp = reg.get('xp') + 1;
     reg.set('xp', xp);
     const lvl = PROGRESSION.thresholds.filter((t) => xp >= t).length - 1;
     if (lvl > reg.get('level')) {
       reg.set('level', lvl);
+      sfx('level');
       this.game.events.emit('banner', `LEVEL UP!\n${PROGRESSION.titles[lvl]}`);
       this.lockAnim('celebrate', 900);
     }
@@ -318,6 +329,7 @@ export default class GameScene extends Phaser.Scene {
 
   powerUp() {
     this.coffeeMs = P.coffeeMs;
+    sfx('power');
     this.game.events.emit('banner', 'CAFFEINATED!\nFASTER + TRIPLE JUMP');
     this.cameras.main.shake(120, 0.004);
     this.lockAnim('sip', 700);
@@ -444,6 +456,7 @@ export default class GameScene extends Phaser.Scene {
   hitCheckpoint(flag) {
     if (flag.texture.key === 'flag-on') return;
     flag.setTexture('flag-on');
+    sfx('check');
     this.registry.set('checkpoint', { room: this.roomKey, ...flag.cp });
     this.game.events.emit('banner', 'CHECKPOINT!');
   }
@@ -451,6 +464,7 @@ export default class GameScene extends Phaser.Scene {
   hitGoal() {
     if (this.goalShown) return;
     this.goalShown = true;
+    sfx('win');
     save.completed[this.level.world] = true;
     save.lastWorld = Math.min(this.level.world + 1, 6);
     persist();
@@ -512,6 +526,7 @@ export default class GameScene extends Phaser.Scene {
   enterPipe(pipe) {
     const p = this.player;
     this.entering = true;
+    sfx('pipe');
     p.body.enable = false;
     p.setVelocity(0, 0);
     p.anims.play('crouch', true);
@@ -535,6 +550,7 @@ export default class GameScene extends Phaser.Scene {
     const now = this.time.now;
     if (this.star || now < this.invulUntil || this.entering) return;
     this.invulUntil = now + 1200;
+    sfx('hurt');
     const reg = this.registry;
     if (reg.get('coins') > 0) reg.set('coins', reg.get('coins') - 1);
     const p = this.player;
@@ -543,6 +559,14 @@ export default class GameScene extends Phaser.Scene {
     this.lockAnim('hurt', 450, now);
     this.cameras.main.shake(100, 0.004);
     this.tweens.add({ targets: p, alpha: 0.35, yoyo: true, repeat: 5, duration: 100, onComplete: () => p.setAlpha(1) });
+  }
+
+  // music: calm loop for bonus rooms, a lively one for the worlds (a different key per world)
+  pickMusic() {
+    const L = this.level;
+    if (L.dragon) return music('cave');
+    if (L.theme === 'underground') return music('cave');
+    music('play', [0, 2, 5, -2, 3, 0, 4][L.world] || 0);
   }
 
   // 'R' (or the pause menu): never stuck. Back to the last checkpoint, no penalty.
@@ -557,6 +581,7 @@ export default class GameScene extends Phaser.Scene {
 
   respawn() {
     const reg = this.registry;
+    sfx('hurt');
     const penalty = this.star ? 0 : P.pitCoinPenalty;
     reg.set('coins', Math.max(0, reg.get('coins') - penalty));
     const p = this.player;
@@ -579,7 +604,8 @@ export default class GameScene extends Phaser.Scene {
     const shift = this.shift.isDown;
     const grounded = b.blocked.down;
     const crouching = grounded && c.down.isDown && !this.talking;
-    const frozen = !!this.talking;
+    const frozen = !!this.talking || !!this.mini?.lock;
+    duck(frozen);
     const keyDir = (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
     const dir = crouching || frozen ? 0 : keyDir || this.mouse.dir(time);
     const upHeld = c.up.isDown || this.mouse.held();
@@ -687,6 +713,10 @@ export default class GameScene extends Phaser.Scene {
     if (p.y > this.worldH + 30) this.respawn();
 
     this.syncHero(time, grounded, vx);
+    if (this.mini) {
+      this.mini.update(time, delta);
+      this.mini.hudNow();
+    }
     if (this.dragon) this.dragon.update(time);
     if (this.gimmicks) this.gimmicks.update(time, delta);
     if (this.enemies) this.enemies.update(time, delta);
@@ -787,6 +817,7 @@ export default class GameScene extends Phaser.Scene {
     if (air) vy *= P.airJumpFactor;
     if (powered) vy *= P.coffeeJumpBoost;
     b.setVelocityY(vy);
+    sfx(air ? 'jump2' : 'jump');
     if (long) {
       this.longJumping = true;
       this.ljDir = dir || (p.flipX ? -1 : 1);

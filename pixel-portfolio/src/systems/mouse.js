@@ -7,6 +7,7 @@
 // middle click double-jumps there. Keyboard controls always keep working.
 import Phaser from 'phaser';
 import { burst } from '../ui/pixel.js';
+import { sfx } from './audio.js';
 
 const SCROLL_MS = 240;
 const COMBO_GAP = 230;
@@ -139,6 +140,7 @@ export class PointerPower {
     if (!this.active || now < this.nextThrow || this.ammo <= 0) return;
     this.nextThrow = now + 160;
     this.ammo--;
+    sfx('throw');
     const p = s.player;
     const w = s.cameras.main.getWorldPoint(pointer.x, pointer.y);
     const ox = p.x;

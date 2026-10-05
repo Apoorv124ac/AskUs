@@ -6,6 +6,7 @@ import { save, persist } from './save.js';
 import resume from '../data/resume.json';
 import { burst } from '../ui/pixel.js';
 import { PointerPower } from './mouse.js';
+import { sfx, music } from './audio.js';
 
 const CHIP_NEED = 4; // pointer-arrow hits per dragon life
 
@@ -107,6 +108,7 @@ export class DragonBoss {
     const p = s.player;
     this.invuln = s.time.now + (byArrows ? 900 : 1300);
     this.chip = 0;
+    sfx('boss');
     this.hp--;
     this.hits++;
     this.bar();
@@ -159,6 +161,8 @@ export class DragonBoss {
     if (this.state === 'sleep') {
       if (p.x > (this.x - 48) - 26 * 16) {
         this.setState('roar');
+        sfx('roar');
+        music('boss');
         s.game.events.emit('banner', `${NAME}!\nSURVIVE THE FIRE. STOMP THE HEAD.`);
         s.cameras.main.shake(900, 0.008);
         s.tweens.add({ targets: this.sprite, scale: 1.08, yoyo: true, repeat: 3, duration: 160 });
@@ -200,6 +204,7 @@ export class DragonBoss {
   // ------------------------------------------------------------------ attacks
   fire() {
     const { s } = this;
+    sfx('fire');
     s.cameras.main.shake(200, 0.004);
     if (this.attack === 'wave') this.floorWave();
     else if (this.attack === 'balls') this.fireballs();
@@ -268,6 +273,8 @@ export class DragonBoss {
   defeat() {
     const { s } = this;
     this.setState('dead');
+    sfx('win');
+    music('play', 3);
     this.sprite.anims.play('dragon-hurt');
     s.registry.set('bossBar', null);
     s.pointerPower.clear();

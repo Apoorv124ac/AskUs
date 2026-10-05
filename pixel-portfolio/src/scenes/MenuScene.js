@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CLASSIC_RESUME_URL } from '../config.js';
 import { WORLDS } from '../data/worlds.js';
 import { save, persist } from '../systems/save.js';
+import { sfx } from '../systems/audio.js';
 import { txt, panel, go, skyline, popIn, burst, COLORS, viewCam } from '../ui/pixel.js';
 
 const NODE_X = [22, 57, 92, 128, 164, 199, 234];
@@ -114,6 +115,7 @@ export default class MenuScene extends Phaser.Scene {
     const n = Phaser.Math.Clamp(i, 0, WORLDS.length - 1);
     if (n === this.sel) return;
     this.sel = n;
+    sfx('tick');
     save.lastWorld = n;
     persist();
     this.refresh();
@@ -125,6 +127,7 @@ export default class MenuScene extends Phaser.Scene {
     if (st === 'locked') return this.flash(`LOCKED. FINISH WORLD ${this.sel} FIRST.`);
     if (!w.ready) return this.flash(`COMING SOON (BUILD DAY ${w.day}).`);
     this.registry.remove('checkpoint');
+    sfx('select');
     burst(this, NODE_X[this.sel], NODE_Y[this.sel], { n: 14, spread: 34 });
     go(this, 'Game', { room: w.roomFor ? w.roomFor(save) : w.room });
   }

@@ -13,10 +13,12 @@ import LoginScene from './scenes/LoginScene.js';
 import MenuScene from './scenes/MenuScene.js';
 import StoryScene from './scenes/StoryScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
+import { initAudio } from './systems/audio.js';
 
 const debug = new URLSearchParams(location.search).has('debug');
 
 function start() {
+  initAudio();
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',

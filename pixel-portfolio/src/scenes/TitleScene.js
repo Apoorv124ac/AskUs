@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sfx } from '../systems/audio.js';
 import { save } from '../systems/save.js';
 import { txt, go, skyline, groundStrip, blink, popIn, burst, COLORS, viewCam } from '../ui/pixel.js';
 
@@ -48,9 +49,11 @@ export default class TitleScene extends Phaser.Scene {
     const prompt = txt(this, 128, 126, 'PRESS ENTER TO START', { origin: 0.5, color: COLORS.gold, bold: true });
     prompt.setAlpha(0);
     this.tweens.add({ targets: prompt, alpha: 1, delay: 1700, duration: 300, onComplete: () => blink(this, prompt) });
-    txt(this, 128, 212, 'OR TAP THE SCREEN', { origin: 0.5, color: COLORS.grey });
+    txt(this, 128, 205, 'OR TAP THE SCREEN', { origin: 0.5, color: COLORS.grey });
+    txt(this, 128, 214, 'M  SOUND ON / OFF', { origin: 0.5, color: COLORS.dim, shadow: false });
 
     const start = () => {
+      sfx('select');
       burst(this, 128, 126, { n: 12, spread: 50 });
       go(this, save.character ? 'Entrance' : 'Character');
     };

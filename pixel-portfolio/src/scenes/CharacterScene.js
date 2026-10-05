@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CHARACTERS, byGender } from '../data/characters.js';
 import { save } from '../systems/save.js';
 import { applyCharacter } from '../systems/character.js';
+import { sfx } from '../systems/audio.js';
 import { txt, panel, go, popIn, burst, COLORS, viewCam } from '../ui/pixel.js';
 
 // Step 1: BOY or GIRL. Step 2: pick one of four looks. Choice is saved; Menu (H) can reopen it.
@@ -125,6 +126,7 @@ export default class CharacterScene extends Phaser.Scene {
   move(d) {
     const n = this.cards.length;
     const i = Phaser.Math.Clamp(this.sel + d, 0, n - 1);
+    if (i !== this.sel) sfx('tick');
     this.step === 1 ? this.hilite(i) : this.hiliteLook(i);
   }
 
@@ -137,6 +139,7 @@ export default class CharacterScene extends Phaser.Scene {
     }
     const c = this.list[this.sel];
     applyCharacter(this, c.id, true);
+    sfx('select');
     const k = this.cards[this.sel];
     burst(this, k.spr.x, k.spr.y - 10, { n: 14, spread: 36 });
     this.tweens.add({ targets: k.spr, y: k.spr.y - 12, yoyo: true, duration: 160, ease: 'Quad.out' });
