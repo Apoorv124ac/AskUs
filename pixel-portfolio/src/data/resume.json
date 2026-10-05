@@ -1,159 +1,168 @@
 {
-  "_comment": "SINGLE SOURCE OF TRUTH for all portfolio content. Placeholders for now - replace with real data. Worlds read from here; never hard-code content in scenes.",
+  "_comment": "SINGLE SOURCE OF TRUTH for all portfolio content (filled from Apoorv's resume PDF). Worlds read from here; never hard-code content in scenes.",
   "meta": {
-    "name": "Apoorv",
-    "headline": "Your headline here",
-    "location": "City, Country",
-    "classicResumeUrl": ""
+    "name": "Apoorv Chaurasia",
+    "firstName": "Apoorv",
+    "headline": "Specialist - Graphics Design",
+    "location": "Lucknow, India",
+    "classicResumeUrl": "Apoorv_Chaurasia_Resume.pdf"
   },
   "intro": {
     "facts": [
-      "PLACEHOLDER FACT 1",
-      "PLACEHOLDER FACT 2",
-      "PLACEHOLDER FACT 3",
-      "PLACEHOLDER FACT 4",
-      "PLACEHOLDER FACT 5",
-      "PLACEHOLDER FACT 6",
-      "PLACEHOLDER FACT 7",
-      "PLACEHOLDER FACT 8",
-      "PLACEHOLDER FACT 9",
-      "PLACEHOLDER FACT 10"
+      "I have 12+ years of design experience, including 9+ years in employed roles.",
+      "I am a Specialist Graphic Designer at WSP, since August 2024.",
+      "At WSP I design presentations for global leadership, including the CEO team.",
+      "I live and work in Lucknow, India.",
+      "At JLL I led a design team making marketing materials for US markets.",
+      "At Deloitte Digital I designed newspaper ad campaigns for US, UK and Australian clients.",
+      "My first design work was freelance, back in 2013.",
+      "I studied Multimedia (BSc) and Journalism & Mass Communication (MA).",
+      "I also studied Data Science (AI & ML) at IIT Guwahati and Industrial Design at IIT Delhi.",
+      "My three words: brand thinking, clear communication, creative leadership."
     ]
   },
   "education": [
     {
-      "degree": "PLACEHOLDER DEGREE 1",
-      "school": "SCHOOL ONE",
-      "years": "YYYY-YYYY"
+      "degree": "BSc, Multimedia",
+      "school": "Himalayan University",
+      "years": "2013-2016"
     },
     {
-      "degree": "PLACEHOLDER DEGREE 2",
-      "school": "SCHOOL TWO",
-      "years": "YYYY-YYYY"
+      "degree": "MA, Journalism & Mass Communication",
+      "school": "BBAU Central University",
+      "years": "2018-2020"
     },
     {
-      "degree": "PLACEHOLDER DEGREE 3",
-      "school": "SCHOOL THREE",
-      "years": "YYYY-YYYY"
+      "degree": "Industrial Design, Innovation & Entrepreneurship",
+      "school": "IIT Delhi",
+      "years": "2021-2022"
+    },
+    {
+      "degree": "Certificate: Data Science - AI & ML",
+      "school": "IIT Guwahati",
+      "years": "2023-2024"
     }
   ],
   "experience": [
     {
-      "company": "COMPANY ONE",
-      "role": "ROLE ONE",
-      "years": "YYYY-YYYY",
-      "achievement": "PLACEHOLDER: a real achievement from this job goes here (a number, a result, a win)."
+      "company": "Freelance",
+      "short": "FREELANCE",
+      "role": "Freelancer - Graphic Designer",
+      "years": "Aug 2013 - Oct 2016",
+      "achievement": "Built a freelance design practice serving Bhoomi Educational Consultancy, Vibaanta, Global Education and 13Jugaad.com."
     },
     {
-      "company": "COMPANY TWO",
-      "role": "ROLE TWO",
-      "years": "YYYY-YYYY",
-      "achievement": "PLACEHOLDER: a real achievement from the second job goes here."
+      "company": "Bhoomi Educational Consultancy",
+      "short": "BHOOMI EDU",
+      "role": "Graphic Designer",
+      "years": "Nov 2016 - Dec 2020",
+      "achievement": "Created branding, educational materials, website graphics and social content, from concept through final layout."
     },
     {
-      "company": "COMPANY THREE",
-      "role": "ROLE THREE",
-      "years": "YYYY-YYYY",
-      "achievement": "PLACEHOLDER: a real achievement from the third job goes here."
+      "company": "Deloitte Digital",
+      "short": "DELOITTE",
+      "role": "Executive Graphic Designer",
+      "years": "Jun 2021 - Apr 2022",
+      "achievement": "Designed newspaper advertising campaigns for US, UK and Australian clients, working with copywriters and the creative director."
+    },
+    {
+      "company": "JLL",
+      "short": "JLL",
+      "role": "Senior Graphic Designer",
+      "years": "Apr 2022 - Aug 2024",
+      "achievement": "Led a design team and kept the brand consistent across US markets, helping launch a new brand identity."
+    },
+    {
+      "company": "WSP Consultants India",
+      "short": "WSP INDIA",
+      "role": "Specialist Graphic Designer",
+      "years": "Aug 2024 - Present",
+      "achievement": "Designs presentations for global leadership including the CEO team, plus internal communications and marketing collateral."
     }
   ],
   "skills": [
     {
-      "category": "CATEGORY ONE",
+      "category": "Design",
+      "short": "DESIGN",
       "color": "#F83800",
       "items": [
-        {
-          "name": "Skill A",
-          "level": 0.9
-        },
-        {
-          "name": "Skill B",
-          "level": 0.8
-        }
+        "Brand identity",
+        "Typography & layout",
+        "Visual storytelling",
+        "Data visualization"
       ]
     },
     {
-      "category": "CATEGORY TWO",
+      "category": "Leadership",
+      "short": "LEADER",
       "color": "#58D854",
       "items": [
-        {
-          "name": "Skill C",
-          "level": 0.85
-        },
-        {
-          "name": "Skill D",
-          "level": 0.7
-        }
+        "Creative team leadership",
+        "Stakeholder collaboration",
+        "Executive presentations",
+        "Marketing & campaigns"
       ]
     },
     {
-      "category": "CATEGORY THREE",
+      "category": "Toolkit",
+      "short": "TOOLS",
       "color": "#00B8F8",
       "items": [
-        {
-          "name": "Skill E",
-          "level": 0.8
-        },
-        {
-          "name": "Skill F",
-          "level": 0.75
-        }
+        "Adobe InDesign",
+        "Illustrator",
+        "Photoshop",
+        "After Effects",
+        "Adobe XD",
+        "PowerPoint"
       ]
     },
     {
-      "category": "CATEGORY FOUR",
+      "category": "Data & UX",
+      "short": "UX+DATA",
       "color": "#F8D878",
       "items": [
-        {
-          "name": "Skill G",
-          "level": 0.7
-        },
-        {
-          "name": "Skill H",
-          "level": 0.65
-        }
+        "User-centered interface design",
+        "Data Science: AI & ML",
+        "Industrial design thinking",
+        "Journalism & media"
       ]
     }
   ],
   "awards": [
     {
-      "title": "PLACEHOLDER CERTIFICATE 1",
-      "issuer": "ISSUER",
-      "year": "YYYY"
+      "title": "Adobe XD: Design & Prototype",
+      "issuer": "LinkedIn",
+      "year": "2022"
     },
     {
-      "title": "PLACEHOLDER CERTIFICATE 2",
-      "issuer": "ISSUER",
-      "year": "YYYY"
+      "title": "Illustrator: Graphic Design",
+      "issuer": "LinkedIn",
+      "year": "2022"
     },
     {
-      "title": "PLACEHOLDER AWARD 3",
-      "issuer": "ISSUER",
-      "year": "YYYY"
-    },
-    {
-      "title": "PLACEHOLDER AWARD 4",
-      "issuer": "ISSUER",
-      "year": "YYYY"
+      "title": "Visual Storytelling in PowerPoint",
+      "issuer": "LinkedIn",
+      "year": "2022"
     }
   ],
   "contact": {
-    "email": "",
-    "linkedin": "",
+    "email": "apoorv.uk@gmail.com",
+    "linkedin": "linkedin.com/in/apoorv-chaurasia-152b51228",
     "github": "",
     "website": "",
-    "resumePdf": ""
+    "resumePdf": "Apoorv_Chaurasia_Resume.pdf"
   },
   "credits": [
     "DESIGN & CODE",
-    "APOORV",
+    "APOORV CHAURASIA",
+    "",
+    "SPECIALIST - GRAPHICS DESIGN",
+    "WSP INDIA",
     "",
     "BUILT WITH",
     "PHASER 3 + VITE",
     "",
     "ART & MUSIC",
-    "ORIGINAL, MADE FOR THIS GAME",
-    "",
-    "THANK YOU FOR PLAYING!"
+    "ORIGINAL, MADE FOR THIS GAME"
   ]
 }

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PHYSICS as P, COFFEE, FX as FXCFG, ENEMIES } from '../config.js';
+import { PHYSICS as P, COFFEE, FX as FXCFG, ENEMIES, STAR } from '../config.js';
 import { MovementController } from '../systems/MovementController.js';
 
 const WALK_CYCLE = [1, 0, 2, 0];
@@ -60,7 +60,7 @@ export class Player {
 
     if (!this.locked) {
       const inp = { dir: input.dir, run: input.isDown('run'), jumpPressed: input.justPressed('jump'), jumpHeld: input.isDown('jump') };
-      const mods = { speedMult: coffee ? COFFEE.speedMult : 1, canAirJump: coffee && COFFEE.doubleJump };
+      const mods = { speedMult: (coffee ? COFFEE.speedMult : 1) * (this.sv.state.starActive ? STAR.speedMult : 1), canAirJump: coffee && COFFEE.doubleJump };
       const out = this.ctrl.step(
         { vx: this.body.velocity.x, vy: this.body.velocity.y, onGround: this.onGround, ceiling: this.body.blocked.up },
         inp, mods, dt,
@@ -98,11 +98,16 @@ export class Player {
     this.sprite.setAlpha(this.invulnerable ? (calm ? 0.6 : (Math.floor(this.scene.time.now / 80) % 2 ? 0.35 : 1)) : 1);
     this.platformContact = false;
 
-    // coffee glow
-    this.aura.setVisible(coffee && !this.locked);
-    if (coffee) {
-      const pulse = calm ? 0.4 : 0.35 + 0.15 * Math.sin(this.scene.time.now / 90);
-      this.aura.setAlpha(pulse).setPosition(this.sprite.x, this.sprite.y - 14);
+    // glow: coffee = gold, star power / Recruiter Mode = cycling rainbow
+    const st = this.sv.state, immune = st.immune, now = this.scene.time.now;
+    const colour = immune ? STAR.colors[Math.floor(now / (st.recruiter ? 160 : 80)) % STAR.colors.length] : COFFEE.glowColor;
+    if (st.starActive && !calm) this.sprite.setTint(colour); else this.sprite.clearTint();
+    this.aura.setVisible((coffee || immune) && !this.locked);
+    if (coffee || immune) {
+      const pulse = calm ? 0.5 : (immune ? 0.5 : 0.32) + 0.14 * Math.sin(now / 90);
+      this.aura.setFillStyle(colour, pulse).setPosition(this.sprite.x, this.sprite.y - 14);
+      if (immune) this.aura.setScale(1.25);
+      else this.aura.setScale(1);
     }
   }
 
@@ -141,6 +146,13 @@ export class Player {
     // without jump held the bounce is a fixed hop (no variable-height cut); holding jump lets you cut it short by releasing
     this.ctrl.jumping = true; this.ctrl.cutDone = !held; this.ctrl.coyote = 0; this.ctrl.airJumpUsed = false;
     if (FXCFG.squash) { this.sx = 0.8; this.sy = 1.25; }
+  }
+
+  /** Spring pad launch. */
+  launch(vy) {
+    this.body.setVelocityY(-vy);
+    this.ctrl.jumping = true; this.ctrl.cutDone = true; this.ctrl.coyote = 0; this.ctrl.airJumpUsed = false;
+    if (FXCFG.squash) { this.sx = 0.7; this.sy = 1.4; }
   }
 
   /** Stand still, no collisions (cutscenes, pipes, transitions). */

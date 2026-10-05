@@ -59,7 +59,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     if (d.mode === 'walk' || d.mode === 'boss') {
       let sp = (d.speed ?? this.cfg.speed) * this.mult;
-      if (this.boss) sp *= 1 + 0.25 * (E.boss.hp - this.hp);
+      if (this.boss) sp *= (1 + 0.25 * (E.boss.hp - this.hp)) * (this.props.boost ?? 1);
       if (b.blocked.left) this.dir = 1; else if (b.blocked.right) this.dir = -1;
       if (onGround && this.edgeAhead()) this.dir *= -1;
       if (this.range) { if (this.x < this.homeX - this.range) this.dir = 1; else if (this.x > this.homeX + this.range) this.dir = -1; }

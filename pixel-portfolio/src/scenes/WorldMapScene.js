@@ -6,7 +6,7 @@ import worldData from '../data/worlds.json';
 import { text, drawBox, fadeTo, fmt, disc } from '../systems/UI.js';
 
 const WORLDS = worldData.worlds;
-const NODES = [[30, 134], [68, 102], [110, 132], [150, 98], [192, 126], [226, 100]];
+const NODES = [[22, 134], [57, 104], [92, 134], [127, 100], [162, 130], [197, 100], [232, 126]];
 const WALK = [1, 0, 2, 0];
 const hex = (s) => parseInt(s.slice(1), 16);
 
@@ -163,7 +163,7 @@ export class WorldMapScene extends Phaser.Scene {
       const bob = isSel && !calm ? Math.round(Math.sin(time / 180)) : 0;
       g.fillStyle(hex(C.black)); disc(g, x, y + 2, 11);
       g.fillStyle(hex(isSel ? C.white : C.black)); disc(g, x, y + bob, 11);
-      g.fillStyle(hex(done ? C.green : unlocked ? C.yellow : C.grey)); disc(g, x, y + bob, 9);
+      g.fillStyle(hex(done ? C.green : unlocked ? (id === 6 ? C.red : C.yellow) : C.grey)); disc(g, x, y + bob, 9);
       this.nums[i].setPosition(x, y + bob + 1);
       if (done) { g.fillStyle(hex(C.white)); g.fillRect(x - 4, y + bob - 1, 2, 2); g.fillRect(x - 2, y + bob + 1, 2, 2); g.fillRect(x, y + bob - 1, 2, 2); g.fillRect(x + 2, y + bob - 3, 2, 2); this.nums[i].setVisible(false); }
       else if (!unlocked) { // padlock

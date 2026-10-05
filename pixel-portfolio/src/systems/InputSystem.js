@@ -18,7 +18,7 @@ const KEYMAP = {
   contact:  ['KeyH'],
   resume:   ['KeyV'],
   n1: ['Digit1', 'Numpad1'], n2: ['Digit2', 'Numpad2'], n3: ['Digit3', 'Numpad3'],
-  n4: ['Digit4', 'Numpad4'], n5: ['Digit5', 'Numpad5'], n6: ['Digit6', 'Numpad6'],
+  n4: ['Digit4', 'Numpad4'], n5: ['Digit5', 'Numpad5'], n6: ['Digit6', 'Numpad6'], n7: ['Digit7', 'Numpad7'],
 };
 const BLOCK_DEFAULT = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'Enter']);
 

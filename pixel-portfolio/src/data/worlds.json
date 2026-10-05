@@ -1,5 +1,5 @@
 {
-  "_comment": "World-map entries. `map` = Tiled map; `difficulty` 1-5 (also reflected in the level: enemy count, gap sizes, jump type needed); `mechanic` is the headline rule of that world.",
+  "_comment": "World-map entries. `map` = Tiled map; `difficulty` 1-5; `mechanic` is the headline rule.",
   "worlds": [
     {
       "id": 1,
@@ -15,7 +15,7 @@
       "short": "EDUCATION",
       "name": "WORLD 2: EDUCATION",
       "desc": "DEGREES & LEARNING",
-      "mechanic": "EARN 3 DEGREES",
+      "mechanic": "EARN 4 DEGREES",
       "map": "world2",
       "difficulty": 2
     },
@@ -24,7 +24,7 @@
       "short": "EXPERIENCE",
       "name": "WORLD 3: EXPERIENCE",
       "desc": "ONE FLOOR PER JOB",
-      "mechanic": "BEAT 3 MINI-BOSSES",
+      "mechanic": "BEAT 5 MINI-BOSSES",
       "map": "world3",
       "difficulty": 3
     },
@@ -42,17 +42,26 @@
       "short": "AWARDS",
       "name": "WORLD 5: AWARDS",
       "desc": "CERTS IN ? BLOCKS",
-      "mechanic": "BUMP ? BLOCKS",
+      "mechanic": "BUMP 3 ? BLOCKS",
       "map": "world5",
       "difficulty": 5
     },
     {
       "id": 6,
+      "short": "BOSS",
+      "name": "WORLD 6: FINAL BOSS",
+      "desc": "THE PRINTER MONSTER",
+      "mechanic": "THROW PLANES AT IT!",
+      "map": "world6",
+      "difficulty": 5
+    },
+    {
+      "id": 7,
       "short": "CONTACT",
-      "name": "WORLD 6: CONTACT",
+      "name": "WORLD 7: CONTACT",
       "desc": "ROOFTOP: SAY HELLO",
       "mechanic": "GET HIRED!",
-      "map": "world6",
+      "map": "world7",
       "difficulty": 1
     }
   ]

@@ -1,5 +1,5 @@
 /** Pure world-progression rules (no imports, so Node unit tests can load it). */
-export const WORLD_COUNT = 6;
+export const WORLD_COUNT = 7;
 
 /** World n is playable when it is world 1, the previous world is cleared, it is already cleared, or Recruiter Mode is on. */
 export function isWorldUnlocked(id, completed, recruiter) {

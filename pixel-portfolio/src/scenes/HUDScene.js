@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME, PALETTE as C, COFFEE, DEBUG } from '../config.js';
+import { GAME, PALETTE as C, COFFEE, DEBUG, STAR } from '../config.js';
 import { text, drawBox } from '../systems/UI.js';
 
 const hex = (s) => parseInt(s.slice(1), 16);
@@ -26,6 +26,13 @@ export class HUDScene extends Phaser.Scene {
     this.infoText = text(this, 6, 34, '', { size: 8, color: C.lime, origin: [0, 0.5], backing: true, shadow: false }).setVisible(false);
     this.skillG = this.add.graphics();
     this.skillLabels = [0, 1, 2, 3].map((i) => text(this, 6 + i * 62, 200, '', { size: 8, color: C.white, origin: [0, 0.5], shadow: true }));
+
+    // star power / Recruiter immunity badge + boss health bar
+    this.starG = this.add.graphics();
+    this.starIcon = this.add.image(206, 22, 'star', 0).setScale(0.5).setVisible(false);
+    this.immuneText = text(this, 250, 34, '', { size: 8, origin: [1, 0.5], backing: true, shadow: false }).setVisible(false);
+    this.bossG = this.add.graphics();
+    this.bossText = text(this, 128, 36, '', { size: 8, color: C.white, backing: true, shadow: false }).setVisible(false);
 
     this.toastBox = this.add.graphics().setVisible(false);
     this.toast = text(this, 128, 70, '', { size: 8, color: C.yellow }).setVisible(false);
@@ -70,15 +77,40 @@ export class HUDScene extends Phaser.Scene {
   /** World-specific extras supplied by the active level (see LevelScene.hudInfo). */
   drawExtras() {
     const lvl = this.scene.isActive('Level') || this.scene.isPaused('Level') ? this.scene.get('Level') : null;
-    const info = lvl?.hudInfo?.() ?? {};
+    const info = lvl?.hud?.() ?? {};
     this.infoText.setVisible(!!info.text); if (info.text) this.infoText.setText(info.text);
+    // star power: meter under the coffee bar; Recruiter Mode shows a permanent rainbow "IMMUNE" badge
+    const sg = this.starG; sg.clear();
+    const stInfo = info.star, rainbow = STAR.colors[Math.floor(this.time.now / 120) % STAR.colors.length];
+    this.starIcon.setVisible(!!stInfo);
+    this.immuneText.setVisible(!!stInfo?.recruiter);
+    if (stInfo) {
+      sg.fillStyle(hex(C.black)).fillRect(213, 17, 38, 6);
+      sg.fillStyle(hex(C.grey)).fillRect(214, 18, 36, 4);
+      sg.fillStyle(rainbow).fillRect(214, 18, Math.round(36 * stInfo.frac), 4);
+      if (stInfo.recruiter) {
+        // recolouring a Text rebuilds its canvas texture, so only do it when the colour actually changes (not every frame)
+        this.immuneText.setText('IMMUNE');
+        if (this.lastRainbow !== rainbow) { this.lastRainbow = rainbow; this.immuneText.setColor('#' + rainbow.toString(16).padStart(6, '0')); }
+      }
+    }
+    // boss health
+    const bg = this.bossG; bg.clear();
+    this.bossText.setVisible(!!info.boss);
+    if (info.boss) {
+      const b = info.boss;
+      this.bossText.setText(`${b.name}  HP ${b.hp}`);
+      bg.fillStyle(hex(C.black)).fillRect(27, 44, 202, 10);
+      bg.fillStyle(hex(C.grey)).fillRect(28, 45, 200, 8);
+      bg.fillStyle(hex(b.phase === 2 ? C.red : b.phase === 1 ? C.orange : C.lime)).fillRect(28, 45, Math.round(200 * b.frac), 8);
+    }
     const g = this.skillG; g.clear();
     this.skillLabels.forEach((t, i) => {
       const k = info.skills?.[i];
       t.setVisible(!!k);
       if (!k) return;
       const x = 6 + i * 62;
-      t.setText(k.name.replace('CATEGORY ', 'CAT ').slice(0, 7));
+      t.setText(k.name.slice(0, 7));
       g.fillStyle(hex(C.black), 0.7).fillRect(x - 3, 192, 61, 28);
       g.fillStyle(hex(C.black)).fillRect(x - 1, 207, 54, 8);
       g.fillStyle(hex(C.grey)).fillRect(x, 208, 52, 6);

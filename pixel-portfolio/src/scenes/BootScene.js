@@ -24,6 +24,8 @@ export class BootScene extends Phaser.Scene {
     for (let t = 0; t < HERO.tiers; t++) if (!this.textures.exists(`hero_t${t}`)) generateHero(this, `hero_t${t}`, t);
 
     this.anims.create({ key: 'coin-spin', frames: this.anims.generateFrameNumbers('coin', { frames: [0, 1, 2, 3] }), frameRate: 8, repeat: -1 });
+    this.anims.create({ key: 'star-spin', frames: this.anims.generateFrameNumbers('star', { frames: [0, 1] }), frameRate: 6, repeat: -1 });
+    this.anims.create({ key: 'fan-spin', frames: this.anims.generateFrameNumbers('deco_fan', { frames: [0, 1] }), frameRate: 14, repeat: -1 });
     this.scene.start('Title');
   }
 }

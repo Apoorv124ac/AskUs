@@ -23,18 +23,28 @@ export const SPRITESHEETS = {
   boss_clock:    { url: null, frameWidth: 32, frameHeight: 32, generator: 'boss', args: { from: 'enemy_clock' } },
   boss_invite:   { url: null, frameWidth: 32, frameHeight: 32, generator: 'boss', args: { from: 'enemy_invite' } },
   lever:         { url: null, frameWidth: 16, frameHeight: 16, generator: 'lever' },
+  star:          { url: null, frameWidth: 16, frameHeight: 16, generator: 'star' },
+  spring:        { url: null, frameWidth: 16, frameHeight: 16, generator: 'spring' },
+  deadline:      { url: null, frameWidth: 16, frameHeight: 16, generator: 'deadline' },
+  printer_boss:  { url: null, frameWidth: 68, frameHeight: 68, generator: 'printerBoss' },
+  deco_fan:      { url: null, frameWidth: 16, frameHeight: 16, generator: 'deco', args: { kind: 'fan' } },
   trophy:        { url: null, frameWidth: 16, frameHeight: 16, generator: 'trophy' },
   coin:   { url: null, frameWidth: 16, frameHeight: 16, generator: 'coin' },
   flag:   { url: null, frameWidth: 16, frameHeight: 32, generator: 'flag' },
 };
 export const IMAGES = {
   book:     { url: null, generator: 'book' },
+  jam:      { url: null, generator: 'jam' },
+  plane:    { url: null, generator: 'plane' },
+  // scenery props (origin = feet): deco_<kind>
+  ...Object.fromEntries(['plant', 'cooler', 'whiteboard', 'cabinet', 'vending', 'bench', 'lamp', 'globe', 'statue', 'ac', 'antenna', 'easel', 'crate']
+    .map((kind) => [`deco_${kind}`, { url: null, generator: 'deco', args: { kind } }])),
   cert:     { url: null, generator: 'cert' },
   paper:    { url: null, generator: 'paper' },
   mplat:    { url: null, generator: 'mplat' },
   terminal: { url: null, generator: 'terminal' },
   // themed parallax sets: bg_<theme>_far / _mid / _near
-  ...Object.fromEntries(['campus', 'office', 'server', 'gallery', 'sunset'].flatMap((theme) =>
+  ...Object.fromEntries(['campus', 'office', 'server', 'gallery', 'sunset', 'boss'].flatMap((theme) =>
     ['far', 'mid', 'near'].map((layer) => [`bg_${theme}_${layer}`, { url: null, generator: 'bg', args: { theme, layer } }]))),
   tiles:   { url: null, generator: 'tiles' },
   coffee:  { url: null, generator: 'coffee' },
@@ -52,7 +62,7 @@ export const IMAGES = {
 export const HERO = { url: null, tiers: 6, frameWidth: 16, frameHeight: 32 };
 /** Tiled JSON maps (served from /public/maps). */
 export const MAPS = {
-  ...Object.fromEntries(['world1', 'world2', 'world3', 'world4', 'world5', 'world6', 'bonus-skills-a', 'bonus-skills-b'].map((k) => [k, `maps/${k}.json`])),
+  ...Object.fromEntries(['world1', 'world2', 'world3', 'world4', 'world5', 'world6', 'world7', 'bonus-skills-a', 'bonus-skills-b'].map((k) => [k, `maps/${k}.json`])),
   'test-level': 'maps/test-level.json',
   'bonus-room': 'maps/bonus-room.json',
 };

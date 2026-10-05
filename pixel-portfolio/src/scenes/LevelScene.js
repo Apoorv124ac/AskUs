@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
-import { GAME, CAMERA, RESPAWN, ENEMIES, PALETTE as C } from '../config.js';
+import { GAME, CAMERA, RESPAWN, ENEMIES, STAR, SPRING, PALETTE as C } from '../config.js';
 import dialogue from '../data/dialogue.json';
 import resume from '../data/resume.json';
 import worldData from '../data/worlds.json';
 import { Player } from '../entities/Player.js';
 import { Enemy, Paper } from '../entities/Enemy.js';
+import { PrinterBoss, Thrower } from '../entities/PrinterBoss.js';
 import { FX } from '../systems/FX.js';
 import { DialogueBox } from '../systems/DialogueBox.js';
 import { FONT } from '../systems/UI.js';
@@ -26,6 +27,9 @@ const hex = (s) => parseInt(s.slice(1), 16);
  *   qblock (+award)                                                 "?" block that releases a certificate (World 5)
  *   trophy (+award), link (+kind)                                   interactables: press Enter / OK
  *   mplat (+dx,dy,speed)                                            moving platform
+ *   star, hblock                                                    star power (immunity); hblock = invisible block that reveals a star
+ *   spring, crumble (+len,f), laser (+period,on,phase)              springs, falling platforms, blinking laser gates
+ *   deco (+kind)                                                    scenery props;  printerboss = the final boss arena
  */
 export class LevelScene extends Phaser.Scene {
   constructor() { super('Level'); }
@@ -35,6 +39,8 @@ export class LevelScene extends Phaser.Scene {
     this.world = data?.world ?? null;      // world number when launched from the map
     this.spawnName = data?.spawn ?? 'start';
     this.finished = false; this.transitioning = false; this.respawning = false; this.frozen = false;
+    // the scene object is reused for every map: clear anything a previous map left behind
+    this.goal = null; this.boss = null; this.thrower = null; this.bossObj = null;
   }
 
   create() {
@@ -44,7 +50,7 @@ export class LevelScene extends Phaser.Scene {
     this.meta = worldData.worlds.find((w) => w.id === this.world);
     this.speedMult = 1 + ENEMIES.speedPerDifficulty * ((this.meta?.difficulty ?? 1) - 1);
     this.pipes = []; this.checkpoints = []; this.interactables = []; this.sayQueue = [];
-    this.tasks = {}; this.gates = {}; this.movers = [];
+    this.tasks = {}; this.gates = {}; this.movers = []; this.hblocks = []; this.lasers = [];
 
     this.buildMap();
     this.buildBackground();
@@ -52,6 +58,8 @@ export class LevelScene extends Phaser.Scene {
     this.buildPlayer();
     this.setupCamera();
     this.setupCollisions();
+    this.fx.ambient(this.mapOpts.theme);
+    if (this.bossObj) this.setupBoss();
 
     this.dlg = new DialogueBox(this, sv, { y: 40, vars: { name: resume.meta.name.toUpperCase() } });
     this.prompt = this.add.text(0, 0, 'ENTER', { fontFamily: FONT, fontSize: '8px', color: C.yellow, backgroundColor: 'rgba(15,15,27,0.85)', padding: { x: 2, y: 2 } })
@@ -117,6 +125,10 @@ export class LevelScene extends Phaser.Scene {
     this.mplats = this.physics.add.group({ allowGravity: false, immovable: true });
     this.bookGroup = this.physics.add.group({ allowGravity: false, immovable: true });
     this.leverGroup = this.physics.add.group({ allowGravity: false, immovable: true });
+    this.starGroup = this.physics.add.group({ allowGravity: false, immovable: true });
+    this.springs = this.physics.add.group({ allowGravity: false, immovable: true });
+    this.crumbles = this.physics.add.staticGroup();
+    this.solidBlocks = this.physics.add.staticGroup();
     this.spawns = {};
     let coinIndex = 0;
 
@@ -206,6 +218,45 @@ export class LevelScene extends Phaser.Scene {
           break;
         }
         case 'link': this.makeLink(o, p); break;
+        case 'deco': {
+          const d = this.add.sprite(o.x, o.y, `deco_${p.kind}`, p.kind === 'fan' ? 0 : undefined).setOrigin(0.5, 1).setDepth(1.5);
+          if (p.kind === 'fan' && !calm) d.anims.play('fan-spin');
+          break;
+        }
+        case 'star': this.makeStar(o.x, o.y); break;
+        case 'hblock': {
+          const hb = { x: o.x + 8, y: o.y + 8, used: false };
+          if (state.recruiter) {                       // Recruiter Mode: the secret is out in the open
+            hb.used = true;
+            this.add.image(hb.x, hb.y, 'tiles', 10).setAlpha(0.5).setDepth(3);
+            this.makeStar(hb.x, hb.y - 20);
+          } else this.hblocks.push(hb);
+          break;
+        }
+        case 'spring': {
+          const sp = this.physics.add.sprite(o.x, o.y, 'spring', 0).setOrigin(0.5, 1).setDepth(4);
+          sp.body.setAllowGravity(false); sp.body.setImmovable(true); sp.body.setSize(14, 8); sp.body.setOffset(1, 8);
+          this.springs.add(sp);
+          break;
+        }
+        case 'crumble': {
+          const len = p.len ?? 2;
+          const c = this.add.tileSprite(o.x + len * 8, o.y + 8, len * 16, 16, 'tiles', p.f ?? 21).setDepth(3);
+          this.crumbles.add(c);
+          c.setData({ homeX: c.x, homeY: c.y, state: 'idle', at: 0 });
+          break;
+        }
+        case 'laser': {
+          const w = o.width || 4, cx = o.x + w / 2;
+          const l = { x: o.x, y: o.y, w, h: o.height, period: p.period ?? 2.6, on: p.on ?? 1.2, phase: p.phase ?? 0 };
+          l.glow = this.add.rectangle(cx, o.y + o.height / 2, w + 6, o.height, 0xf83800, 0.28).setDepth(5.9).setAlpha(0);
+          l.beam = this.add.rectangle(cx, o.y + o.height / 2, w, o.height, 0xfcfcfc).setStrokeStyle(1, 0xf83800).setDepth(6).setAlpha(0);
+          this.add.rectangle(cx, o.y - 3, 12, 6, 0x2c2c44).setStrokeStyle(1, 0x0f0f1b).setDepth(6);
+          this.add.rectangle(cx, o.y + o.height + 3, 12, 6, 0x2c2c44).setStrokeStyle(1, 0x0f0f1b).setDepth(6);
+          this.lasers.push(l);
+          break;
+        }
+        case 'printerboss': this.bossObj = o; break;
         default: break;
       }
     }
@@ -213,7 +264,7 @@ export class LevelScene extends Phaser.Scene {
 
   makeSign(o, p) {
     let str = dialogue.signs[p.dialogue] ?? p.text ?? p.dialogue ?? '';
-    if (p.job !== undefined) str = `FLOOR ${p.job + 1}\n${resume.experience[p.job].company.slice(0, 16)}`;
+    if (p.job !== undefined) { const j = resume.experience[p.job]; str = `FLOOR ${p.job + 1}\n${j.short ?? j.company.slice(0, 16)}`; }
     // dark backing keeps sign text readable on any background (contrast-safe)
     this.add.text(o.x, o.y, str, { fontFamily: FONT, fontSize: '8px', color: C.white, align: 'center', lineSpacing: 3,
       backgroundColor: 'rgba(15,15,27,0.82)', padding: { x: 3, y: 3 } }).setOrigin(0.5, 1).setDepth(3);
@@ -243,7 +294,7 @@ export class LevelScene extends Phaser.Scene {
   openLink(kind, label) {
     const v = (resume.contact[kind] ?? '').trim();
     if (!v) { this.say([{ who: `${label}: NOT SET YET`, text: `Add your ${label.toLowerCase()} to src/data/resume.json (contact.${kind}) and it will open from here.` }]); return; }
-    const url = kind === 'email' ? `mailto:${v}` : /^(https?:|mailto:)/i.test(v) ? v : `https://${v}`;
+    const url = kind === 'email' ? `mailto:${v}` : kind === 'resumePdf' ? new URL(v, location.href).href : /^(https?:|mailto:)/i.test(v) ? v : `https://${v}`;
     this.audio.sfx('confirm');
     window.open(url, '_blank', 'noopener');
   }
@@ -269,9 +320,15 @@ export class LevelScene extends Phaser.Scene {
     const z = this.player.zone;
     this.physics.add.collider(z, this.groundLayer);
     this.physics.add.collider(z, this.pipeLayer);
-    this.physics.add.collider(z, this.gateGroup);
-    this.physics.add.collider(z, this.mplats, () => { this.player.platformContact = z.body.touching.down; });
-    this.physics.add.collider(z, this.qblocks, (_, blk) => this.tryBump(blk));
+    // bodies that are not tiles report contact through platformContact so the hero can stand on and jump off them
+    const ride = () => { if (z.body.touching.down) this.player.platformContact = true; };
+    this.physics.add.collider(z, this.gateGroup, ride);
+    this.physics.add.collider(z, this.mplats, ride);
+    this.physics.add.collider(z, this.qblocks, (_, blk) => { ride(); this.tryBump(blk); });
+    this.physics.add.collider(z, this.solidBlocks, ride);
+    this.physics.add.collider(z, this.crumbles, (_, c) => { ride(); this.stepCrumble(c); });
+    this.physics.add.overlap(z, this.springs, (_, sp) => this.hitSpring(sp));
+    this.physics.add.overlap(z, this.starGroup, (_, st) => this.collectStar(st));
     // enemies live in a plain group (so their body settings stay intact); give each its own colliders
     for (const e of this.enemies.getChildren()) {
       this.physics.add.collider(e, this.groundLayer);
@@ -305,7 +362,11 @@ export class LevelScene extends Phaser.Scene {
     const id = coin.getData('id'), fact = coin.getData('fact'), ghost = coin.getData('ghost');
     if (!ghost) state.collectCoin(id);
     this.fx.coinSparkle(coin.x, coin.y);
-    if (!ghost) this.fx.floatText(coin.x, coin.y - 8, '+1 XP');
+    const cat = coin.getData('cat');
+    if (cat !== undefined && !ghost) {       // skill coins name the skill you just "learned"
+      const k = resume.skills[cat], n = state.countCollected(`:skill:${cat}:`);
+      this.fx.floatText(coin.x, coin.y - 8, k.items[(n - 1) % k.items.length].toUpperCase(), k.color);
+    } else if (!ghost) this.fx.floatText(coin.x, coin.y - 8, '+1 XP');
     coin.destroy();
     if (fact !== undefined) {
       audio.sfx('fact');
@@ -335,6 +396,116 @@ export class LevelScene extends Phaser.Scene {
     this.audio.sfx('lever');
     this.fx.burst(l.x, l.y - 8, { count: 8, colors: [C.lime, C.white] });
     this.taskProgress(l.getData('task'));
+  }
+
+  // -------------------------------------------- star power, springs, secrets
+  makeStar(x, y) {
+    const { save, state } = this.sv, calm = save.settings.reducedMotion;
+    const st = this.physics.add.sprite(x, y, 'star', 0).setDepth(8);
+    st.body.setAllowGravity(false); st.body.setSize(12, 12);
+    if (!calm) { st.anims.play('star-spin'); this.tweens.add({ targets: st, y: y - 3, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
+    this.starGroup.add(st);
+    if (state.recruiter) {                              // Recruiter Mode: stars are marked with a beacon so nothing is hidden
+      const beam = this.add.rectangle(x, y - 26, 4, 46, 0xf8d878, 0.4).setDepth(7);
+      const tag = this.add.text(x, y - 52, 'STAR', { fontFamily: FONT, fontSize: '8px', color: C.yellow, backgroundColor: 'rgba(15,15,27,0.85)', padding: { x: 2, y: 2 } }).setOrigin(0.5, 1).setDepth(7);
+      if (!calm) this.tweens.add({ targets: [beam, tag], alpha: 0.35, duration: 450, yoyo: true, repeat: -1 });
+      st.on('destroy', () => { beam.destroy(); tag.destroy(); });
+    } else if (!calm) {                                 // normal mode: only a faint glint gives a hidden star away
+      this.time.addEvent({ delay: 2200, loop: true, callback: () => { if (st.active) this.fx.burst(st.x, st.y, { count: 2, speed: 14, gravity: 0, life: 600, colors: ['#F8D878', '#FCFCFC'] }); } });
+    }
+    return st;
+  }
+
+  collectStar(st) {
+    this.sv.state.startStar();
+    this.audio.sfx('star');
+    this.fx.burst(st.x, st.y, { count: 20, speed: 100, colors: STAR.colors.map((c) => '#' + c.toString(16).padStart(6, '0')), life: 600, gravity: 20 });
+    this.fx.floatText(st.x, st.y - 10, dialogue.star.got, '#F8D878');
+    st.destroy();
+  }
+
+  hitSpring(sp) {
+    const p = this.player, b = p.body;
+    if (this.time.now < (sp.getData('cool') ?? 0) || b.velocity.y < 10 || b.bottom - sp.body.top > 10) return;
+    sp.setData('cool', this.time.now + 250);
+    p.launch(SPRING.vy);
+    this.audio.sfx('spring');
+    sp.setFrame(1); this.time.delayedCall(170, () => sp.active && sp.setFrame(0));
+  }
+
+  /** Invisible block: bump it from below and a star pops out. */
+  revealHidden(hb) {
+    hb.used = true;
+    const p = this.player, calm = this.sv.save.settings.reducedMotion;
+    const blk = this.add.image(hb.x, hb.y, 'tiles', 11).setDepth(3);
+    this.solidBlocks.add(blk);
+    p.teleport(p.x, p.feetY + Math.max(0, hb.y + 8 - p.body.top) + 1);      // knock the hero out of the new block
+    this.audio.sfx('bump');
+    if (!calm) this.tweens.add({ targets: blk, y: hb.y - 4, duration: 90, yoyo: true });
+    const st = this.makeStar(hb.x, hb.y, false);
+    this.tweens.add({ targets: st, y: hb.y - 22, duration: calm ? 40 : 300, ease: 'Back.easeOut' });
+    this.fx.floatText(hb.x, hb.y - 26, 'SECRET!', '#F8D878');
+  }
+
+  stepCrumble(c) {
+    if (c.getData('state') !== 'idle' || !this.player.body.touching.down) return;
+    c.setData({ state: 'shake', at: this.time.now + 450 });
+  }
+
+  updateCrumbles() {
+    const now = this.time.now, calm = this.sv.save.settings.reducedMotion;
+    for (const c of this.crumbles.getChildren()) {
+      const st = c.getData('state');
+      if (st === 'shake') {
+        if (!calm) c.x = c.getData('homeX') + Phaser.Math.Between(-1, 1);
+        if (now >= c.getData('at')) {
+          c.setData({ state: 'gone', at: now + 2600 }); c.x = c.getData('homeX'); c.body.enable = false;
+          this.tweens.add({ targets: c, y: c.getData('homeY') + (calm ? 0 : 56), alpha: 0, duration: calm ? 60 : 380 });
+          this.fx.burst(c.x, c.y, { count: 6, colors: [C.lgrey, C.white], gravity: 120, life: 400 });
+        }
+      } else if (st === 'gone' && now >= c.getData('at')) {
+        c.y = c.getData('homeY'); c.setAlpha(1); c.body.enable = true; c.body.updateFromGameObject(); c.setData('state', 'idle');
+      }
+    }
+  }
+
+  updateLasers() {
+    const t = this.time.now / 1000, calm = this.sv.save.settings.reducedMotion, b = this.player.body;
+    for (const l of this.lasers) {
+      const ph = (t + l.phase) % l.period, on = ph < l.on, warn = !on && ph > l.period - 0.5;
+      l.beam.setAlpha(on ? 1 : warn && !calm && Math.floor(t * 14) % 2 ? 0.4 : 0);
+      l.glow.setAlpha(on ? 0.5 : 0);
+      if (on && !this.respawning && !this.finished && b.right > l.x && b.left < l.x + l.w && b.bottom > l.y && b.top < l.y + l.h) this.hurtPlayer();
+    }
+  }
+
+  // ------------------------------------------------------------- final boss
+  setupBoss() {
+    const o = this.bossObj, z = this.player.zone;
+    this.boss = new PrinterBoss(this, o.x, o.y);
+    this.thrower = new Thrower(this);
+    const burstAt = (x, y) => this.fx.burst(x, y, { count: 6, colors: [C.white, C.lgrey], gravity: 100, life: 250 });
+    this.physics.add.overlap(this.thrower.planes, this.boss.sprite, (a, b) => { const plane = a.texture?.key === 'plane' ? a : b; if (this.boss.dead) return; plane.destroy(); this.boss.damage(1); });
+    this.physics.add.overlap(this.thrower.planes, this.boss.jams, (a, b) => { const plane = a.texture.key === 'plane' ? a : b, jam = plane === a ? b : a; burstAt(jam.x, jam.y); plane.destroy(); jam.destroy(); this.audio.sfx('stomp'); });
+    this.physics.add.overlap(this.thrower.planes, this.boss.deadlines, (a, b) => {
+      const plane = a.texture.key === 'plane' ? a : b, dl = plane === a ? b : a;
+      plane.destroy(); const hp = dl.getData('hp') - 1; dl.setData('hp', hp); dl.setTint(0xff8888);
+      if (hp <= 0) { burstAt(dl.x, dl.y); dl.destroy(); this.audio.sfx('stomp'); }
+    });
+    this.physics.add.overlap(z, this.boss.jams, (_, j) => { j.destroy(); this.hurtPlayer(); });
+    this.physics.add.overlap(z, this.boss.deadlines, (_, d) => { if (this.sv.state.immune) { d.destroy(); return; } this.hurtPlayer(); });
+  }
+
+  bossDefeated() {
+    if (this.finished) return;
+    this.finished = true;
+    const { state } = this.sv;
+    state.completeWorld(this.world ?? 6);
+    this.say([{ who: dialogue.boss.win, text: 'The Printer Monster is shut down for good. Nice throwing! Now up to the rooftop.' }], () => {
+      const cam = this.cameras.main;
+      cam.fadeOut(CAMERA.fadeMs, 15, 15, 27);
+      cam.once('camerafadeoutcomplete', () => { this.scene.stop('HUD'); this.scene.start('WorldMap', { cleared: this.world ?? 6 }); });
+    });
   }
 
   // ----------------------------------------------------------- tasks / gates
@@ -416,11 +587,19 @@ export class LevelScene extends Phaser.Scene {
       this.fx.shake(60, 0.003);
       return;
     }
+    if (this.sv.state.immune) { this.starStrike(e); return; }
     this.hurtPlayer();
   }
 
+  /** With star power (or Recruiter Mode) touching an enemy defeats it; bosses lose one hit point per touch. */
+  starStrike(e) {
+    if (e.dead) return;
+    if (e.boss) { if (this.time.now < e.invulnUntil) return; e.stomp(); this.audio.sfx('boss'); } else { e.defeat(); this.audio.sfx('stomp'); }
+    this.fx.burst(e.x, e.y, { count: 8, colors: STAR.colors.map((c) => '#' + c.toString(16).padStart(6, '0')), gravity: 60, life: 400 });
+  }
+
   hurtPlayer() {
-    if (this.player.invulnerable || this.respawning || this.finished) return;
+    if (this.sv.state.immune || this.player.invulnerable || this.respawning || this.finished) return;
     this.audio.sfx('hurt');
     this.respawn(RESPAWN.hitCoinLoss, 'hit');
   }
@@ -519,9 +698,17 @@ export class LevelScene extends Phaser.Scene {
       case 'degrees': return { text: `DEGREES ${s.earnedCount('degrees')}/${resume.education.length}` };
       case 'bosses':  return { text: `BOSSES ${s.earnedCount('bosses')}/${resume.experience.length}` };
       case 'awards':  return { text: `CERTS ${s.earnedCount('awards')}/${resume.awards.length}` };
-      case 'skills':  return { skills: resume.skills.map((k, i) => ({ name: k.category, color: k.color, frac: Math.min(1, s.countCollected(`:skill:${i}:`) / 7) })) };
+      case 'skills':  return { skills: resume.skills.map((k, i) => ({ name: (k.short ?? k.category).toUpperCase(), color: k.color, frac: Math.min(1, s.countCollected(`:skill:${i}:`) / 7) })) };
       default: return {};
     }
+  }
+
+  /** Everything the HUD needs in one object. */
+  hud() {
+    const s = this.sv.state, out = { ...this.hudInfo() };
+    if (s.immune) out.star = { frac: s.recruiter ? 1 : s.starMs / STAR.durationMs, recruiter: s.recruiter };
+    if (this.boss) out.boss = { name: dialogue.boss.name, hp: this.boss.hp, frac: this.boss.frac, phase: this.boss.phase };
+    return out;
   }
 
   // ------------------------------------------------------------------ frame
@@ -536,6 +723,14 @@ export class LevelScene extends Phaser.Scene {
     this.enemies.getChildren().forEach((e) => e.update(dt));
     this.projectiles.getChildren().forEach((p) => p.update(dt));
     this.updateMovers();
+    this.updateCrumbles();
+    this.updateLasers();
+    for (const hb of this.hblocks) {
+      const b = this.player.body;
+      if (!hb.used && b.velocity.y < -30 && b.top <= hb.y + 11 && b.top >= hb.y - 6 && Math.abs(this.player.x - hb.x) < 12) this.revealHidden(hb);
+    }
+    if (this.boss) this.boss.update(dt);
+    this.thrower?.update(dt, input);
 
     // pipe entry: stand on it and press down
     if (!this.transitioning && input.isDown('down')) {

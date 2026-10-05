@@ -7,7 +7,11 @@
     "coffee": "COFFEE: SPEED\n+ DOUBLE JUMP",
     "bonus": "BONUS ROOM!",
     "goal": "FINISH FLAG!",
-    "bugs": "JUMP ON BUGS!\nTOUCHING = -COINS"
+    "bugs": "JUMP ON BUGS!\nTOUCHING = -COINS",
+    "star": "SECRET STAR =\nIMMUNITY",
+    "spring": "SPRING PADS\nLAUNCH YOU HIGH",
+    "laser": "LASERS BLINK:\nTIME YOUR RUN",
+    "crumble": "CRUMBLING\nPLATFORMS!"
   },
   "ui": {
     "pressStart": "PRESS ENTER",
@@ -111,13 +115,23 @@
       },
       {
         "who": "TIP",
-        "text": "Printer Jams shoot paper: stomp them or time your run. The trophy hall waits at the end."
+        "text": "Printer Jams shoot paper, and platforms crumble. The trophy hall waits at the end."
       }
     ],
     "world6": [
       {
-        "who": "WORLD 6: CONTACT",
-        "text": "The rooftop at sunset. Stand by a terminal and press ENTER to get in touch."
+        "who": "WORLD 6: FINAL BOSS",
+        "text": "The Printer Monster throws paper jams and deadlines at you!"
+      },
+      {
+        "who": "YOUR TOOL",
+        "text": "Aim with the MOUSE and click (or tap) to throw paper planes. Keyboard: hold ENTER. Planes also pop incoming jams!"
+      }
+    ],
+    "world7": [
+      {
+        "who": "WORLD 7: CONTACT",
+        "text": "You beat the boss! Welcome to the rooftop. Stand by a terminal and press ENTER to get in touch."
       },
       {
         "who": "FINAL STEP",
@@ -129,5 +143,15 @@
     "thanks": "THANK YOU FOR PLAYING!",
     "hired": "FINAL RANK: HIRED!",
     "continue": "ENTER: BACK TO MAP"
+  },
+  "boss": {
+    "name": "PRINTER MONSTER",
+    "phase2": "PHASE 2: IT'S JAMMING!",
+    "phase3": "PHASE 3: DEADLINE RUSH!",
+    "win": "BOSS DEFEATED!"
+  },
+  "star": {
+    "got": "STAR POWER!",
+    "recruiter": "RECRUITER MODE: IMMUNE"
   }
 }

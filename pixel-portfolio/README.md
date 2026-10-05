@@ -9,26 +9,37 @@ Tiled-JSON maps, everything configurable from `src/config.js`.
 > locked/unlocked worlds, Recruiter Mode, finish flag that clears a world. Worlds 1-6 still use the shared
 > test level as a stand-in; enemies, NPCs and credits come in later segments.
 
-## The six worlds (each is its own level, theme and mechanic)
+## The seven worlds (each is its own level, theme and mechanic)
 
 | # | world | theme | mission | difficulty |
 |---|---|---|---|---|
 | 1 | Intro | city | exactly 10 gold coins, each reveals an about-me fact; 2 bugs | 1 |
-| 2 | Education | campus | 3 classroom tasks (collect books / stomp bugs / pull lever) earn 3 degrees and open gates | 2 |
-| 3 | Experience | office | 3 floors, each ends in a mini-boss (3 stomps) that reveals a real achievement | 3 |
-| 4 | Skills | server room | 4 coloured coin zones fill 4 skill bars; moving platforms, long jumps, 2 bonus pipe rooms | 4 |
-| 5 | Awards | gallery | bump `?` blocks for certificates; printers, gaps, trophy hall | 5 |
-| 6 | Contact | rooftop sunset | link terminals (Enter), HIRE ME flag, rolling credits | 1 (victory lap) |
+| 2 | Education | campus | 4 classroom tasks (collect books / stomp bugs / pull lever / spring to the high shelves) earn 4 degrees and open gates | 2 |
+| 3 | Experience | office | 5 floors (one per job), each ends in a mini-boss (3 stomps) that reveals a real achievement | 3 |
+| 4 | Skills | server room | 4 coloured coin zones fill 4 skill bars; moving platforms, lasers, crumbling racks, 2 bonus pipe rooms | 4 |
+| 5 | Awards | gallery | bump 3 `?` blocks for certificates; printers, lasers, crumbling ledges, trophy hall | 5 |
+| 6 | **Final boss** | printer lair | the Printer Monster throws paper jams + deadline clocks; you throw paper planes with the mouse | 5 |
+| 7 | Contact | rooftop sunset | link terminals (Enter), resume PDF, HIRE ME flag -> credits | 1 (victory lap) |
 
+**Boss fight controls:** aim with the mouse and click (hold to auto-fire) / tap on touch; keyboard-only: hold Enter or Space.
+Planes pop jams (1 hit) and deadlines (2 hits); the monster has 40 HP and 3 phases (`PRINTER_BOSS` in `config.js`).
+
+**Star power:** a hidden star in every world (invisible `?`-less blocks you bump from below, or ledges only a spring pad reaches)
+gives 10 s of immunity - touching enemies defeats them. **Recruiter Mode** (title menu or `R` on the map) = permanent immunity with a
+rainbow aura + IMMUNE badge, every secret star revealed with a beacon, all worlds unlocked.
+
+Scenery: springs, crumbling platforms, blinking lasers, themed props and ambient particles per world.
 Enemies: Bug, Deadline Clock, Meeting Invite, Spam Email, Printer Jam (stomp them; a hit costs 3 coins and sends you to the
-last checkpoint - no game over). Enemy speed also scales with world difficulty (`ENEMIES` in `config.js`).
-`node tools/validate-maps.mjs` proves every level is beatable (worlds 1-3 and 6 with normal jumps, 4-5 need the long jump) and
-that every coin / `?` block / book is reachable, so information is never gated behind difficulty (also run by `npm test`).
-Edit layouts in `tools/gen-maps.mjs` (then `node tools/gen-maps.mjs`). Fill in your real content in `src/data/resume.json`.
+last checkpoint - no game over). Speeds scale with world difficulty (`ENEMIES` in `config.js`).
+
+`node tools/validate-maps.mjs` proves every level is beatable (worlds 1-3 and 7 with normal jumps, 4-5 need the long jump), that every
+coin / `?` block / book is reachable and every secret star is reachable (spring or bumpable block), so information is never gated behind
+difficulty (also run by `npm test`). Edit layouts in `tools/gen-maps.mjs`, then `node tools/gen-maps.mjs`.
+All content comes from `src/data/resume.json` (filled from the resume PDF; `public/Apoorv_Chaurasia_Resume.pdf` is the downloadable copy).
 
 ## The flow
 
-`Title` -> `Entrance` (cutscene, Esc skips) -> `Login` (e-mail or SKIP) -> `WorldMap` -> `Level` (world n) -> finish flag -> `WorldMap`.
+`Title` -> `Entrance` (cutscene, Esc skips) -> `Login` (e-mail or SKIP) -> `WorldMap` -> `Level` (world n) -> finish flag / boss defeated -> `WorldMap`; the HIRE ME flag in world 7 -> `Credits`.
 Returning visitors get **CONTINUE** (straight to the map). **RECRUITER MODE** on the title (or `R` on the map)
 unlocks all worlds, adds `H` = jump to Contact and `V` = classic resume link (set `meta.classicResumeUrl` in `resume.json`).
 

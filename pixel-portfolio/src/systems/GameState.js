@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PROGRESSION, COFFEE } from '../config.js';
+import { PROGRESSION, COFFEE, STAR } from '../config.js';
 import { isWorldUnlocked } from './Worlds.js';
 
 /**
@@ -15,6 +15,7 @@ export class GameState extends Phaser.Events.EventEmitter {
     this.xp = p.xp;
     this.collected = new Set(p.collected);
     this.coffeeMs = 0;
+    this.starMs = 0;             // temporary star immunity
     this.checkpoint = null;      // { map, x, y }
     this.worlds = new Set(p.worlds);
     this.earned = { degrees: new Set(p.earned?.degrees), bosses: new Set(p.earned?.bosses), awards: new Set(p.earned?.awards) };
@@ -79,9 +80,15 @@ export class GameState extends Phaser.Events.EventEmitter {
     return lost;
   }
 
+  /** Star power: immune to enemies / lasers / projectiles. Recruiter Mode is permanently immune. */
+  startStar() { this.starMs = STAR.durationMs; this.emit('star', true); }
+  get starActive() { return this.starMs > 0; }
+  get immune() { return this.recruiter || this.starMs > 0; }
+
   startCoffee() { this.coffeeMs = COFFEE.durationMs; this.emit('coffee', true); }
   get coffeeActive() { return this.coffeeMs > 0; }
   tick(dtMs) {
+    if (this.starMs > 0) { this.starMs = Math.max(0, this.starMs - dtMs); if (this.starMs === 0) this.emit('star', false); }
     if (this.coffeeMs > 0) {
       this.coffeeMs = Math.max(0, this.coffeeMs - dtMs);
       if (this.coffeeMs === 0) this.emit('coffee', false);
@@ -97,7 +104,7 @@ export class GameState extends Phaser.Events.EventEmitter {
   }
   reset() {
     this.saveSys.reset();
-    this.coins = 0; this.xp = 0; this.collected.clear(); this.coffeeMs = 0; this.checkpoint = null;
+    this.coins = 0; this.xp = 0; this.collected.clear(); this.coffeeMs = 0; this.starMs = 0; this.checkpoint = null;
     this.worlds.clear(); this.lastWorld = 1;
     for (const k of Object.keys(this.earned)) this.earned[k].clear();
     this.emit('coins', 0); this.emit('xp', 0); this.emit('tier', 0);

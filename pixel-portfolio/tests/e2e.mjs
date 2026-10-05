@@ -26,6 +26,8 @@ const tap = async (k, ms = 60) => { await key.down(k); await sleep(ms); await ke
 const placeAt = (x, feetY) => L((s, p, st, a) => p.teleport(a[0], a[1]), [x, feetY]);
 const settle = () => sleep(350);
 let passed = 0;
+// a world's intro dialogue opens a moment after the level starts (scene-clock delay, slower under load): wait for it, then close it
+const waitIntro = async () => { try { await page.waitForFunction(() => window.__oq.game.scene.getScene('Level')?.dlg?.active, null, { timeout: 4000 }); } catch { /* already seen */ } };
 // close any open dialogue box in the Level (world intro, facts, degrees...)
 const dismiss = async () => {
   for (let i = 0; i < 40; i++) {
@@ -40,6 +42,7 @@ try {
   await page.goto(`http://localhost:${PORT}/?debug&reset`);
   await page.waitForFunction(() => window.__oq?.game?.scene.isActive('Title'), null, { timeout: 15000 });
   await sleep(500);
+  await page.evaluate(() => window.__oq.game.services.audio.setMuted(true));   // headless Chromium has no sound card: synthesising audio just burns CPU
   await page.screenshot({ path: 'test-output/01-title.png' });
   ok('boots to title screen');
 
@@ -80,9 +83,9 @@ try {
   ok('login: invalid rejected, valid -> ACCESS GRANTED, stored in localStorage');
   await active('WorldMap'); await sleep(700);
   await page.screenshot({ path: 'test-output/02e-worldmap.png' });
-  const wm = () => page.evaluate(() => { const s = window.__oq.game.scene.getScene('WorldMap'); const st = window.__oq.game.services.state; return { sel: s.sel, unlocked: [1,2,3,4,5,6].map((i) => st.isUnlocked(i)), done: [...st.worlds] }; });
+  const wm = () => page.evaluate(() => { const s = window.__oq.game.scene.getScene('WorldMap'); const st = window.__oq.game.services.state; return { sel: s.sel, unlocked: [1,2,3,4,5,6,7].map((i) => st.isUnlocked(i)), done: [...st.worlds] }; });
   let w = await wm();
-  assert.deepEqual(w.unlocked, [true, false, false, false, false, false]);
+  assert.deepEqual(w.unlocked, [true, false, false, false, false, false, false]);
   await tap('ArrowRight'); await sleep(200);
   assert.equal((await wm()).sel, 1, 'right selects next world');
   await tap('Enter'); await sleep(600);
@@ -93,7 +96,7 @@ try {
   await tap('Enter');
   await active('Level'); await sleep(900);
   assert.equal(await L((s) => s.world), 1);
-  await dismiss();
+  await waitIntro(); await dismiss();
   // clear the level through the finish flag
   const goalPos = await L((s) => ({ x: s.goal.x, y: s.goal.y }));
   await L((s, p, st, a) => p.teleport(a.x, a.y), goalPos);
@@ -105,18 +108,23 @@ try {
 
   // Recruiter Mode: unlock all, Contact shortcut
   await tap('KeyR'); await sleep(300);
-  assert.deepEqual((await wm()).unlocked, [true, true, true, true, true, true]);
+  assert.deepEqual((await wm()).unlocked, [true, true, true, true, true, true, true]);
   await page.screenshot({ path: 'test-output/02g-recruiter.png' });
-  await tap('KeyV'); await sleep(200);                                    // no resume URL yet -> friendly notice, no crash
+  await page.evaluate(() => { window.__opened = []; window.open = (u) => { window.__opened.push(u); return null; }; });   // don't really open tabs in the test browser
+  await tap('KeyV'); await sleep(300);
+  const opened0 = await page.evaluate(() => window.__opened);
+  assert.ok(opened0.length === 1 && /Apoorv_Chaurasia_Resume\.pdf$/.test(opened0[0]), 'V opens the classic resume PDF: ' + opened0);
   await tap('KeyH');
   await active('Level'); await sleep(700);
-  assert.equal(await L((s) => s.world), 6);
-  await dismiss();
-  ok('Recruiter Mode unlocks everything; H jumps straight to Contact (world 6)');
+  assert.equal(await L((s) => s.world), 7);
+  await waitIntro(); await dismiss();
+  await page.evaluate(() => window.__oq.game.services.state.setRecruiter(false));     // the rest of the run plays in normal mode
+  ok('Recruiter Mode unlocks everything; H jumps straight to Contact (world 7)');
 
   // pause menu -> WORLD MAP
-  await tap('Escape'); await sleep(300);
-  for (let i = 0; i < 5; i++) { await tap('ArrowDown', 40); await sleep(80); }
+  await tap('Escape'); await sleep(400);
+  for (let i = 0; i < 12 && (await page.evaluate(() => window.__oq.game.scene.getScene('Pause').sel)) !== 5; i++) { await tap('ArrowDown', 60); await sleep(150); }
+  assert.equal(await page.evaluate(() => window.__oq.game.scene.getScene('Pause').sel), 5, 'cursor on WORLD MAP');
   await tap('Enter');
   await active('WorldMap'); await sleep(500);
   await tap('Enter');
@@ -126,6 +134,7 @@ try {
 
   // ================= DAY 3: EVERY WORLD IS ITS OWN LEVEL =================
   const startWorld = async (n, map = 'world' + n) => {
+    const firstVisit = await page.evaluate((m) => !window.__oq.game.services.save.flags['seen_' + m], map);
     await page.evaluate(([n, map]) => {
       const g = window.__oq.game, cur = ['Level', 'WorldMap', 'Title', 'Credits'].find((k) => g.scene.isActive(k));
       window.__prevPlayer = g.scene.getScene('Level')?.player ?? null;       // so we can tell the restart really happened
@@ -133,19 +142,20 @@ try {
     }, [n, map]);
     await page.waitForFunction((map) => { const s = window.__oq.game.scene.getScene('Level'); return s?.mapKey === map && s.player && s.player !== window.__prevPlayer && s.sys.isActive(); }, map, { timeout: 8000 });
     await sleep(900);
+    if (firstVisit) await waitIntro();
   };
-  const info = () => L((s, p, st) => ({ map: s.mapKey, theme: s.mapOpts.theme, coins: s.coinGroup.getLength(), enemies: s.enemies.getLength(), gates: s.gateGroup.getLength(), qblocks: s.qblocks.getLength(), mplats: s.mplats.getLength(), hud: s.hudInfo(), goal: s.goal && { x: s.goal.x, y: s.goal.y }, kinds: [...new Set(s.enemies.getChildren().map((e) => e.kind))].sort() }));
+  const info = () => L((s, p, st) => ({ map: s.mapKey, theme: s.mapOpts.theme, coins: s.coinGroup.getLength(), enemies: s.enemies.getLength(), hazards: s.enemies.getLength() + s.lasers.length + s.crumbles.getLength() + s.mplats.getLength(), gates: s.gateGroup.getLength(), qblocks: s.qblocks.getLength(), mplats: s.mplats.getLength(), hud: s.hudInfo(), goal: s.goal && { x: s.goal.x, y: s.goal.y }, kinds: [...new Set(s.enemies.getChildren().map((e) => e.kind))].sort() }));
   const onto = (x, feetY) => L((s, p, st, a) => p.teleport(a[0], a[1]), [x, feetY]);
   const maps = {};
-  for (const n of [1, 2, 3, 4, 5, 6]) { await startWorld(n); maps[n] = await info(); await page.screenshot({ path: `test-output/w${n}-start.png` }); }
+  for (const n of [1, 2, 3, 4, 5, 6, 7]) { await startWorld(n); maps[n] = await info(); await page.screenshot({ path: `test-output/w${n}-start.png` }); }
   const themes = Object.values(maps).map((m) => m.theme);
-  assert.equal(new Set(themes).size, 6, 'six different themes: ' + themes);
-  assert.equal(new Set(Object.values(maps).map((m) => m.map)).size, 6, 'six different maps');
-  const hazards = [1, 2, 3, 4, 5].map((n) => maps[n].enemies);
-  console.log('      themes:', themes.join(', '), '| enemies per world:', Object.values(maps).map((m) => m.enemies).join(','));
-  assert.ok(hazards.every((h, i) => i === 0 || h >= hazards[i - 1]), 'enemy count never drops from world 1 to 5');
+  assert.equal(new Set(themes).size, 7, 'seven different themes: ' + themes);
+  assert.equal(new Set(Object.values(maps).map((m) => m.map)).size, 7, 'seven different maps');
+  const hazards = [1, 2, 3, 4, 5].map((n) => maps[n].hazards);
+  console.log('      themes:', themes.join(', '), '| hazards per world:', Object.values(maps).map((m) => m.hazards).join(','));
+  assert.ok(hazards.every((h, i) => i === 0 || h >= hazards[i - 1]), 'hazards (enemies + lasers + crumbling + moving platforms) never drop from world 1 to 5');
   assert.deepEqual(maps[1].kinds, ['bug']); assert.ok(maps[3].kinds.includes('invite') && maps[3].kinds.includes('spam')); assert.ok(maps[4].kinds.includes('printer'));
-  ok('six distinct levels: themes ' + themes.join('/') + ', enemy mix grows with difficulty');
+  ok('seven distinct levels: themes ' + themes.join('/') + ', enemy mix grows with difficulty');
 
   // ---------- WORLD 1: exactly 10 fact coins, each reveals a fact
   await startWorld(1);
@@ -197,14 +207,14 @@ try {
 
   // ---------- WORLD 2: three tasks -> three degrees, each opens a gate
   await startWorld(2); await dismiss();
-  assert.equal(maps[2].gates, 3);
-  const books = await L((s) => s.bookGroup.getChildren().map((b) => ({ x: b.x, y: b.y })));
+  assert.equal(maps[2].gates, 4);
+  const books = await L((s) => s.bookGroup.getChildren().filter((b) => b.getData('task') === 't1').map((b) => ({ x: b.x, y: b.y })));
   assert.equal(books.length, 5);
   for (const b of books) { await onto(b.x, b.y + 14); await sleep(260); }
   await sleep(400);
   assert.ok(await L((s) => s.dlg.active && s.dlg.name.text === 'DEGREE EARNED!'), 'degree 1 pop-up');
   await dismiss(); await sleep(700);
-  assert.equal(await L((s) => s.gateGroup.getLength()), 2, 'gate 1 opened');
+  assert.equal(await L((s) => s.gateGroup.getLength()), 3, 'gate 1 opened');
   await page.screenshot({ path: 'test-output/w2-degree1.png' });
   const stompTargets = await L((s) => s.enemies.getChildren().filter((e) => e.props.task === 't2').map((e) => e.x));
   assert.equal(stompTargets.length, 3);
@@ -213,16 +223,23 @@ try {
     await onto(tgt.x, tgt.top - 40); await sleep(700); await dismiss();
   }
   await sleep(500); await dismiss(); await sleep(700);
-  assert.equal(await L((s) => s.gateGroup.getLength()), 1, 'gate 2 opened after 3 stomps');
+  assert.equal(await L((s) => s.gateGroup.getLength()), 2, 'gate 2 opened after 3 stomps');
   const lever = await L((s) => { const l = s.leverGroup.getChildren()[0]; return { x: l.x, y: l.y }; });
   await onto(lever.x, lever.y); await sleep(400); await dismiss(); await sleep(700);
-  assert.equal(await L((s) => s.gateGroup.getLength()), 0, 'gate 3 opened after the lever');
-  assert.equal((await L((s) => s.hudInfo())).text, 'DEGREES 3/3');
-  ok('world 2: books, stomps and lever each earn a degree and open a gate (DEGREES 3/3)');
+  assert.equal(await L((s) => s.gateGroup.getLength()), 1, 'gate 3 opened after the lever');
+  // classroom 4: books on the high shelves (a spring pad launches you up there)
+  await L((s) => s.enemies.getChildren().forEach((e) => { e.dead = true; e.body.enable = false; e.setVisible(false); }));
+  const books4 = await L((s) => s.bookGroup.getChildren().filter((b) => b.getData('task') === 't4').map((b) => ({ x: b.x, y: b.y })));
+  assert.equal(books4.length, 5);
+  for (const b of books4) { await onto(b.x, b.y + 14); await sleep(260); }
+  await sleep(400); await dismiss(); await sleep(700);
+  assert.equal(await L((s) => s.gateGroup.getLength()), 0, 'gate 4 opened after the fourth degree');
+  assert.equal((await L((s) => s.hudInfo())).text, 'DEGREES 4/4');
+  ok('world 2: books, stomps, lever and the spring-shelf books earn four degrees and open four gates (DEGREES 4/4)');
 
   // ---------- WORLD 3: mini-boss -> achievement -> gate
   await startWorld(3); await dismiss();
-  assert.equal(maps[3].gates, 3);
+  assert.equal(maps[3].gates, 5);
   // in-page: drop onto the boss three times, waiting out its invulnerability blink between hits
   const bossLog = await page.evaluate(() => new Promise((res) => {
     const sc = window.__oq.game.scene.getScene('Level'), p = sc.player;
@@ -244,8 +261,8 @@ try {
   for (let i = 0; i < 6; i++) { const d = await L((s) => ({ a: s.dlg.active, who: s.dlg.name.text })); if (!d.a) break; pages.push(d.who); await tap('Enter', 30); await sleep(250); await tap('Enter', 30); await sleep(250); }
   assert.ok(pages.includes('BOSS DEFEATED!') && pages.includes('ACHIEVEMENT'), 'boss shows its achievement: ' + pages.join('|'));
   await sleep(700);
-  assert.equal(await L((s) => s.gateGroup.getLength()), 2, 'boss gate opened');
-  assert.equal((await L((s) => s.hudInfo())).text, 'BOSSES 1/3');
+  assert.equal(await L((s) => s.gateGroup.getLength()), 4, 'boss gate opened');
+  assert.equal((await L((s) => s.hudInfo())).text, 'BOSSES 1/5');
   ok('world 3: three stomps beat the mini-boss, its achievement is shown, the floor gate opens');
 
   // ---------- WORLD 4: skill bars, moving platform, bonus pipe room
@@ -292,7 +309,7 @@ try {
 
   // ---------- WORLD 5: ? blocks release certificates; printers shoot; trophy hall
   await startWorld(5); await dismiss();
-  assert.equal(maps[5].qblocks, 4);
+  assert.equal(maps[5].qblocks, 3);
   await L((s) => s.enemies.getChildren().filter((e) => e.kind !== 'printer').forEach((e) => { e.dead = true; e.body.enable = false; e.setVisible(false); }));   // isolate the printer
   const pr = await L((s) => { const e = s.enemies.getChildren().find((q) => q.kind === 'printer'); return { x: e.x }; });
   await onto(pr.x + 70, 192);
@@ -311,41 +328,169 @@ try {
     assert.ok(await L((s) => s.dlg.active && /CERTIFICATE/.test(s.dlg.name.text)), 'certificate pop-up for block ' + (b.award + 1));
     await dismiss();
   }
-  assert.equal((await L((s) => s.hudInfo())).text, 'CERTS 4/4');
-  ok('world 5: all four ? blocks release certificates (CERTS 4/4); printer jams fire paper');
+  assert.equal((await L((s) => s.hudInfo())).text, 'CERTS 3/3');
+  ok('world 5: all three ? blocks release certificates (CERTS 3/3); printer jams fire paper');
   await startWorld(5); await dismiss();
   const golds = await L((s) => s.children.list.filter((c) => c.texture?.key === 'trophy' && c.frame.name === 1).length);
-  assert.equal(golds, 4, 'trophy hall shows all four earned trophies');
-  await onto(176 * 16 + 8, 192); await sleep(300);
+  assert.equal(golds, 3, 'trophy hall shows all three earned trophies');
+  await onto(178 * 16 + 8, 192); await sleep(300);
   await tap('Enter'); await sleep(300);
   assert.ok(await L((s) => s.dlg.active && /CERTIFICATE 1/.test(s.dlg.name.text)), 'Enter at a trophy shows its certificate');
   await dismiss();
   await page.screenshot({ path: 'test-output/w5-hall.png' });
-  ok('trophy hall: four gold trophies; Enter shows the certificate');
+  ok('trophy hall: three gold trophies; Enter shows the certificate');
 
-  // ---------- WORLD 6: link terminals, then the HIRE ME flag -> credits
-  await startWorld(6); await dismiss();
+  // ---------- SECRET STARS: hidden block (world 1), normal mode
+  await startWorld(1); await dismiss();
+  await L((s, p, st) => { st.starMs = 0; st.setRecruiter(false); });
+  const hb = await L((s) => ({ x: s.hblocks[0].x, y: s.hblocks[0].y, n: s.hblocks.length, stars: s.starGroup.getLength() }));
+  assert.equal(hb.n, 1); assert.equal(hb.stars, 0, 'no star is visible in normal mode');
+  await L((s) => s.enemies.getChildren().forEach((e) => { e.dead = true; e.body.enable = false; e.setVisible(false); }));
+  await onto(hb.x, 192); await sleep(500);
+  await key.down('ArrowUp'); await sleep(300); await key.up('ArrowUp'); await sleep(600);
+  assert.equal(await L((s) => s.starGroup.getLength()), 1, 'bumping the invisible block releases a star');
+  const stPos = await L((s) => { const st = s.starGroup.getChildren()[0]; return { x: st.x, y: st.y }; });
+  await onto(stPos.x, stPos.y + 14); await sleep(400);
+  assert.ok(await L((s, p, st) => st.starActive && st.immune), 'star power is active');
+  ok('normal mode: a secret invisible block hides a star; collecting it gives star power');
+
+  // star immunity: touching an enemy defeats it, no coins lost; after it runs out enemies hurt again
+  await startWorld(1); await dismiss();
+  await L((s, p, st) => { st.setRecruiter(false); st.coins = 9; st.startStar(); });
+  let tb = await L((s) => { const e = s.enemies.getChildren()[0]; return { x: e.x }; });
+  await onto(tb.x - 7, 192); await sleep(600);
+  let r = await L((s, p, st) => ({ coins: st.coins, left: s.enemies.getChildren().filter((e) => !e.dead).length }));
+  assert.equal(r.coins, 9, 'immune: no coins lost'); assert.equal(r.left, 1, 'immune: the bug was defeated by touch');
+  await L((s, p, st) => { st.starMs = 0; });
+  tb = await L((s) => { const e = s.enemies.getChildren().find((q) => !q.dead); return { x: e.x }; });
+  await onto(tb.x - 7, 192);
+  await page.waitForFunction(() => window.__oq.game.services.state.coins < 9, null, { timeout: 4000 });
+  ok('star immunity: enemies die on touch with no penalty; once it expires they hurt again');
+
+  // ---------- RECRUITER MODE: permanent, visible immunity; secrets revealed
+  await L((s, p, st) => { st.setRecruiter(true); });
+  await startWorld(1); await dismiss();
+  const rm = await L((s, p, st) => ({ immune: st.immune, stars: s.starGroup.getLength(), hblocks: s.hblocks.length, hud: s.hud().star }));
+  assert.ok(rm.immune && rm.stars === 1 && rm.hblocks === 0, 'recruiter: star is revealed up-front');
+  assert.ok(rm.hud && rm.hud.recruiter && rm.hud.frac === 1, 'HUD shows the permanent IMMUNE badge');
+  await L((s, p, st) => { st.coins = 9; });
+  tb = await L((s) => { const e = s.enemies.getChildren()[0]; return { x: e.x }; });
+  await onto(tb.x - 7, 192); await sleep(700);
+  assert.equal(await L((s, p, st) => st.coins), 9, 'recruiter: enemies cannot hurt');
+  await page.screenshot({ path: 'test-output/recruiter-immune.png' });
+  await L((s, p, st) => { st.setRecruiter(false); });
+  ok('Recruiter Mode: permanent immunity badge, hidden stars shown with beacons, enemies harmless');
+
+  // ---------- SPRING (world 2), CRUMBLING PLATFORM (world 5), LASER (world 4)
+  await startWorld(2); await dismiss();
+  await L((s) => s.enemies.getChildren().forEach((e) => { e.dead = true; e.body.enable = false; e.setVisible(false); }));
+  const springX = await L((s) => s.springs.getChildren()[0].x);
+  const springVy = await page.evaluate((x) => new Promise((res) => {
+    const sc = window.__oq.game.scene.getScene('Level'), p = sc.player; p.teleport(x, 192 - 44); p.body.setVelocity(0, 0);
+    let min = 0; const t0 = performance.now();
+    const tick = (t) => { min = Math.min(min, p.body.velocity.y); if (t - t0 > 900) res(min); else requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  }), springX);
+  console.log(`      spring launch vy=${springVy.toFixed(0)}`);
+  assert.ok(springVy < -380, 'spring pad launches the hero high');
+  await startWorld(5); await dismiss();
+  await L((s) => s.enemies.getChildren().forEach((e) => { e.dead = true; e.body.enable = false; e.setVisible(false); }));
+  const cr = await L((s) => { const c = s.crumbles.getChildren()[0]; return { x: c.x, y: c.y }; });
+  await onto(cr.x, cr.y - 8); await sleep(400);
+  assert.ok(await L((s) => s.player.onGround), 'can stand on a crumbling platform');
+  await sleep(1100);
+  assert.equal(await L((s) => s.crumbles.getChildren()[0].getData('state')), 'gone', 'the platform crumbles');
+  await sleep(3200);
+  assert.equal(await L((s) => s.crumbles.getChildren()[0].getData('state')), 'idle', 'and comes back');
+  await startWorld(4); await dismiss();
+  await L((s, p, st) => { st.coins = 9; st.setRecruiter(false); st.starMs = 0; s.enemies.getChildren().forEach((e) => { e.dead = true; e.body.enable = false; e.setVisible(false); }); });
+  const lz = await L((s) => ({ x: s.lasers[0].x + 2, y: s.lasers[0].y + s.lasers[0].h, period: s.lasers[0].period }));
+  // wait for the beam to be OFF, stand in it: nothing happens; then turn it ON: hurt
+  await L((s) => { const l = s.lasers[0]; const t = s.time.now / 1000; l.phase = l.period - (t % l.period) - 0.01 + l.on + 0.05; });   // now in the off part
+  await onto(lz.x, lz.y); await sleep(250);
+  assert.equal(await L((s, p, st) => st.coins), 9, 'a laser that is off is harmless');
+  await L((s) => { const l = s.lasers[0]; const t = s.time.now / 1000; l.phase = l.period - (t % l.period) + 0.05; });                  // now in the on part
+  await page.waitForFunction(() => window.__oq.game.services.state.coins < 9, null, { timeout: 4000 });
+  ok('springs launch, platforms crumble and return, lasers hurt only while on');
+
+  // ---------- WORLD 6: THE PRINTER MONSTER (mouse tool)
+  await startWorld(6);
+  assert.ok(await L((s) => !!s.boss && !!s.thrower && s.mapOpts.boss === 1), 'boss arena set up');
+  await dismiss();
+  const box = await page.evaluate(() => { const r = window.__oq.game.canvas.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height }; });
+  const at = (gx, gy) => [box.l + (box.w * gx) / 256, box.t + (box.h * gy) / 224];
+  // (a) a jam hurts you in normal mode
+  await L((s, p, st) => { st.coins = 9; st.setRecruiter(false); st.starMs = 0; s.boss.jamTimer = 99; s.boss.deadlineTimer = 99; });
+  await L((s) => { const j = s.boss.jams.create(s.player.x, s.player.feetY - 60, 'jam'); j.body.setAllowGravity(true); j.body.setGravityY(300); j.body.setVelocity(0, 0); });
+  await page.waitForFunction(() => window.__oq.game.services.state.coins < 9, null, { timeout: 4000 });
+  await sleep(900);
+  // (b) a thrown plane pops an incoming jam
+  await L((s) => { s.boss.jamTimer = 99; s.boss.deadlineTimer = 99; s.player.invulnUntil = 0; });
+  await L((s) => { const j = s.boss.jams.create(s.player.x + 60, s.player.feetY - 18, 'jam'); j.body.setAllowGravity(false); j.body.setVelocity(0, 0); });
+  await page.mouse.move(...at(150, 174)); await page.mouse.down(); await sleep(250); await page.mouse.up(); await sleep(400);
+  assert.equal(await L((s) => s.boss.jams.getLength()), 0, 'planes destroy incoming paper jams');
+  // (c) keyboard-only: holding Enter throws planes at the boss
+  const hp0 = await L((s) => s.boss.hp);
+  await L((s) => { s.boss.jamTimer = 99; s.boss.deadlineTimer = 99; });
+  await key.down('Enter'); await sleep(1200); await key.up('Enter'); await sleep(500);
+  const hp1 = await L((s) => s.boss.hp);
+  console.log(`      Enter-to-throw: boss HP ${hp0} -> ${hp1}`);
+  assert.ok(hp1 < hp0, 'keyboard throwing damages the boss');
+  // (d) the full fight with the mouse (Recruiter immunity so the test is deterministic): phases, defeat, world cleared
+  await L((s, p, st) => { st.setRecruiter(true); s.boss.jamTimer = 1; s.boss.deadlineTimer = 2; });
+  await page.mouse.move(...at(205, 150)); await page.mouse.down();
+  const phases = new Set(); const tf = Date.now();
+  while (Date.now() - tf < 60000) {
+    const b = await L((s) => ({ hp: s.boss.hp, phase: s.boss.phase, dead: s.boss.dead, jams: s.boss.jams.getLength(), dls: s.boss.deadlines.getLength() }));
+    phases.add(b.phase);
+    if (b.hp === 20) await page.screenshot({ path: 'test-output/boss-fight.png' });
+    if (b.dead) break;
+    await sleep(150);
+  }
+  await page.mouse.up();
+  console.log('      boss phases seen:', [...phases].join(','), `| fight took ${((Date.now() - tf) / 1000).toFixed(0)}s`);
+  assert.ok(await L((s) => s.boss.dead), 'boss defeated by thrown planes');
+  assert.ok(phases.has(1) && phases.has(2), 'boss went through phases 2 and 3');
+  await page.waitForFunction(() => window.__oq.game.scene.getScene('Level').dlg.active, null, { timeout: 8000 });
+  await dismiss();
+  await active('WorldMap'); await sleep(600);
+  assert.ok((await wm()).done.includes(6), 'world 6 cleared after the boss');
+  await page.evaluate(() => window.__oq.game.services.state.setRecruiter(false));
+  ok('world 6: Printer Monster - jams hurt, planes pop jams, mouse/Enter throws, 3 phases, defeat clears the world');
+
+  // ---------- WORLD 7: link terminals, then the HIRE ME flag -> credits
+  await startWorld(7); await dismiss();
   await page.evaluate(() => { window.__opened = []; window.open = (u) => { window.__opened.push(u); return null; }; });
   const term = await L((s) => { const i = s.interactables[0]; return { x: i.x, y: i.y + 8 }; });
   await onto(term.x, term.y); await sleep(300);
+  const realEmail = await page.evaluate(() => window.__oq.resume.contact.email);
+  await page.evaluate(() => { window.__oq.resume.contact.email = ''; });
   await tap('Enter'); await sleep(300);
   assert.ok(await L((s) => s.dlg.active && /NOT SET/.test(s.dlg.name.text)), 'empty contact field explains how to set it');
   await dismiss();
-  await page.evaluate(() => { window.__oq.resume.contact.email = 'hello@example.com'; });
+  await page.evaluate((e) => { window.__oq.resume.contact.email = e; }, realEmail);
   await tap('Enter'); await sleep(300);
-  assert.deepEqual(await page.evaluate(() => window.__opened), ['mailto:hello@example.com'], 'terminal opens a mailto link');
+  assert.deepEqual(await page.evaluate(() => window.__opened), ['mailto:' + realEmail], 'terminal opens a mailto link with the real address');
+  assert.equal(realEmail, 'apoorv.uk@gmail.com');
+  const t2 = await L((s) => { const i = s.interactables[2]; return { x: i.x, y: i.y + 8 }; });
+  await onto(t2.x, t2.y); await sleep(300);
+  await tap('Enter'); await sleep(300);
+  const opened = await page.evaluate(() => window.__opened);
+  assert.ok(/Apoorv_Chaurasia_Resume\.pdf$/.test(opened[1]), 'resume terminal opens the bundled PDF: ' + opened[1]);
+  const pdf = await page.evaluate(async (u) => { const r = await fetch(u); return { ok: r.ok, type: r.headers.get('content-type'), len: (await r.arrayBuffer()).byteLength }; }, opened[1]);
+  assert.ok(pdf.ok && pdf.len > 50000, 'the resume PDF is served (' + pdf.len + ' bytes)');
   const links = await L((s) => s.interactables.length);
-  assert.equal(links, 5);
+  assert.equal(links, 3);
   const hireGoal = await L((s) => ({ x: s.goal.x, y: s.goal.y, hire: s.goal.hire }));
   assert.ok(hireGoal.hire);
   await onto(hireGoal.x, hireGoal.y);
   await active('Credits'); await sleep(1200);
-  await page.screenshot({ path: 'test-output/w6-credits.png' });
+  await page.screenshot({ path: 'test-output/w7-credits.png' });
   assert.equal(await page.evaluate(() => window.__oq.game.services.state.tierTitle), 'HIRED!');
   await tap('Enter');
   await active('WorldMap'); await sleep(500);
-  assert.ok((await wm()).done.includes(6));
-  ok('world 6: link terminals open mailto/URLs, HIRE ME flag promotes to HIRED! and rolls the credits');
+  assert.ok((await wm()).done.includes(7));
+  ok('world 7: terminals open mailto + the resume PDF, HIRE ME flag promotes to HIRED! and rolls the credits');
 
   // back to the Day-1 movement lab for the movement checks below
   await page.evaluate(() => window.__oq.game.scene.getScene('WorldMap').scene.start('Level', { map: 'test-level' }));
@@ -518,10 +663,12 @@ try {
   await page.screenshot({ path: 'test-output/07-pause.png' });
   await tap('Escape'); await sleep(400);
   assert.ok(await page.evaluate(() => window.__oq.game.scene.isActive('Level')), 'resumed');
+  await tap('KeyM');                                     // the run started muted, so M un-mutes
+  assert.equal(await page.evaluate(() => window.__oq.game.services.audio.muted), false);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('office-quest-save-v1')));
+  assert.ok(saved.progress.coins > 0 && saved.settings.muted === false, 'progress + settings saved to localStorage');
   await tap('KeyM');
   assert.equal(await page.evaluate(() => window.__oq.game.services.audio.muted), true);
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('office-quest-save-v1')));
-  assert.ok(saved.progress.coins > 0 && saved.settings.muted === true, 'progress + settings saved to localStorage');
   ok('pause/resume, mute (M), localStorage save');
 
   // ---------- level-up look swap
@@ -596,6 +743,7 @@ try {
 } catch (e) {
   console.error('\nE2E FAILED:', e.message, (e.stack||'').split('\n').slice(1,3).join(' | '));
   console.error('errors seen:', errors);
+  console.error('active scenes:', await page.evaluate(() => ['Title', 'Entrance', 'Login', 'WorldMap', 'Level', 'HUD', 'Pause', 'Credits'].filter((k) => window.__oq?.game.scene.isActive(k))).catch(() => '?'));
   await page.screenshot({ path: 'test-output/failure.png' }).catch(() => {});
   process.exitCode = 1;
 } finally {

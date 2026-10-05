@@ -28,7 +28,7 @@ export class PauseScene extends Phaser.Scene {
     ];
     this.render();
     // swallow the key press that opened this menu
-    this.time.delayedCall(120, () => { this.armed = true; });
+    this.openedAt = performance.now();      // real-time clock: scene timers can stall when the frame rate drops
   }
 
   resume() { this.scene.stop(); this.scene.resume('Level'); }
@@ -40,7 +40,7 @@ export class PauseScene extends Phaser.Scene {
   }
 
   update() {
-    if (!this.armed) return;
+    if (!this.armed) { if (performance.now() - this.openedAt < 140) return; this.armed = true; }
     const { input, audio } = this.sv;
     if (input.justPressed('pause')) { this.resume(); return; }
     if (input.menuUp()) { this.sel = (this.sel + this.items.length - 1) % this.items.length; audio.sfx('menu'); this.confirmReset = false; }

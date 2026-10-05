@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 
 const T = 16;
 // Conservative envelopes derived from tests/run.mjs (jump 51px high, long jump 107px far incl. body width)
-const RISE_MAX = 49;                                   // px a normal/long jump can climb
+const RISE_MAX = 49;
+const SPRING_RISE = 90;                                // a spring pad launches ~6 tiles (config SPRING.vy)                                   // px a normal/long jump can climb
 const gapMax = (rise, long) => {
   if (rise > 0) return long ? 88 - rise * 0.8 : 40 - rise * 0.5;      // climbing: shorter reach
   const d = -rise;                                                    // dropping: longer reach
@@ -29,6 +30,7 @@ export function surfaces(map) {
     }
   }
   const objs = map.layers.find((l) => l.name === 'objects').objects;
+  for (const o of objs.filter((o) => o.type === 'crumble')) segs.push({ x0: o.x, x1: o.x + 16 * (prop(o, 'len') ?? 2), y: o.y, crumble: true });
   for (const o of objs.filter((o) => o.type === 'mplat')) {
     const dx = prop(o, 'dx') ?? 0, dy = prop(o, 'dy') ?? 0;
     segs.push({ x0: o.x, x1: o.x + 32, y: o.y, mover: true }, { x0: o.x + dx, x1: o.x + dx + 32, y: o.y + dy, mover: true });
@@ -43,11 +45,13 @@ export function canReach(a, b, long) {
   return gap <= gapMax(rise, long);
 }
 
-export function reachable(segs, startIdx, long) {
+/** springs: x positions of spring pads; with `springs` given, a pad lets you climb up to SPRING_RISE onto ledges within 48px of it. */
+export function reachable(segs, startIdx, long, springs = []) {
   const seen = new Set([startIdx]), q = [startIdx];
+  const viaSpring = (a, b) => springs.some((sx) => sx >= a.x0 && sx <= a.x1 && a.y - b.y <= SPRING_RISE && Math.max(0, b.x0 - sx, sx - b.x1) <= 48);
   while (q.length) {
     const i = q.shift();
-    segs.forEach((s, j) => { if (!seen.has(j) && canReach(segs[i], s, long)) { seen.add(j); q.push(j); } });
+    segs.forEach((s, j) => { if (!seen.has(j) && (canReach(segs[i], s, long) || viaSpring(segs[i], s))) { seen.add(j); q.push(j); } });
   }
   return seen;
 }
@@ -67,7 +71,9 @@ export function analyse(name) {
   const goal = objs.find((o) => o.type === 'goal');
   let si = segAt(segs, spawn.x, spawn.y);
   if (si < 0) si = segBelow(segs, spawn.x, spawn.y);
+  const springs = objs.filter((o) => o.type === 'spring').map((o) => o.x);
   const rn = si >= 0 ? reachable(segs, si, false) : new Set(), rl = si >= 0 ? reachable(segs, si, true) : new Set();
+  const rs = si >= 0 ? reachable(segs, si, true, springs) : new Set();       // reachable when springs are used (optional secrets)
   const res = { name, map, segs, objs, startSeg: si, issues: [], needsLong: false, goalReach: 'n/a' };
   if (si < 0) res.issues.push('spawn is not standing on a surface');
   if (goal) {
@@ -78,18 +84,24 @@ export function analyse(name) {
   }
   // collectibles must be reachable from the main path
   const R = [...rl].map((i) => segs[i]);
-  const near = (x, y, rule) => R.some((s) => rule(s, Math.max(0, s.x0 - x, x - s.x1)));
+  const RS = [...rs].map((i) => segs[i]);                 // springs allowed: for optional items on spring-high ledges
+  const near = (x, y, rule, pool = R) => pool.some((s) => rule(s, Math.max(0, s.x0 - x, x - s.x1)));
   for (const o of objs) {
     if (o.type === 'coin' || o.type === 'book') {
       // standing/jumping next to it, or an "arc coin" hanging over a gap that you collect mid-jump
       const stand = (s, dx) => dx <= 14 && o.y >= s.y - 85 && o.y <= s.y + 6;
       const arc = (s, dx) => dx <= 56 && o.y >= s.y - 75 && o.y <= s.y - 8;
-      if (!near(o.x, o.y, (s, dx) => stand(s, dx) || arc(s, dx))) res.issues.push(`${o.type} at (${o.x},${o.y}) out of reach`);
+      if (!near(o.x, o.y, (s, dx) => stand(s, dx) || arc(s, dx), RS)) res.issues.push(`${o.type} at (${o.x},${o.y}) out of reach`);
     } else if (o.type === 'lever') {
       if (!near(o.x, o.y - 8, (s, dx) => dx <= 8 && Math.abs(s.y - o.y) < 3)) res.issues.push(`lever at (${o.x},${o.y}) not standing on a reachable surface`);
     } else if (o.type === 'qblock') {
       const bottom = o.y + 16, cx = o.x + 8;
       if (!near(cx, bottom, (s, dx) => dx <= 8 && s.y - bottom >= 28 && s.y - (bottom + 28) <= 51)) res.issues.push(`? block at (${o.x},${o.y}) cannot be bumped from the main path`);
+    } else if (o.type === 'star') {
+      if (!near(o.x, o.y, (s, dx) => dx <= 14 && o.y >= s.y - 85 && o.y <= s.y + 6, RS)) res.issues.push(`star at (${o.x},${o.y}) unreachable (even with springs)`);
+    } else if (o.type === 'hblock') {
+      const bottom = o.y + 16, cx = o.x + 8;
+      if (!near(cx, bottom, (s, dx) => dx <= 8 && s.y - bottom >= 28 && s.y - (bottom + 28) <= 51)) res.issues.push(`hidden block at (${o.x},${o.y}) cannot be bumped from the main path`);
     } else if (o.type === 'link' || o.type === 'trophy') {
       if (!near(o.x, o.y, (s, dx) => dx <= 8 && Math.abs(s.y - o.y) < 3)) res.issues.push(`${o.type} at (${o.x},${o.y}) unreachable`);
     }
@@ -100,15 +112,17 @@ export function analyse(name) {
   for (let x = 0; x < W; x++) { const empty = !g[13 * W + x]; if (empty && !inPit) pits++; inPit = empty; }
   res.enemies = objs.filter((o) => o.type === 'enemy').length;
   res.pits = pits; res.movers = objs.filter((o) => o.type === 'mplat').length;
-  res.hazards = res.enemies + res.pits + res.movers;
+  res.lasers = objs.filter((o) => o.type === 'laser').length; res.crumbles = objs.filter((o) => o.type === 'crumble').length;
+  res.stars = objs.filter((o) => o.type === 'star' || o.type === 'hblock').length;
+  res.hazards = res.enemies + res.pits + res.movers + res.lasers + res.crumbles;
   return res;
 }
 
 if (process.argv[1] && process.argv[1].endsWith('validate-maps.mjs')) {
   let bad = 0;
-  for (const n of ['world1', 'world2', 'world3', 'world4', 'world5', 'world6', 'bonus-skills-a', 'bonus-skills-b']) {
+  for (const n of ['world1', 'world2', 'world3', 'world4', 'world5', 'world6', 'world7', 'bonus-skills-a', 'bonus-skills-b']) {
     const r = analyse(n);
-    console.log(`${n.padEnd(15)} goal:${String(r.goalReach).padEnd(6)} enemies:${String(r.enemies).padStart(2)} pits:${r.pits} movers:${r.movers} hazards:${String(r.hazards).padStart(2)} ${r.issues.length ? 'ISSUES' : 'ok'}`);
+    console.log(`${n.padEnd(15)} goal:${String(r.goalReach).padEnd(6)} enemies:${String(r.enemies).padStart(2)} pits:${r.pits} movers:${r.movers} lasers:${r.lasers} crumbles:${r.crumbles} stars:${r.stars} hazards:${String(r.hazards).padStart(2)} ${r.issues.length ? 'ISSUES' : 'ok'}`);
     r.issues.forEach((i) => { console.log('   - ' + i); bad++; });
   }
   process.exit(bad ? 1 : 0);

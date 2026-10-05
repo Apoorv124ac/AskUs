@@ -30,6 +30,27 @@ export class FX {
     this.scene.time.delayedCall(400, () => em.destroy());
   }
 
+  /** Slow ambient particles that give each theme some life (skipped in calm mode). */
+  ambient(theme) {
+    if (this.calm) return;
+    const cfg = {
+      city:    { colors: [C.white, C.cream], vx: [6, 16], vy: [-3, 3], freq: 520, life: [5000, 8000], alpha: 0.5 },
+      campus:  { colors: [C.green, C.orange, C.yellow, C.lime], vx: [-10, 8], vy: [10, 22], freq: 420, life: [5000, 8000], alpha: 0.9, size: 1.6 },
+      office:  { colors: [C.white], vx: [-3, 3], vy: [-4, 3], freq: 480, life: [5000, 9000], alpha: 0.35 },
+      server:  { colors: [C.lime, C.cyan], vx: [-2, 2], vy: [-42, -18], freq: 260, life: [3000, 6000], alpha: 0.7 },
+      gallery: { colors: [C.yellow, C.white], vx: [-4, 4], vy: [-5, 5], freq: 300, life: [2500, 5000], alpha: 0.9 },
+      sunset:  { colors: [C.yellow, C.orange, C.cream], vx: [-8, 8], vy: [-9, 5], freq: 340, life: [4000, 8000], alpha: 0.9, size: 1.4 },
+      boss:    { colors: [C.red, C.orange, C.yellow], vx: [-6, 6], vy: [-40, -15], freq: 160, life: [2500, 5000], alpha: 0.8 },
+    }[theme];
+    if (!cfg) return;
+    const em = this.scene.add.particles(0, 0, 'px', {
+      x: { min: 0, max: 256 }, y: { min: 0, max: 224 }, lifespan: { min: cfg.life[0], max: cfg.life[1] }, frequency: cfg.freq, quantity: 1,
+      speedX: { min: cfg.vx[0], max: cfg.vx[1] }, speedY: { min: cfg.vy[0], max: cfg.vy[1] },
+      scale: cfg.size ?? 1, alpha: { start: cfg.alpha, end: 0 }, tint: cfg.colors.map(hex),
+    }).setScrollFactor(0).setDepth(-5);
+    em.fastForward(3000);
+  }
+
   shake(ms = CFG.shakeDurationMs, intensity = CFG.shakeIntensity) {
     if (!this.calm) this.scene.cameras.main.shake(ms, intensity);
   }

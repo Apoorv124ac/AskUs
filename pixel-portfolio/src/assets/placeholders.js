@@ -333,6 +333,118 @@ const GEN = {
     });
   },
 
+
+  /* ------------------------------------------------ star power, spring, boss + projectiles */
+  star(scene, key) {
+    const t = canvasTex(scene.textures, key, 32, 16, (ctx) => {
+      [0, 1].forEach((f) => {
+        const o = f * 16, R = (c, x, y, w, h) => rect(ctx, c, o + x, y, w, h);
+        const body = f ? C.white : C.yellow;
+        [[7, 1, 2], [7, 2, 2], [6, 3, 4], [6, 4, 4], [1, 5, 14], [2, 6, 12], [3, 7, 10], [4, 8, 8], [4, 9, 8], [3, 10, 10], [3, 11, 4], [9, 11, 4], [2, 12, 4], [10, 12, 4], [2, 13, 3], [11, 13, 3]]
+          .forEach(([x, y, w]) => R(body, x, y, w, 1));
+        R(C.orange, 3, 9, 10, 1); R(C.orange, 4, 10, 8, 1);
+        R(C.white, 6, 4, 2, 2); R(C.black, 6, 7, 1, 2); R(C.black, 9, 7, 1, 2);            // sparkle + eyes
+        outline(ctx, o, 0, 16, 16);
+      });
+    });
+    t.add(0, 0, 0, 0, 16, 16); t.add(1, 0, 16, 0, 16, 16);
+  },
+  spring(scene, key) {
+    const t = canvasTex(scene.textures, key, 32, 16, (ctx) => {
+      [[4, 8], [9, 4]].forEach(([padY, coilH], f) => {
+        const o = f * 16, R = (c, x, y, w, h) => rect(ctx, c, o + x, y, w, h);
+        R(C.red, 2, padY, 12, 3); R(C.yellow, 2, padY, 12, 1); R(C.black, 2, padY + 3, 12, 1);
+        for (let i = 0; i < coilH; i += 2) { R(C.lgrey, 4, padY + 4 + i, 8, 1); R(C.grey, 5, padY + 5 + i, 6, 1); }
+        R(C.darkBrown, 3, 13, 10, 2); R(C.black, 3, 15, 10, 1);
+        outline(ctx, o, 0, 16, 16);
+      });
+    });
+    t.add(0, 0, 0, 0, 16, 16); t.add(1, 0, 16, 0, 16, 16);
+  },
+  jam(scene, key) {
+    canvasTex(scene.textures, key, 16, 16, (ctx) => {
+      rect(ctx, C.white, 4, 3, 8, 10); rect(ctx, C.white, 3, 5, 10, 6); rect(ctx, C.lgrey, 5, 2, 6, 12);
+      rect(ctx, C.grey, 5, 5, 4, 1); rect(ctx, C.grey, 4, 8, 6, 1); rect(ctx, C.grey, 7, 10, 3, 1);
+      rect(ctx, C.red, 4, 6, 2, 1); rect(ctx, C.red, 6, 7, 2, 1); rect(ctx, C.red, 8, 6, 2, 1); rect(ctx, C.red, 10, 7, 2, 1);
+      outline(ctx, 0, 0, 16, 16);
+    });
+  },
+  deadline(scene, key) {
+    const t = canvasTex(scene.textures, key, 32, 16, (ctx) => {
+      [0, 1].forEach((f) => {
+        const o = f * 16, R = (c, x, y, w, h) => rect(ctx, c, o + x, y, w, h);
+        R(C.lgrey, 0, 5 + f * 2, 3, 3); R(C.lgrey, 13, 5 + f * 2, 3, 3);
+        R(C.yellow, 3, 1, 3, 2); R(C.yellow, 10, 1, 3, 2);
+        R(C.red, 3, 3, 10, 10); R(C.red, 4, 2, 8, 12); R(C.white, 5, 4, 6, 8);
+        R(C.black, 8, 5, 1, 4); R(C.black, 8, 8, 3, 1); R(C.black, 5, 4, 2, 1); R(C.black, 9, 4, 2, 1);
+        R(C.black, 5 + f, 14, 2, 1); R(C.black, 9 - f, 14, 2, 1);
+        outline(ctx, o, 0, 16, 16);
+      });
+    });
+    t.add(0, 0, 0, 0, 16, 16); t.add(1, 0, 16, 0, 16, 16);
+  },
+  plane(scene, key) {
+    canvasTex(scene.textures, key, 14, 10, (ctx) => {
+      rect(ctx, C.lgrey, 1, 1, 8, 3); rect(ctx, C.lgrey, 1, 6, 8, 3);
+      rect(ctx, C.white, 0, 4, 13, 2); rect(ctx, C.white, 3, 3, 8, 4); rect(ctx, C.cyan, 11, 4, 2, 2); rect(ctx, C.grey, 3, 5, 6, 1);
+      outline(ctx, 0, 0, 14, 10);
+    });
+  },
+  printerBoss(scene, key) {
+    const t = canvasTex(scene.textures, key, 136, 68, (ctx) => {
+      [0, 1].forEach((f) => {
+        const o = f * 68, R = (c, x, y, w, h) => rect(ctx, c, o + 2 + x, 2 + y, w, h);
+        R(C.white, 14, 0, 36, 9); for (let i = 0; i < 4; i++) R(C.lgrey, 17, 2 + i * 2, 28 - i * 3, 1);        // paper stack
+        R(C.grey, 8, 8, 48, 8); R(C.lgrey, 8, 8, 48, 2);                                                         // lid
+        R(C.lgrey, 4, 16, 56, 38); R(C.grey, 4, 46, 56, 8); R(C.white, 4, 16, 56, 2);                           // body
+        R(C.black, 12, 22, 14, 12); R(C.black, 38, 22, 14, 12);                                                  // eye sockets
+        R(f ? C.yellow : C.red, 14, 24, 10, 8); R(f ? C.yellow : C.red, 40, 24, 10, 8);
+        R(C.white, 15, 25, 3, 3); R(C.white, 41, 25, 3, 3); R(C.black, 19, 27, 3, 4); R(C.black, 45, 27, 3, 4);
+        R(C.black, 10, 18, 18, 3); R(C.black, 36, 18, 18, 3); R(C.black, 24, 20, 4, 2); R(C.black, 36, 20, 4, 2);   // angry brows
+        R(C.black, 12, 38, 40, 12);                                                                              // paper-tray mouth
+        for (let i = 0; i < 6; i++) { R(C.white, 14 + i * 6, 38, 4, 4); R(C.white, 17 + i * 6, 46, 4, 4); }
+        if (f) { R(C.white, 18, 48, 28, 12); R(C.red, 22, 52, 4, 1); R(C.red, 26, 54, 4, 1); R(C.red, 30, 52, 4, 1); R(C.red, 34, 54, 4, 1); R(C.grey, 20, 50, 20, 1); }
+        R(C.red, 52, 20, 4, 3); R(C.lime, 52, 26, 4, 3);                                                         // panel lights
+        R(C.black, 8, 54, 12, 8); R(C.black, 44, 54, 12, 8); R(C.grey, 9, 55, 10, 3); R(C.grey, 45, 55, 10, 3);  // feet
+        R(C.grey, 0, 28, 5, 14); R(C.lgrey, 59, 28, 5, 14); R(C.grey, 0, 40, 7, 8); R(C.lgrey, 57, 40, 7, 8);   // arms + fists
+        outline(ctx, o, 0, 68, 68);
+      });
+    });
+    t.add(0, 0, 0, 0, 68, 68); t.add(1, 0, 68, 0, 68, 68);
+  },
+
+  /* ------------------------------------------------ scenery props (origin = feet) */
+  deco(scene, key, args) {
+    const k = args.kind;
+    const sizes = { plant: [16, 24], cooler: [14, 28], whiteboard: [32, 26], cabinet: [16, 24], vending: [20, 32], bench: [32, 14], lamp: [8, 40],
+      globe: [16, 22], statue: [16, 32], fan: [32, 16], ac: [24, 16], antenna: [10, 40], easel: [20, 28], crate: [16, 16] };
+    const [w, h] = sizes[k];
+    const t = canvasTex(scene.textures, key, w + 2, h + 2, (ctx) => {
+      ctx.translate(1, 1);
+      const R = (c, x, y, ww, hh) => rect(ctx, c, x, y, ww, hh);
+      switch (k) {
+        case 'plant': R(C.darkGreen, 7, 4, 2, 12); R(C.green, 2, 4, 12, 9); R(C.lime, 4, 2, 5, 5); R(C.lime, 9, 6, 4, 4); R(C.brown, 3, 15, 10, 9); R(C.darkBrown, 3, 21, 10, 3); break;
+        case 'cooler': R(C.cyan, 3, 0, 8, 11); R(C.white, 4, 1, 2, 8); R(C.lgrey, 1, 11, 12, 17); R(C.grey, 1, 22, 12, 6); R(C.red, 3, 15, 3, 3); R(C.blue, 8, 15, 3, 3); break;
+        case 'whiteboard': R(C.grey, 4, 18, 2, 8); R(C.grey, 26, 18, 2, 8); R(C.black, 0, 0, 32, 19); R(C.white, 1, 1, 30, 17); R(C.blue, 4, 4, 14, 1); R(C.red, 4, 7, 9, 1); R(C.green, 4, 10, 18, 1); R(C.blue, 22, 5, 6, 6); break;
+        case 'cabinet': R(C.grey, 1, 0, 14, 24); R(C.lgrey, 1, 0, 14, 2); for (let i = 0; i < 3; i++) { R(C.black, 2, 3 + i * 7, 12, 1); R(C.black, 6, 5 + i * 7, 4, 2); } break;
+        case 'vending': R(C.red, 0, 0, 20, 32); R(C.black, 2, 3, 13, 18); R(C.cyan, 3, 4, 11, 16); for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) R([C.yellow, C.orange, C.lime][(i + j) % 3], 4 + j * 4, 5 + i * 5, 3, 3); R(C.black, 16, 4, 3, 12); R(C.lime, 16, 5, 3, 2); R(C.black, 3, 24, 14, 5); break;
+        case 'bench': R(C.brown, 0, 3, 32, 4); R(C.yellow, 0, 3, 32, 1); R(C.brown, 0, 0, 32, 3); R(C.black, 2, 7, 3, 7); R(C.black, 27, 7, 3, 7); break;
+        case 'lamp': R(C.black, 3, 6, 2, 34); R(C.black, 1, 36, 6, 4); R(C.yellow, 0, 0, 8, 6); R(C.white, 2, 1, 4, 2); R(C.black, 0, 6, 8, 1); break;
+        case 'globe': R(C.black, 3, 18, 10, 4); R(C.black, 7, 12, 2, 7); R(C.blue, 2, 1, 12, 12); R(C.green, 4, 3, 5, 4); R(C.green, 9, 7, 4, 4); R(C.white, 4, 2, 2, 1); break;
+        case 'statue': R(C.white, 2, 24, 12, 8); R(C.lgrey, 2, 30, 12, 2); R(C.lgrey, 5, 4, 6, 20); R(C.white, 5, 4, 3, 20); R(C.lgrey, 5, 0, 6, 6); R(C.grey, 3, 8, 2, 12); R(C.grey, 11, 8, 2, 12); break;
+        case 'ac': R(C.lgrey, 0, 0, 24, 16); R(C.grey, 0, 12, 24, 4); R(C.black, 4, 3, 10, 8); R(C.grey, 5, 4, 8, 6); R(C.black, 8, 6, 2, 2); for (let i = 0; i < 4; i++) R(C.grey, 17, 3 + i * 3, 5, 1); break;
+        case 'antenna': R(C.black, 4, 4, 2, 36); R(C.black, 0, 10, 10, 1); R(C.black, 1, 16, 8, 1); R(C.black, 2, 22, 6, 1); R(C.red, 3, 0, 4, 4); break;
+        case 'easel': R(C.brown, 2, 12, 2, 16); R(C.brown, 16, 12, 2, 16); R(C.brown, 9, 8, 2, 20); R(C.yellow, 1, 0, 18, 16); R(C.white, 3, 2, 14, 12); R(C.cyan, 3, 8, 14, 6); R(C.red, 6, 4, 4, 4); R(C.green, 11, 9, 4, 4); break;
+        case 'crate': R(C.brown, 0, 0, 16, 16); R(C.darkBrown, 0, 0, 16, 2); R(C.darkBrown, 0, 14, 16, 2); R(C.darkBrown, 0, 0, 2, 16); R(C.darkBrown, 14, 0, 2, 16); for (let i = 0; i < 12; i++) R(C.darkBrown, 2 + i, 2 + i, 1, 1); break;
+        case 'fan': [0, 1].forEach((f) => { const o = f * 16; R(C.grey, o, 0, 16, 16); R(C.black, o + 2, 2, 12, 12); R(C.lgrey, o + 3, 3, 10, 10);
+          if (f) { R(C.black, o + 3, 3, 3, 3); R(C.black, o + 10, 3, 3, 3); R(C.black, o + 3, 10, 3, 3); R(C.black, o + 10, 10, 3, 3); } else { R(C.black, o + 7, 3, 2, 10); R(C.black, o + 3, 7, 10, 2); }
+          R(C.black, o + 7, 7, 2, 2); }); break;
+        default: break;
+      }
+    });
+    if (k === 'fan') { outline(t.context, 0, 0, 18, 18); t.refresh(); t.add(0, 0, 1, 1, 16, 16); t.add(1, 0, 17, 1, 16, 16); } else { outline(t.context, 0, 0, w + 2, h + 2); t.refresh(); }
+  },
+
   /* ------------------------------------------------ themed 3-layer parallax backgrounds */
   bg(scene, key, args) {
     const { theme, layer } = args;
@@ -458,6 +570,26 @@ const THEMES = {
         rect(ctx, C.black, x + 6, 156, 5, 36); rect(ctx, C.yellow, x + 4, 152, 9, 5); rect(ctx, C.black, x + 52, 156, 5, 36); rect(ctx, C.yellow, x + 50, 152, 9, 5);
         for (let k = 0; k < 40; k++) rect(ctx, C.red, x + 11 + k, 158 + Math.round(5 * Math.sin((k / 40) * Math.PI)), 1, 2);
       }
+    },
+  },
+
+  boss: {
+    far(ctx) {
+      rect(ctx, '#1c0818', 0, 0, 256, 224);
+      for (let y = 0; y < 224; y += 28) rect(ctx, '#2c1028', 0, y, 256, 14);
+      for (let x = 0; x < 256; x += 32) rect(ctx, '#3c1838', x, 0, 1, 224);
+      [[20, 40], [130, 70], [210, 30]].forEach(([x, y]) => { rect(ctx, '#58081c', x, y, 34, 3); rect(ctx, C.red, x, y, 10, 3); });
+    },
+    mid(ctx) {
+      for (let i = 0; i < 8; i++) {
+        const x = i * 32 + 2, h = 60 + ((i * 37) % 40);
+        rect(ctx, '#2c1028', x, 190 - h, 26, h); rect(ctx, '#44204a', x, 190 - h, 26, 2);
+        for (let y = 192 - h + 4; y < 186; y += 10) { rect(ctx, C.white, x + 3, y, 20, 6); rect(ctx, C.lgrey, x + 3, y + 4, 20, 2); }
+      }
+    },
+    near(ctx) {
+      for (let x = 0; x < 256; x += 16) { rect(ctx, C.yellow, x, 184, 8, 8); rect(ctx, C.black, x + 8, 184, 8, 8); }
+      for (let x = 0; x < 256; x += 64) { rect(ctx, C.black, x + 14, 120, 3, 64); rect(ctx, C.red, x + 15, 126, 1, 58); rect(ctx, C.black, x + 40, 140, 3, 44); }
     },
   },
   sunset: {

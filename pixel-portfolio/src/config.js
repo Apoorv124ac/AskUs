@@ -119,6 +119,26 @@ export const ENEMIES = {
   boss:    { hp: 3, speed: 38, hopEvery: 1.8, hopVy: 230, invulnMs: 1100 },
 };
 
+/** Star power: temporary immunity from enemies, lasers and projectiles; touching enemies defeats them. Recruiter Mode = permanent. */
+export const STAR = {
+  durationMs: 10000,
+  speedMult: 1.12,
+  colors: [0xf83800, 0xfca044, 0xf8d878, 0x58d854, 0x00b8f8, 0x6844fc],
+};
+
+export const SPRING = { vy: 420 };   // launch speed of spring pads (~6 tiles high)
+
+/** Final boss: the Printer Monster. Aim with the mouse / tap; Enter or Space throws too. */
+export const PRINTER_BOSS = {
+  hp: 40,
+  planeCooldown: 0.16,       // seconds between throws (hold to auto-fire)
+  planeSpeed: 240,
+  jamEvery:      [2.4, 1.7, 1.9],      // seconds between paper-jam lobs, per phase
+  deadlineEvery: [5.2, 3.6, 2.6],      // seconds between deadline clocks rolling along the floor
+  jamSpeed: 80, deadlineSpeed: 78,
+  phaseAt: [0.66, 0.33],               // fraction of HP where phase 2 / 3 start
+};
+
 export const RESPAWN = {
   hitCoinLoss: 3,          // coins lost when an enemy hits you (enemies arrive in a later segment)
   pitCoinLoss: 0,          // falling in a pit is forgiving by default

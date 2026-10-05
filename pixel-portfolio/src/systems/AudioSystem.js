@@ -82,6 +82,11 @@ export class AudioSystem {
       case 'boss':     this.#tone(110, 0.2, { vol: 0.25, type: 'sawtooth' }); this.#tone(82, 0.3, { vol: 0.25, type: 'sawtooth', delay: 0.15 }); break;
       case 'lever':    this.#tone(180, 0.08, { vol: 0.2 }); this.#tone(360, 0.1, { vol: 0.2, delay: 0.08 }); break;
       case 'fact':     this.#tone(880, 0.08, { vol: 0.16 }); this.#tone(1320, 0.14, { vol: 0.16, delay: 0.08 }); this.#tone(1760, 0.2, { vol: 0.14, delay: 0.16 }); break;
+      case 'throw':    this.#tone(700, 0.07, { slide: -380, type: 'triangle', vol: 0.09 }); break;
+      case 'bosshit':  this.#tone(160, 0.09, { vol: 0.2 }); this.#noise(0.04, 0.1); break;
+      case 'star':     [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => this.#tone(f, 0.1, { delay: i * 0.05, vol: 0.18 })); break;
+      case 'spring':   this.#tone(200, 0.2, { slide: 700, vol: 0.2, type: 'triangle' }); break;
+      case 'laser':    this.#tone(900, 0.12, { slide: -600, vol: 0.06, type: 'sawtooth' }); break;
       case 'blip':     this.#tone(740 + Math.random() * 80, 0.03, { vol: 0.07 }); break;
       case 'grant':    [392, 523, 659, 784, 1047].forEach((f, i) => this.#tone(f, 0.16, { delay: i * 0.07, vol: 0.18, type: 'triangle' })); break;
       case 'deny':     this.#tone(200, 0.12, { vol: 0.2 }); this.#tone(150, 0.2, { vol: 0.2, delay: 0.12 }); break;
