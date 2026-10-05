@@ -34,27 +34,42 @@ export default class LoginScene extends Phaser.Scene {
 
     // terminal
     this.term = this.add.container(0, 0).setDepth(6);
-    this.term.add(panel(this, 14, 14, 228, 98, { fill: 0x0f0f1b, frame: 0x58d854, depth: 0 }));
+    this.term.add(panel(this, 14, 14, 228, 108, { fill: 0x0f0f1b, frame: 0x58d854, depth: 0 }));
     this.term.add(txt(this, 24, 22, 'OFFICE QUEST OS  v1.0', { color: GREEN, bold: true, shadow: false, depth: 0 }));
     this.term.add(this.add.rectangle(24, 33, 208, 1, 0x006c00).setOrigin(0));
-    this.msg = txt(this, 24, 40, '', { color: GREEN, shadow: false, depth: 0, lineSpacing: 3 });
+    this.msg = txt(this, 24, 38, '', { color: GREEN, shadow: false, depth: 0, lineSpacing: 3 });
     this.line = txt(this, 24, 66, '', { color: '#fcfcfc', bold: true, shadow: false, depth: 0 });
-    this.err = txt(this, 24, 80, '', { color: '#f83800', shadow: false, depth: 0 });
-    this.note = txt(this, 24, 94, '', { color: COLORS.dim, shadow: false, depth: 0 });
-    this.hint = txt(this, 232, 100, 'PRESS ENTER', { origin: [1, 0], color: COLORS.gold, shadow: false, depth: 0 });
+    this.err = txt(this, 24, 89, '', { color: '#f83800', shadow: false, depth: 0 });
+    this.note = txt(this, 24, 99, '', { color: COLORS.dim, shadow: false, depth: 0 });
+    this.hint = txt(this, 230, 104, 'CONTINUE >', { origin: [1, 0], color: COLORS.gold, bold: true, shadow: false, depth: 0 });
+    this.hint.setPadding(10, 8, 6, 6).setInteractive({ useHandCursor: true });
+    this.hint.on('pointerdown', () => this.time.now - this.createdAt > 500 && this.submit());
     this.term.add([this.msg, this.line, this.err, this.note, this.hint]);
     this.tweens.add({ targets: this.hint, alpha: 0.2, yoyo: true, repeat: -1, duration: 500 });
     popIn(this, this.term, { from: 0.92, duration: 280 });
     this.term.setPosition(0, 0);
 
-    // hidden input
+    // A real, visible <input> sits on top of the terminal line. Phones only open the keyboard when
+    // the person taps an actual input, so it must be visible and tappable (not hidden).
+    if (!document.getElementById('oq-input-style')) {
+      const st = document.createElement('style');
+      st.id = 'oq-input-style';
+      st.textContent = '.oq-input::placeholder{color:#7c7c7c;opacity:1}';
+      document.head.appendChild(st);
+    }
     const el = document.createElement('input');
+    el.className = 'oq-input';
     el.type = 'text';
     el.inputMode = 'text';
     el.autocomplete = 'off';
     el.autocapitalize = 'off';
     el.spellcheck = false;
-    Object.assign(el.style, { position: 'fixed', left: '0', top: '0', width: '1px', height: '1px', opacity: '0', border: '0', padding: '0' });
+    el.enterKeyHint = 'go';
+    Object.assign(el.style, {
+      position: 'fixed', zIndex: '10', boxSizing: 'border-box', padding: '0 8px', margin: '0', outline: 'none', borderRadius: '0',
+      background: '#0f0f1b', color: '#fcfcfc', border: '2px solid #58d854', caretColor: '#58d854',
+      font: 'bold 16px Silkscreen, monospace', display: 'none',
+    });
     document.body.appendChild(el);
     this.el = el;
     el.addEventListener('input', () => {
@@ -72,7 +87,7 @@ export default class LoginScene extends Phaser.Scene {
         this.enterStep();
       }
     });
-    this.input.on('pointerdown', () => el.focus());
+    this.input.on('pointerdown', () => this.step !== 'welcome' && el.focus());
     this.events.once('shutdown', () => el.remove());
     this.events.once('destroy', () => el.remove());
 
@@ -85,25 +100,32 @@ export default class LoginScene extends Phaser.Scene {
     const el = this.el;
     this.err.setText('');
     this.pending = this.pending || {};
+    el.style.display = this.step === 'welcome' ? 'none' : 'block';
     if (this.step === 'welcome') {
       el.value = '';
       this.msg.setText(`WELCOME BACK, *${save.name}*.`.replace(/\*/g, '') + '\nPRESS ENTER TO LOG IN.');
       this.note.setText('NOT YOU? PRESS ESC.');
-      this.hint.setText('ENTER');
+      this.hint.setText('CONTINUE >');
     } else if (this.step === 'name') {
       el.value = '';
       el.maxLength = 16;
+      el.placeholder = 'TAP HERE, TYPE YOUR NAME';
+      el.inputMode = 'text';
       this.msg.setText('NEW VISITOR DETECTED.\nWHAT SHOULD I CALL YOU?');
       this.note.setText('YOUR NAME IS USED THROUGHOUT THE GAME.');
-      this.hint.setText('ENTER');
+      this.hint.setText('CONTINUE >');
     } else {
       el.value = save.email || '';
       el.maxLength = 60;
+      el.placeholder = 'TAP HERE: YOU@EMAIL.COM';
+      el.inputMode = 'email';
+      el.autocomplete = 'email';
       this.msg.setText(`NICE TO MEET YOU, ${this.pending.name}.\nLOG IN WITH YOUR EMAIL:`);
-      this.note.setText('ONLY SO APOORV KNOWS WHO PLAYED. NO SPAM.');
-      this.hint.setText('ENTER');
+      this.note.setText('SO APOORV KNOWS WHO PLAYED. NO SPAM.');
+      this.hint.setText('CONTINUE >');
     }
-    el.focus();
+    if (this.step !== 'welcome') el.focus(); // desktop: type straight away. Phones: tap the box.
+    this.placeInput();
     this.tweens.add({ targets: this.msg, alpha: { from: 0, to: 1 }, duration: 250 });
   }
 
@@ -144,6 +166,7 @@ export default class LoginScene extends Phaser.Scene {
   finish() {
     this.done = true;
     this.el.disabled = true;
+    this.el.style.display = 'none';
     this.msg.setText('');
     this.err.setText('');
     this.note.setText('');
@@ -162,9 +185,20 @@ export default class LoginScene extends Phaser.Scene {
 
   update(time) {
     if (this.done) return;
-    const showing = this.step === 'welcome' ? '' : this.el.value;
-    if (this.step === 'welcome') return this.line.setText('');
-    const tail = showing.length > 34 ? showing.slice(-34) : showing;
-    this.line.setText(`> ${tail}${Math.floor(time / 450) % 2 ? '_' : ' '}`);
+    this.line.setText('');
+    this.placeInput();
+  }
+
+  // keep the real input exactly over the terminal's input line (the canvas is scaled to fit the screen)
+  placeInput() {
+    const el = this.el;
+    if (!el || this.step === 'welcome' || this.done) return;
+    const r = this.game.canvas.getBoundingClientRect();
+    const k = r.width / 256; // screen pixels per game pixel
+    const h = Math.max(36, 13 * k);
+    el.style.left = `${r.left + 24 * k}px`;
+    el.style.width = `${208 * k}px`;
+    el.style.height = `${h}px`;
+    el.style.top = `${r.top + 73 * k - h / 2}px`;
   }
 }
