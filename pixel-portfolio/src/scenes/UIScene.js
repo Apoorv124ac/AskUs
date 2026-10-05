@@ -178,7 +178,7 @@ export default class UIScene extends Phaser.Scene {
     this.bubble = box;
     this.bubbleRt = rt;
     box.setScale(first ? 0 : 0.92);
-    this.tweens.add({ targets: box, scale: 1, duration: first ? 320 : 160, ease: 'Back.out' });
+    this.tweens.add({ targets: box, scale: 1, duration: first ? 320 : 160, ease: 'Back.out', easeParams: [0.9] }); // gentle overshoot: never pops past the screen edge
     this.registry.set('typing', true);
     this.time.delayedCall(first ? 240 : 40, () => {
       if (this.bubbleRt !== rt) return; // replaced or closed in the meantime

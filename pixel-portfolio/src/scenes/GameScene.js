@@ -113,7 +113,7 @@ export default class GameScene extends Phaser.Scene {
     if (L.world === 0) reg.set('hudInfo', '');
 
     this.mouse = new MouseControls(this);
-    if (this.star) this.time.delayedCall(2000, () => this.game.events.emit('banner', 'STAR POWER ON!\nRECRUITER MODE'));
+    if (this.star) this.time.delayedCall(2000, () => !this.talking && this.game.events.emit('banner', 'STAR POWER ON!\nRECRUITER MODE'));
     this.cursors = this.input.keyboard.createCursorKeys();
     this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     // event-based (not polled) so even a very quick tap of Enter/Space registers

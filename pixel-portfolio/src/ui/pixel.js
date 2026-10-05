@@ -100,15 +100,24 @@ export function richText(scene, x, y, str, { width = 200, color = COLORS.white, 
     const words = chunk.split(/\s+/).filter(Boolean);
     // punctuation touching a *highlight* sticks to it (no gap); a real space keeps its gap
     const glue = tokens.length > 0 && !prevEndsSpace && !/^\s/.test(chunk);
-    words.forEach((w, k) => tokens.push({ w, hi: i % 2 === 1, glue: glue && k === 0 }));
+    // long addresses (URLs, e-mails) may break after "/" "-" "@" so they never run out of the box
+    words.forEach((w, k) =>
+      w.split(/(?<=[/\-@])/).forEach((part, j) => tokens.push({ w: part, hi: i % 2 === 1, glue: j > 0 || (glue && k === 0) }))
+    );
     if (chunk.length) prevEndsSpace = /\s$/.test(chunk);
   });
   const words = [];
   const space = 4;
   let cx = 0;
   let line = 0;
-  tokens.forEach((tk) => {
+  for (let idx = 0; idx < tokens.length; idx++) {
+    const tk = tokens[idx];
     const t = txt(scene, 0, 0, tk.w, { color: tk.hi ? hi : color, bold: tk.hi, shadow: false, depth });
+    if (t.width > width) {
+      const keep = Math.max(3, Math.floor((tk.w.length * (width - 4)) / t.width));
+      t.setText(tk.w.slice(0, keep));
+      tokens.splice(idx + 1, 0, { w: tk.w.slice(keep), hi: tk.hi, glue: true });
+    }
     if (tk.glue && cx > 0) cx -= space;
     if (cx > 0 && cx + t.width > width) {
       cx = 0;
@@ -118,7 +127,7 @@ export function richText(scene, x, y, str, { width = 200, color = COLORS.white, 
     cx += t.width + space;
     container.add(t);
     words.push(t);
-  });
+  }
   const height = (line + 1) * lineH;
   words.forEach((w) => w.setAlpha(0));
   // Typewriter: letters appear one by one (pausing a beat at punctuation). Layout is already
