@@ -1,9 +1,10 @@
-// Draws the hero sprite sheet (Apoorv) -> public/assets/hero.png
+// Draws every playable hero's sprite sheet -> public/assets/chars/<id>.png (+ hero.png = Apoorv)
 // Run:  node tools/make-hero.mjs        (no dependencies)
 // Optional: node tools/make-hero.mjs --preview <out.png>  (8x contact sheet)
 import fs from 'node:fs';
 import { hex, Frame, limb, part, png } from './lib/raster.mjs';
 import { FW, FH, COLS, HERO_FRAMES } from '../src/heroFrames.js';
+import { CHARACTERS } from '../src/data/characters.js';
 
 // --- palette ---------------------------------------------------------------
 const C = {
@@ -22,6 +23,21 @@ const C = {
   cup: hex('#fcfcfc'), lid: hex('#ac7c00'), cupBand: hex('#ac4040'),
   gray: hex('#bcbcbc'), grayDark: hex('#7c7c7c'),
 };
+
+let LOOK = CHARACTERS[0].look;
+// re-colour the shared palette for one character
+function setLook(look) {
+  LOOK = look;
+  C.S = hex(look.skin);
+  C.s = hex(look.skinS);
+  C.H = hex(look.hair);
+  C.h = hex(look.hairHi);
+  C.M = hex(look.lips);
+  C.blazer = hex(look.blazer);
+  C.blazerHi = hex(look.blazerHi);
+  C.red = hex(look.lanyard);
+  C.pants = hex(look.pants);
+}
 
 // 14x14 head, facing right. See legend in C.
 const HEAD = [
@@ -55,6 +71,13 @@ function headRows(kind) {
   } else if (kind === 'open') {
     r[10] = 'KBBBBBBMMMMBBK';
     set(10, 8, 'W');
+  }
+  // no beard: the beard rows become plain face
+  if (!LOOK.beard) for (let i = 8; i <= 12; i++) r[i] = r[i].replace(/[Bb]/g, 'S');
+  // longer hair framing the face (bob / long)
+  if (LOOK.hairStyle === 'bob' || LOOK.hairStyle === 'long') {
+    for (const i of [7, 8, 9]) r[i] = r[i].slice(0, 1) + 'HHH' + r[i].slice(4);
+    r[4] = 'KHHHHHHHHHHHSK';
   }
   return r;
 }
@@ -100,7 +123,9 @@ function compose(o = {}) {
   void back;
   if (!o.seated) leg(f, 8 + lean * 0, hip, o.backLeg);
 
-  // torso: blazer + shirt + lapel + red/white WSP lanyard + badge
+  if (LOOK.hairStyle === 'long') part(f, [[5 + lean, hd + 7, 5, 13]], C.H);
+  if (LOOK.hairStyle === 'curly') part(f, [[4 + lean, hd + 3, 5, 9]], C.H);
+  // torso: blazer + shirt + lapel + lanyard + badge
   part(f, [[7 + lean, ty, 10, th]], C.blazer);
   f.rect(13 + lean, ty, 4, Math.min(7, th), C.shirt);
   f.rect(13 + lean, ty + 5, 4, 1, C.shirtShade);
@@ -114,6 +139,10 @@ function compose(o = {}) {
     f.set(14 + lean, ty + 8, C.grayDark);
   }
 
+  // skirt + a lock of hair over the shoulder for the female looks
+  if (LOOK.skirt && !o.seated) part(f, [[6 + lean, hip - 2, 11, 5]], C.blazer);
+  if (LOOK.female && (LOOK.hairStyle === 'long' || LOOK.hairStyle === 'curly')) part(f, [[7 + lean, hd + 9, 3, 9]], C.H);
+
   if (o.seated) {
     part(f, limb(9, hip, 17, hip, 4), C.pants); // thigh
     part(f, limb(17, hip + 1, 17, 27, 4), C.pants); // shin
@@ -126,6 +155,17 @@ function compose(o = {}) {
   const hand = arm(f, [11 + lean, ty + 1], o.frontArm || [1, 6], true);
   if (o.extra) o.extra(f, hand, ty);
   drawHead(f, 5 + lean, hd, o.face || 'smile');
+  const hx = 5 + lean;
+  if (LOOK.hairStyle === 'bun') part(f, [[hx - 1, hd + 1, 4, 4]], C.H);
+  if (LOOK.hairStyle === 'curly') {
+    part(f, [[hx + 1, hd - 1 < 0 ? 0 : hd, 3, 3], [hx + 5, hd, 4, 2], [hx + 9, hd, 3, 2]], C.H);
+    f.rect(hx + 2, hd, 2, 1, C.h);
+  }
+  if (LOOK.female) f.rect(hx + 11, hd + 5, 2, 1, C.K); // lashes
+  if (LOOK.glasses) {
+    [[hx + 8, hd + 5, 5, 1], [hx + 8, hd + 8, 5, 1], [hx + 8, hd + 5, 1, 4], [hx + 12, hd + 5, 1, 4]].forEach(([a, b, w, h]) => f.rect(a, b, w, h, C.K));
+    f.rect(hx + 9, hd + 6, 1, 1, hex('#bcd8fc'));
+  }
   if (o.postHead) o.postHead(f, hand, ty);
   return f;
 }
@@ -234,30 +274,45 @@ function buildSheet() {
   return { W, H, rgba };
 }
 
-const { W, H, rgba } = buildSheet();
-fs.mkdirSync(new URL('../public/assets/', import.meta.url), { recursive: true });
-fs.writeFileSync(new URL('../public/assets/hero.png', import.meta.url), png(W, H, rgba));
-console.log(`wrote public/assets/hero.png (${W}x${H}, ${HERO_FRAMES.length} frames)`);
+const dir = new URL('../public/assets/chars/', import.meta.url);
+fs.mkdirSync(dir, { recursive: true });
+let W = 0;
+let H = 0;
+const sheets = {};
+for (const ch of CHARACTERS) {
+  setLook(ch.look);
+  const sheet = buildSheet();
+  ({ W, H } = sheet);
+  sheets[ch.id] = sheet.rgba;
+  fs.writeFileSync(new URL(`${ch.id}.png`, dir), png(W, H, sheet.rgba));
+  if (ch.id === 'apoorv') fs.writeFileSync(new URL('../hero.png', dir), png(W, H, sheet.rgba));
+}
+console.log(`wrote ${CHARACTERS.length} character sheets (${W}x${H}, ${HERO_FRAMES.length} frames each)`);
 
+// --preview <file>: contact sheet of every character (idle + walk + jump + wave frames), 6x
 const pi = process.argv.indexOf('--preview');
 if (pi > -1) {
   const S = 6;
-  const bg = [88, 176, 248];
-  const PW = W * S;
-  const PH = H * S;
+  const pick = [0, 3, 14, 24]; // idle, walk, jump, wave
+  const PW = pick.length * FW * S;
+  const PH = CHARACTERS.length * FH * S;
   const out = new Uint8Array(PW * PH * 4);
-  for (let y = 0; y < PH; y++)
-    for (let x = 0; x < PW; x++) {
-      const sx = Math.floor(x / S);
-      const sy = Math.floor(y / S);
-      const o = (sy * W + sx) * 4;
-      const a = rgba[o + 3];
-      const d = (y * PW + x) * 4;
-      const col = a ? [rgba[o], rgba[o + 1], rgba[o + 2]] : bg;
-      out[d] = col[0];
-      out[d + 1] = col[1];
-      out[d + 2] = col[2];
-      out[d + 3] = 255;
-    }
+  CHARACTERS.forEach((ch, row) =>
+    pick.forEach((fi, col) => {
+      for (let y = 0; y < FH * S; y++)
+        for (let x = 0; x < FW * S; x++) {
+          const sx = (fi % COLS) * FW + Math.floor(x / S);
+          const sy = Math.floor(fi / COLS) * FH + Math.floor(y / S);
+          const o = (sy * W + sx) * 4;
+          const d = ((row * FH * S + y) * PW + col * FW * S + x) * 4;
+          const a = sheets[ch.id][o + 3];
+          const c = a ? [sheets[ch.id][o], sheets[ch.id][o + 1], sheets[ch.id][o + 2]] : [88, 176, 248];
+          out[d] = c[0];
+          out[d + 1] = c[1];
+          out[d + 2] = c[2];
+          out[d + 3] = 255;
+        }
+    })
+  );
   fs.writeFileSync(process.argv[pi + 1], png(PW, PH, out));
 }

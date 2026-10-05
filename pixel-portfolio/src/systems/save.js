@@ -17,6 +17,8 @@ const DEFAULTS = {
   floors: [false, false, false, false, false],
   difficulty: 1, // 0 relaxed, 1 normal, 2 hard
   dragonDown: false,
+  character: '', // chosen hero id ('' = not chosen yet)
+  gender: '',
 };
 
 function read() {

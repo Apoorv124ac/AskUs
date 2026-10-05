@@ -78,8 +78,10 @@ export default class MenuScene extends Phaser.Scene {
     this.topic = txt(this, 14, 158, '', { color: COLORS.green, bold: true });
     this.desc = txt(this, 14, 170, '', { wrap: 228 });
     this.status = txt(this, 14, 192, '', { bold: true });
-    txt(this, 14, 206, '< >  MOVE   ENTER  PLAY', { color: COLORS.dim, shadow: false });
+    txt(this, 14, 206, 'ENTER  PLAY', { color: COLORS.dim, shadow: false });
     this.recruiterBtn = txt(this, 244, 206, '', { shadow: false, origin: [1, 0] }).setInteractive({ useHandCursor: true });
+    this.heroBtn = txt(this, 112, 206, 'H  HERO', { origin: [0.5, 0], shadow: false }).setInteractive({ useHandCursor: true });
+    this.heroBtn.on('pointerdown', () => go(this, 'Character', { from: 'Menu' }));
     this.resumeBtn = txt(this, 244, 192, 'C  RESUME', { origin: [1, 0], shadow: false }).setInteractive({ useHandCursor: true });
     this.recruiterBtn.on('pointerdown', () => this.toggleRecruiter());
     this.resumeBtn.on('pointerdown', () => this.openResume());
@@ -93,6 +95,7 @@ export default class MenuScene extends Phaser.Scene {
     kb.on('keydown-R', () => this.toggleRecruiter());
     kb.on('keydown-D', () => this.cycleDifficulty());
     kb.on('keydown-C', () => this.openResume());
+    kb.on('keydown-H', () => go(this, 'Character', { from: 'Menu' }));
 
     this.refresh(true);
   }

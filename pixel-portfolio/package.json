@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "hero": "node tools/make-hero.mjs",
+    "site": "node tools/export-site.mjs",
     "npcs": "node tools/make-npcs.mjs"
   },
   "dependencies": {

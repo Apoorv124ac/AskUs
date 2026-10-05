@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { save } from '../systems/save.js';
 import { txt, go, skyline, groundStrip, blink, popIn, burst, COLORS, viewCam } from '../ui/pixel.js';
 
 export default class TitleScene extends Phaser.Scene {
@@ -51,7 +52,7 @@ export default class TitleScene extends Phaser.Scene {
 
     const start = () => {
       burst(this, 128, 126, { n: 12, spread: 50 });
-      go(this, 'Entrance');
+      go(this, save.character ? 'Entrance' : 'Character');
     };
     this.input.keyboard.once('keydown-ENTER', start);
     this.input.keyboard.once('keydown-SPACE', start);

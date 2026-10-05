@@ -7,6 +7,7 @@ import PreloadScene from './scenes/PreloadScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
 import TitleScene from './scenes/TitleScene.js';
+import CharacterScene from './scenes/CharacterScene.js';
 import EntranceScene from './scenes/EntranceScene.js';
 import LoginScene from './scenes/LoginScene.js';
 import MenuScene from './scenes/MenuScene.js';
@@ -29,7 +30,7 @@ function start() {
       default: 'arcade',
       arcade: { gravity: { y: PHYSICS.gravity }, debug },
     },
-    scene: [PreloadScene, TitleScene, EntranceScene, LoginScene, StoryScene, CreditsScene, MenuScene, GameScene, UIScene],
+    scene: [PreloadScene, TitleScene, CharacterScene, EntranceScene, LoginScene, StoryScene, CreditsScene, MenuScene, GameScene, UIScene],
   });
   window.__game = game; // handy for debugging / automated tests
 }

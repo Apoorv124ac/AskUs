@@ -2,7 +2,7 @@
   "story": [
     "HI *{name}*! I'M *APOORV*, A DESIGNER FROM LUCKNOW.",
     "*12+ YEARS*, FOUR COMPANIES, AND A LOT OF COFFEE.",
-    "INSTEAD OF A RESUME, I BUILT A GAME. *YOU'RE PLAYING ME.*",
+    "INSTEAD OF A RESUME, I BUILT A GAME. *YOU'RE PLAYING MY STORY.*",
     "WALK THROUGH MY STORY, COLLECT THE COINS AND MEET THE TEAM.",
     "READY? *LET'S GO!*"
   ],
@@ -198,7 +198,7 @@
     "role": "CURATOR",
     "color": "#f8a0d8",
     "lines": [
-      "*{certs}/5* CERTIFICATES, {name}! LEARNING NEVER STOPS, AND NEITHER DOES HE.",
+      "*{certs}/5* CERTIFICATES, {name}! LEARNING NEVER STOPS, AND NEITHER DOES APOORV.",
       "THE LAST STOP IS THE *ROOFTOP*. TAKE THE DOOR!"
     ],
     "again": [

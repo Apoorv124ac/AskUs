@@ -7,6 +7,8 @@ import { save, persist, resetSave } from '../systems/save.js';
 import { NPC_ORDER, NPC_ANIMS } from '../npcFrames.js';
 import { createCreatureTextures, createVignette } from '../art/creatures.js';
 import { GAME_W, GAME_H, ZOOM } from '../config.js';
+import { CHARACTERS } from '../data/characters.js';
+import { loadCharacterSheets, createHeroTexture } from '../systems/character.js';
 
 function canvasTex(scene, key, w, h, draw) {
   const tex = scene.textures.createCanvas(key, w, h);
@@ -402,12 +404,13 @@ export default class PreloadScene extends Phaser.Scene {
 
   preload() {
     // Hero sprite sheet: made by tools/make-hero.mjs (replace with your own art any time)
-    this.load.spritesheet('hero', 'assets/hero.png', { frameWidth: FW, frameHeight: FH });
+    loadCharacterSheets(this);
     this.load.spritesheet('npcs', 'assets/npcs.png', { frameWidth: FW, frameHeight: FH });
   }
 
   create() {
     const t = this.textures;
+    createHeroTexture(this);
 
     canvasTex(this, 'tile-ground', 16, 16, drawGround);
     canvasTex(this, 'tile-dirt', 16, 16, drawDirt);
@@ -497,6 +500,17 @@ export default class PreloadScene extends Phaser.Scene {
         repeat: def.repeat,
       });
     });
+    // per-character idle/walk/wave for the picker (the in-game hero uses the 'hero' texture)
+    CHARACTERS.forEach((c) =>
+      ['idle', 'walk', 'wave'].forEach((k) =>
+        a.create({
+          key: `${k}-${c.id}`,
+          frames: HERO_ANIMS[k].frames.map((n) => ({ key: `char-${c.id}`, frame: frameIndex(n) })),
+          frameRate: HERO_ANIMS[k].fps,
+          repeat: HERO_ANIMS[k].repeat,
+        })
+      )
+    );
     a.create({
       key: 'coin-spin',
       frames: [0, 1, 2, 3].map((frame) => ({ key: 'coin', frame })),
