@@ -130,6 +130,8 @@ export class Enemies {
     if (e.dead || s.entering) return;
     const now = s.time.now;
     const falling = p.body.velocity.y > -30 && p.body.bottom <= e.body.top + 12;
+    // recruiter star: everything you touch is knocked out
+    if (s.star && !(e.type === 'turtle' && e.state === 'shell') && !(e.type === 'piranha' && e.visibleHeight < 6)) return this.die(e, 'fall');
 
     switch (e.type) {
       case 'turtle':

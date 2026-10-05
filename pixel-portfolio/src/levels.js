@@ -101,6 +101,7 @@ function buildWorld1() {
   label(L, 1, 5, 'SHIFT+UP  LONG JUMP');
   label(L, 1, 6, 'UP IN AIR  DOUBLE JUMP');
   label(L, 1, 7, 'DOWN ON PIPE  ENTER');
+  label(L, 1, 8, 'MOUSE  SCROLL = MOVE, CLICK = JUMP');
   put(L, 14, 11, 'f'); // 1
 
   // spring up to a high ledge

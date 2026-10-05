@@ -7,6 +7,7 @@ import { save, persist, resetSave } from '../systems/save.js';
 import { NPC_ORDER, NPC_ANIMS } from '../npcFrames.js';
 import { createCreatureTextures, createVignette } from '../art/creatures.js';
 import { GAME_W, GAME_H, ZOOM } from '../config.js';
+import { createPointerTexture } from '../systems/mouse.js';
 import { CHARACTERS } from '../data/characters.js';
 import { loadCharacterSheets, createHeroTexture } from '../systems/character.js';
 
@@ -411,6 +412,7 @@ export default class PreloadScene extends Phaser.Scene {
   create() {
     const t = this.textures;
     createHeroTexture(this);
+    createPointerTexture(this);
 
     canvasTex(this, 'tile-ground', 16, 16, drawGround);
     canvasTex(this, 'tile-dirt', 16, 16, drawDirt);

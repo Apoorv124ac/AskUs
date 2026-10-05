@@ -5,6 +5,9 @@ import Phaser from 'phaser';
 import { save, persist } from './save.js';
 import resume from '../data/resume.json';
 import { burst } from '../ui/pixel.js';
+import { PointerPower } from './mouse.js';
+
+const CHIP_NEED = 4; // pointer-arrow hits per dragon life
 
 const NAME = 'THE DEADLINE DRAGON';
 const GATE_ROWS = [3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -23,6 +26,7 @@ export class DragonBoss {
     this.cards = resume.dragonCards;
     this.invuln = 0;
     this.count = 0;
+    this.chip = 0;
     this.attack = 'wave';
     this.since = 0;
     this.x = cfg.col * 16 + 8;
@@ -49,8 +53,9 @@ export class DragonBoss {
       phys.add.existing(this.body, true);
       phys.add.overlap(scene.player, this.head, () => this.onHead());
       phys.add.overlap(scene.player, this.body, () => scene.hurtPlayer(this.x));
-      scene.registry.set('bossBar', { name: NAME, hp: this.hp, max: this.max });
+      this.bar();
       scene.registry.set('hudInfo', 'BOSS');
+      scene.pointerPower = new PointerPower(scene, this);
     } else {
       scene.registry.set('hudInfo', 'DRAGON DOWN');
     }
@@ -62,6 +67,10 @@ export class DragonBoss {
       scene.hurtPlayer(b.x);
     });
     phys.add.collider(this.balls, scene.solids, (b) => this.explode(b));
+  }
+
+  bar() {
+    this.s.registry.set('bossBar', { name: NAME, hp: this.hp, max: this.max, chip: this.chip / CHIP_NEED, ammo: this.s.pointerPower?.ammo ?? 6, ammoMax: 6 });
   }
 
   t(ms) {
@@ -79,15 +88,32 @@ export class DragonBoss {
     s.hurtPlayer(this.x);
   }
 
-  hit() {
+  // a pointer arrow landed
+  onArrow(a) {
+    const { s } = this;
+    if (this.state === 'dead' || this.state === 'sleep' || this.done) return;
+    s.pointerPower.pop(a);
+    this.sprite.setTintFill(0xffffff);
+    s.time.delayedCall(60, () => this.state !== 'tired' && this.sprite.active && this.sprite.clearTint());
+    if (s.time.now < this.invuln) return;
+    this.chip++;
+    s.popText(a.x, a.y - 8, `${this.chip}/${CHIP_NEED}`);
+    if (this.chip >= CHIP_NEED) return this.hit(true);
+    this.bar();
+  }
+
+  hit(byArrows = false) {
     const { s } = this;
     const p = s.player;
-    this.invuln = s.time.now + 1300;
+    this.invuln = s.time.now + (byArrows ? 900 : 1300);
+    this.chip = 0;
     this.hp--;
     this.hits++;
-    s.registry.set('bossBar', { name: NAME, hp: this.hp, max: this.max });
-    p.setVelocityY(-300);
-    s.hitStop(110);
+    this.bar();
+    if (!byArrows) {
+      p.setVelocityY(-300);
+      s.hitStop(110);
+    }
     s.cameras.main.shake(260, 0.012);
     burst(s, this.x - 30, this.y - 10, { n: 22, spread: 40, colors: [0xf83800, 0xf8d878, 0xfcfcfc] });
     s.popText(this.x - 30, this.y - 40, 'HIT!');
@@ -141,6 +167,8 @@ export class DragonBoss {
       return;
     }
     s.registry.set('hudInfo', `DRAGON ${this.hp}/${this.max}`);
+    s.pointerPower.update(time);
+    if (s.registry.get('bossBar')?.ammo !== s.pointerPower.ammo) this.bar();
     this.sprite.setPosition(this.sprite.x, this.state === 'tired' ? this.y + 6 : this.y);
 
     if (this.state === 'roar' && el > 1600) this.toIdle();
@@ -242,6 +270,7 @@ export class DragonBoss {
     this.setState('dead');
     this.sprite.anims.play('dragon-hurt');
     s.registry.set('bossBar', null);
+    s.pointerPower.clear();
     s.registry.set('hudInfo', 'DRAGON DOWN');
     // slow-motion blow-up
     for (let i = 0; i < 12; i++) {

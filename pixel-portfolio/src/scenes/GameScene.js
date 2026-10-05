@@ -15,6 +15,7 @@ import { OfficeTasks } from '../systems/office.js';
 import { ArcadeSkills, countSkills, TOTAL as SKILL_TOTAL } from '../systems/arcade.js';
 import { TrophyHall, countCerts, CERT_ENTRIES } from '../systems/trophies.js';
 import { Rooftop } from '../systems/finale.js';
+import { MouseControls } from '../systems/mouse.js';
 
 const TILE_TEX = {
   '#': 'tile-ground',
@@ -79,6 +80,9 @@ export default class GameScene extends Phaser.Scene {
     this.gimmicks = null;
     this.enemies = null;
     this.dragon = null;
+    this.pointerPower = null;
+    this.star = !!save.recruiter; // recruiter mode: star power (immune, knocks enemies out, faster, triple jump)
+    this.nextSpark = 0;
     this.motes = [];
     this.nextDust = 0;
     this.trophies = null;
@@ -108,6 +112,8 @@ export default class GameScene extends Phaser.Scene {
     } else reg.set('factsTotal', 0);
     if (L.world === 0) reg.set('hudInfo', '');
 
+    this.mouse = new MouseControls(this);
+    if (this.star) this.time.delayedCall(2000, () => this.game.events.emit('banner', 'STAR POWER ON!\nRECRUITER MODE'));
     this.cursors = this.input.keyboard.createCursorKeys();
     this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     // event-based (not polled) so even a very quick tap of Enter/Space registers
@@ -527,7 +533,7 @@ export default class GameScene extends Phaser.Scene {
   // enemy contact: lose a coin, bounce back, brief invulnerability
   hurtPlayer(fromX) {
     const now = this.time.now;
-    if (now < this.invulUntil || this.entering) return;
+    if (this.star || now < this.invulUntil || this.entering) return;
     this.invulUntil = now + 1200;
     const reg = this.registry;
     if (reg.get('coins') > 0) reg.set('coins', reg.get('coins') - 1);
@@ -551,12 +557,13 @@ export default class GameScene extends Phaser.Scene {
 
   respawn() {
     const reg = this.registry;
-    reg.set('coins', Math.max(0, reg.get('coins') - P.pitCoinPenalty));
+    const penalty = this.star ? 0 : P.pitCoinPenalty;
+    reg.set('coins', Math.max(0, reg.get('coins') - penalty));
     const p = this.player;
     p.setVelocity(0, 0);
     p.setPosition(this.spawnPoint.x, this.spawnPoint.bottom - 16);
     this.cameras.main.flash(200, 255, 255, 255);
-    this.game.events.emit('banner', `OOPS! -${P.pitCoinPenalty} COINS`);
+    this.game.events.emit('banner', penalty ? `OOPS! -${penalty} COINS` : 'OOPS! BACK AT CHECKPOINT');
     this.lockAnim('hurt', 600);
   }
 
@@ -573,24 +580,28 @@ export default class GameScene extends Phaser.Scene {
     const grounded = b.blocked.down;
     const crouching = grounded && c.down.isDown && !this.talking;
     const frozen = !!this.talking;
-    const dir = crouching || frozen ? 0 : (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
+    const keyDir = (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
+    const dir = crouching || frozen ? 0 : keyDir || this.mouse.dir(time);
+    const upHeld = c.up.isDown || this.mouse.held();
 
     // coffee timer + HUD value
     this.coffeeMs = Math.max(0, this.coffeeMs - delta);
     const powered = this.coffeeMs > 0;
+    const boosted = powered || this.star; // star (recruiter) gets the triple jump too
     const ratio = Math.ceil((this.coffeeMs / P.coffeeMs) * 20) / 20;
     if (this.registry.get('coffee') !== ratio) this.registry.set('coffee', ratio);
     // golden aura behind the hero while caffeinated (blinks in the last 2 seconds)
-    const auraOn = powered && (this.coffeeMs > 2000 || Math.floor(time / 90) % 2 === 0);
+    const auraOn = this.star || (powered && (this.coffeeMs > 2000 || Math.floor(time / 90) % 2 === 0));
     this.aura.setVisible(auraOn);
     if (auraOn) {
       this.aura.setPosition(p.x, p.y).setFlipX(p.flipX).setFrame(p.frame.name);
       this.aura.setScale(1.18).setAlpha(0.35 + 0.15 * Math.sin(time / 120));
+      if (this.star) this.aura.setTint(Phaser.Display.Color.HSVToRGB((time / 700) % 1, 0.7, 1).color);
     }
 
     if (grounded) {
       this.lastGrounded = time;
-      this.airJumps = powered ? P.coffeeAirJumps : P.baseAirJumps;
+      this.airJumps = boosted ? P.coffeeAirJumps : P.baseAirJumps;
       this.longJumping = false;
       this.jumping = false;
       if (!this.wasGrounded && this.prevVy > 150) {
@@ -602,7 +613,8 @@ export default class GameScene extends Phaser.Scene {
 
     // jumping: buffer + coyote + coffee double jump
     let fresh = false;
-    if (Phaser.Input.Keyboard.JustDown(c.up) && !frozen) {
+    const mouseJump = this.mouse.takeFresh();
+    if ((Phaser.Input.Keyboard.JustDown(c.up) || mouseJump) && !frozen) {
       this.jumpPressedAt = time;
       fresh = true;
     }
@@ -614,15 +626,20 @@ export default class GameScene extends Phaser.Scene {
         this.doJump(false, dir, powered, true);
       }
     }
+    // right / middle click: the extra mid-air jump(s) follow automatically
+    if (this.mouse.comboDue(time, grounded) && !frozen && this.airJumps > 0) {
+      this.airJumps--;
+      this.doJump(false, dir, powered, true);
+    }
     // variable jump height: letting go of Up cuts the hop short
-    if (this.jumping && c.up.isUp && b.velocity.y < 0) {
+    if (this.jumping && !upHeld && b.velocity.y < 0) {
       b.setVelocityY(b.velocity.y * P.jumpCutFactor);
       this.jumping = false;
     }
     b.setGravityY(b.velocity.y > 0 ? P.fallExtraGravity : 0);
 
     // horizontal movement
-    const boost = powered ? P.coffeeSpeedBoost : 1;
+    const boost = (powered ? P.coffeeSpeedBoost : 1) * (this.star ? 1.15 : 1);
     let maxSpeed = (shift ? P.runSpeed : P.walkSpeed) * boost;
     let vx = b.velocity.x;
     let accel = P.accel * (grounded ? 1 : P.airControl);
@@ -687,6 +704,12 @@ export default class GameScene extends Phaser.Scene {
     v.setFlipX(p.flipX);
     if (p.frame && p.frame.name !== undefined) v.setFrame(p.frame.name);
     v.setAlpha(p.alpha);
+    if (this.star) {
+      if (time > this.nextSpark) {
+        this.nextSpark = time + 110;
+        burst(this, p.x + Phaser.Math.Between(-8, 8), p.y + Phaser.Math.Between(-14, 10), { n: 1, spread: 8, colors: [0xf8d878, 0xfcfcfc] });
+      }
+    }
     // shadow on the floor below (shrinks as you rise)
     const gy = this.groundYBelow(p.x, p.body.bottom - 2);
     const h = Math.max(0, gy - p.body.bottom);
@@ -718,7 +741,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   refillAirJumps() {
-    this.airJumps = this.coffeeMs > 0 ? P.coffeeAirJumps : P.baseAirJumps;
+    this.airJumps = this.coffeeMs > 0 || this.star ? P.coffeeAirJumps : P.baseAirJumps;
   }
 
   // brief freeze-frame on impact: makes stomps feel heavy

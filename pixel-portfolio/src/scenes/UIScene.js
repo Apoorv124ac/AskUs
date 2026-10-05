@@ -328,7 +328,13 @@ export default class UIScene extends Phaser.Scene {
       const cw = Math.floor((w - (boss.max - 1) * 2) / boss.max);
       this.bossGfx.fillStyle(0x0f0f1b, 0.8).fillRect(x0 - 3, 25, w + 6, 8);
       for (let k = 0; k < boss.max; k++) {
+        const cur = k === boss.hp - 1 && boss.chip;
         this.bossGfx.fillStyle(k < boss.hp ? 0xf83800 : 0x3a2030).fillRect(x0 + k * (cw + 2), 27, cw, 4);
+        if (cur) this.bossGfx.fillStyle(0xf8d878).fillRect(x0 + k * (cw + 2) + Math.round(cw * (1 - boss.chip)), 27, Math.ceil(cw * boss.chip), 4);
+      }
+      if (boss.ammoMax) {
+        const cols = [0xf83800, 0xfca044, 0xf8d878, 0x58d854, 0x58b0f8, 0x6844fc];
+        for (let k = 0; k < boss.ammoMax; k++) this.bossGfx.fillStyle(k < boss.ammo ? cols[k % cols.length] : 0x2c3a7c).fillRect(x0 + k * 7, 35, 5, 3);
       }
       this.bossName.setText(boss.name);
       this.bossBox.setPosition(0, reg.get('skillBars') ? 10 : 0);
