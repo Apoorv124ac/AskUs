@@ -17,6 +17,7 @@ import { TrophyHall, countCerts, CERT_ENTRIES } from '../systems/trophies.js';
 import { Rooftop } from '../systems/finale.js';
 import { MouseControls } from '../systems/mouse.js';
 import { sfx, music, duck } from '../systems/audio.js';
+import { touch, showTouch } from '../systems/touch.js';
 import { Bricks } from '../systems/bricks.js';
 import { MINIS } from '../systems/minigames.js';
 
@@ -118,6 +119,9 @@ export default class GameScene extends Phaser.Scene {
     if (L.world === 0) reg.set('hudInfo', '');
 
     this.mouse = new MouseControls(this);
+    showTouch(true, { fire: !!(L.dragon && !save.dragonDown) });
+    this.events.once('shutdown', () => showTouch(false));
+    this.input.addPointer(2);
     this.pickMusic();
     this.events.once('shutdown', () => duck(false));
     if (this.star) this.time.delayedCall(2000, () => !this.talking && this.game.events.emit('banner', 'STAR POWER!\nRECRUITER MODE IS ON'));
@@ -513,7 +517,7 @@ export default class GameScene extends Phaser.Scene {
   // --- pipes ---------------------------------------------------------------
   tryEnterPipe() {
     const p = this.player;
-    if (this.entering || !this.cursors.down.isDown || !p.body.blocked.down) return;
+    if (this.entering || !(this.cursors.down.isDown || touch.down) || !p.body.blocked.down) return;
     for (const pipe of this.level.pipes) {
       if (!pipe.to) continue;
       if (Math.abs(p.x - (pipe.x + TILE)) < 10 && Math.abs(p.body.bottom - pipe.y) < 3) {
@@ -601,14 +605,17 @@ export default class GameScene extends Phaser.Scene {
     const p = this.player;
     const b = p.body;
     const c = this.cursors;
-    const shift = this.shift.isDown;
+    const shift = this.shift.isDown || touch.run;
     const grounded = b.blocked.down;
-    const crouching = grounded && c.down.isDown && !this.talking;
+    const crouching = grounded && (c.down.isDown || touch.down) && !this.talking;
     const frozen = !!this.talking || !!this.mini?.lock;
     duck(frozen);
-    const keyDir = (c.right.isDown ? 1 : 0) - (c.left.isDown ? 1 : 0);
+    const keyDir = (c.right.isDown || touch.right ? 1 : 0) - (c.left.isDown || touch.left ? 1 : 0);
     const dir = crouching || frozen ? 0 : keyDir || this.mouse.dir(time);
-    const upHeld = c.up.isDown || this.mouse.held();
+    const upHeld = c.up.isDown || touch.jump || this.mouse.held();
+    const tj = touch.takeJump();
+    if (tj) this.interactPressed = true; // the jump button also talks / advances a message
+    if (touch.takeFire() && this.pointerPower) this.pointerPower.throwAuto();
 
     // coffee timer + HUD value
     this.coffeeMs = Math.max(0, this.coffeeMs - delta);
@@ -639,7 +646,7 @@ export default class GameScene extends Phaser.Scene {
 
     // jumping: buffer + coyote + coffee double jump
     let fresh = false;
-    const mouseJump = this.mouse.takeFresh();
+    const mouseJump = this.mouse.takeFresh() || tj;
     if ((Phaser.Input.Keyboard.JustDown(c.up) || mouseJump) && !frozen) {
       this.jumpPressedAt = time;
       fresh = true;

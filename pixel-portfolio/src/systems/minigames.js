@@ -439,11 +439,11 @@ const WINDOW = 0.17; // seconds either side counts as a hit
 
 class RhythmMini extends Mini {
   constructor(scene) {
-    super(scene, 'PRESS ENTER. HIT THE ARROW KEYS AS THE\nNOTES REACH THE LINE. HIT 14 OF 20.');
+    super(scene, 'PRESS ENTER OR TAP. HIT THE ARROW KEYS (OR TAP\nA LANE) AS NOTES REACH THE LINE. HIT 14 OF 20.');
     this.state = 'idle';
     this.notes = [];
     this.parts = [];
-    if (this.live) this.say('PRESS ENTER TO START');
+    if (this.live) this.say('PRESS ENTER OR TAP TO START');
     const kb = scene.input.keyboard;
     this.onEnter = () => this.live && this.state === 'idle' && this.start();
     kb.on('keydown-ENTER', this.onEnter);
@@ -452,6 +452,18 @@ class RhythmMini extends Mini {
       kb.on(`keydown-${k}`, fn);
       return [k, fn];
     });
+    // phones: tap to start, and tap a lane to hit it
+    const onTap = (pointer) => {
+      if (!this.live) return;
+      if (this.state === 'idle') return this.start();
+      if (this.state !== 'run') return;
+      const w = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      let lane = 0;
+      LANE_X.forEach((x, i) => Math.abs(w.x - x) < Math.abs(w.x - LANE_X[lane]) && (lane = i));
+      this.hit(lane);
+    };
+    scene.input.on('pointerdown', onTap);
+    scene.events.once('shutdown', () => scene.input.off('pointerdown', onTap));
     scene.events.once('shutdown', () => {
       kb.off('keydown-ENTER', this.onEnter);
       this.keyFns.forEach(([k, fn]) => kb.off(`keydown-${k}`, fn));
@@ -525,7 +537,7 @@ class RhythmMini extends Mini {
     if (this.score >= 14) return this.win();
     sfx('buzz');
     this.state = 'idle';
-    this.say(`${this.score}/20. NEED 14. ENTER TO RETRY`);
+    this.say(`${this.score}/20. NEED 14. ENTER OR TAP TO RETRY`);
   }
 }
 

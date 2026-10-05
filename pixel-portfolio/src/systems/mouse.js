@@ -135,6 +135,17 @@ export class PointerPower {
   }
 
   throw(pointer) {
+    const w = this.s.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    this.fire(w.x, w.y);
+  }
+
+  // touch screens have no cursor: the throw button aims at the dragon's head
+  throwAuto() {
+    const h = this.dragon.head;
+    this.fire(h.x, h.y);
+  }
+
+  fire(wx, wy) {
     const { s } = this;
     const now = s.time.now;
     if (!this.active || now < this.nextThrow || this.ammo <= 0) return;
@@ -142,7 +153,7 @@ export class PointerPower {
     this.ammo--;
     sfx('throw');
     const p = s.player;
-    const w = s.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const w = { x: wx, y: wy };
     const ox = p.x;
     const oy = p.y - 6;
     const ang = Math.atan2(w.y - oy, w.x - ox);

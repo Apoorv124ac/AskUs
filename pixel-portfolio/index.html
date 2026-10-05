@@ -14,13 +14,13 @@
       html, body { margin: 0; height: 100%; background: #0f0f1b; overflow: hidden; }
       #game { width: 100vw; height: 100vh; }
       canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
-      #notice { display: none; position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 9; padding: 8px 10px; background: #1c2250; color: #fcfcfc; border: 2px solid #f8d878; font: 12px/1.4 monospace; text-align: center; }
+      #notice { display: none; position: fixed; left: 8px; right: 64px; top: 8px; z-index: 9; padding: 6px 10px; background: #1c2250; color: #fcfcfc; border: 2px solid #f8d878; font: 12px/1.4 monospace; text-align: center; }
       @media (pointer: coarse) { #notice { display: block; } }
     </style>
   </head>
   <body>
     <div id="game"></div>
-    <div id="notice" onclick="this.remove()">Best played on a laptop or desktop with a keyboard (arrow keys + Shift). Tap to hide.</div>
+    <div id="notice" onclick="this.remove()">Tip: turn your phone sideways for the best view. Tap to hide.</div>
     <noscript><p style="color:#fff;font-family:monospace;padding:16px">Office Quest needs JavaScript enabled.</p></noscript>
     <script type="module" src="/src/main.js"></script>
   </body>

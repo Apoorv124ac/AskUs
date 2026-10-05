@@ -66,6 +66,12 @@ export default class UIScene extends Phaser.Scene {
       txt(this, 128, 120, 'R   BACK TO CHECKPOINT', { origin: 0.5, depth: 41 }),
       txt(this, 128, 132, 'Q   WORLD MAP', { origin: 0.5, depth: 41 }),
     ]);
+    // the same three choices work by tap on phones
+    [[108, () => this.togglePause()], [120, () => this.toCheckpoint()], [132, () => this.toMap()]].forEach(([y, fn]) => {
+      const z = this.add.zone(128, y, 156, 12).setInteractive({ useHandCursor: true });
+      z.on('pointerdown', fn);
+      this.pauseBox.add(z);
+    });
 
     const g = this.game.events;
     this.handlers = {
@@ -87,14 +93,22 @@ export default class UIScene extends Phaser.Scene {
     const kb = this.input.keyboard;
     kb.on('keydown-P', () => this.togglePause());
     kb.on('keydown-ESC', () => this.togglePause());
-    kb.on('keydown-Q', () => {
-      if (!this.scene.isPaused('Game')) return;
-      this.pauseBox.setVisible(false);
-      this.scene.stop('Game');
-      this.scene.stop('UI');
-      this.scene.start('Menu');
-    });
+    kb.on('keydown-Q', () => this.toMap());
     this.refresh();
+  }
+
+  toMap() {
+    if (!this.scene.isPaused('Game')) return;
+    this.pauseBox.setVisible(false);
+    this.scene.stop('Game');
+    this.scene.stop('UI');
+    this.scene.start('Menu');
+  }
+
+  toCheckpoint() {
+    if (!this.scene.isPaused('Game')) return;
+    this.togglePause();
+    this.scene.get('Game').returnToCheckpoint();
   }
 
   togglePause() {
