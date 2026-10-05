@@ -56,7 +56,7 @@ export const OWNER_NAME = 'APOORV';
 // Paste your Google Apps Script web-app URL here to receive login emails in a
 // Google Sheet (see docs/EMAIL_SETUP.md). Leave '' to keep emails on the
 // visitor's own device only.
-export const EMAIL_ENDPOINT = '';
+export const EMAIL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzMHLdqMIMtZ4yhobX6GRBOrcWOhl2aRHNenrCM2B9KGGEfARLriflj4dLBQRc5LGtd/exec';
 
 // Link to your normal resume (PDF or web page). '' = the button shows "SOON".
 export const CLASSIC_RESUME_URL = '';
