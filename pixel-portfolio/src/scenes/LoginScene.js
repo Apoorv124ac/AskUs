@@ -44,6 +44,11 @@ export default class LoginScene extends Phaser.Scene {
     this.hint = txt(this, 230, 104, 'CONTINUE >', { origin: [1, 0], color: COLORS.gold, bold: true, shadow: false, depth: 0 });
     this.hint.setPadding(10, 8, 6, 6).setInteractive({ useHandCursor: true });
     this.hint.on('pointerdown', () => this.time.now - this.createdAt > 500 && this.submit());
+    this.note.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+      if (this.step !== 'welcome') return;
+      this.step = 'name';
+      this.enterStep();
+    });
     this.term.add([this.msg, this.line, this.err, this.note, this.hint]);
     this.tweens.add({ targets: this.hint, alpha: 0.2, yoyo: true, repeat: -1, duration: 500 });
     popIn(this, this.term, { from: 0.92, duration: 280 });
@@ -88,6 +93,17 @@ export default class LoginScene extends Phaser.Scene {
       }
     });
     this.input.on('pointerdown', () => this.step !== 'welcome' && el.focus());
+    // "welcome back" has no text box, so Enter / Esc are read from the window instead
+    this.onWinKey = (e) => {
+      if (this.step !== 'welcome' || this.done || e.repeat) return;
+      if (e.key === 'Enter' && this.time.now - this.createdAt > 500) this.submit();
+      else if (e.key === 'Escape') {
+        this.step = 'name';
+        this.enterStep();
+      }
+    };
+    window.addEventListener('keydown', this.onWinKey);
+    this.events.once('shutdown', () => window.removeEventListener('keydown', this.onWinKey));
     this.events.once('shutdown', () => el.remove());
     this.events.once('destroy', () => el.remove());
 
@@ -104,7 +120,7 @@ export default class LoginScene extends Phaser.Scene {
     if (this.step === 'welcome') {
       el.value = '';
       this.msg.setText(`WELCOME BACK, *${save.name}*.`.replace(/\*/g, '') + '\nPRESS ENTER TO LOG IN.');
-      this.note.setText('NOT YOU? PRESS ESC.');
+      this.note.setText('NOT YOU? TAP HERE (OR PRESS ESC).');
       this.hint.setText('CONTINUE >');
     } else if (this.step === 'name') {
       el.value = '';
@@ -131,7 +147,10 @@ export default class LoginScene extends Phaser.Scene {
 
   submit() {
     if (this.done) return;
-    if (this.step === 'welcome') return this.finish();
+    if (this.step === 'welcome') {
+      this.report();
+      return this.finish();
+    }
 
     const val = this.el.value.trim();
     if (this.step === 'name') {
@@ -146,15 +165,19 @@ export default class LoginScene extends Phaser.Scene {
     save.name = this.pending.name;
     save.email = val;
     persist();
-    if (save.emailSent !== val) {
-      sendEmail({ email: val, name: save.name }).then((ok) => {
-        if (ok) {
-          save.emailSent = val;
-          persist();
-        }
-      });
-    }
+    this.report();
     this.finish();
+  }
+
+  // send the visitor to the Google Sheet once per email address (also for returning visitors)
+  report() {
+    if (!save.email || save.emailSent === save.email) return;
+    sendEmail({ email: save.email, name: save.name }).then((ok) => {
+      if (ok) {
+        save.emailSent = save.email;
+        persist();
+      }
+    });
   }
 
   fail(msg) {
