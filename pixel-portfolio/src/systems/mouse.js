@@ -127,7 +127,7 @@ export class PointerPower {
     scene.physics.add.collider(this.group, scene.solids, (a) => this.pop(a));
     scene.input.setDefaultCursor('crosshair');
     scene.events.once('shutdown', () => scene.input.setDefaultCursor(''));
-    scene.time.delayedCall(2400, () => scene.game.events.emit('banner', 'POINTER POWER!\nLEFT CLICK = THROW ARROWS'));
+    scene.time.delayedCall(2400, () => scene.game.events.emit('banner', 'POINTER POWER!\nLEFT-CLICK TO THROW ARROWS'));
   }
 
   get active() {

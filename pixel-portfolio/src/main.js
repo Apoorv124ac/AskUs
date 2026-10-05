@@ -13,6 +13,7 @@ import LoginScene from './scenes/LoginScene.js';
 import MenuScene from './scenes/MenuScene.js';
 import StoryScene from './scenes/StoryScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
+import { richText } from './ui/pixel.js';
 import { initAudio } from './systems/audio.js';
 
 const debug = new URLSearchParams(location.search).has('debug');
@@ -35,6 +36,7 @@ function start() {
     scene: [PreloadScene, TitleScene, CharacterScene, EntranceScene, LoginScene, StoryScene, CreditsScene, MenuScene, GameScene, UIScene],
   });
   window.__game = game; // handy for debugging / automated tests
+  window.__rich = richText;
 }
 
 // make sure the pixel font is ready before any text is drawn

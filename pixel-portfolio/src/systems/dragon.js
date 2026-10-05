@@ -163,7 +163,7 @@ export class DragonBoss {
         this.setState('roar');
         sfx('roar');
         music('boss');
-        s.game.events.emit('banner', `${NAME}!\nSURVIVE THE FIRE. STOMP THE HEAD.`);
+        s.game.events.emit('banner', `${NAME}!\nJUMP THE FIRE. STOMP ITS HEAD.`);
         s.cameras.main.shake(900, 0.008);
         s.tweens.add({ targets: this.sprite, scale: 1.08, yoyo: true, repeat: 3, duration: 160 });
         s.registry.set('hudInfo', `DRAGON ${this.hp}/${this.max}`);
@@ -293,7 +293,7 @@ export class DragonBoss {
       this.head.destroy();
       this.body.destroy();
     });
-    s.time.delayedCall(900, () => s.game.events.emit('banner', 'DEADLINE MET!\nTHE DRAGON IS DEFEATED'));
+    s.time.delayedCall(900, () => s.game.events.emit('banner', 'DEADLINE MET!\nTHE DRAGON IS DOWN'));
     save.dragonDown = true;
     persist();
     for (let i = 0; i < 5; i++) s.award();

@@ -3,6 +3,21 @@ import { PROGRESSION, ZOOM } from '../config.js';
 import { NPC_ORDER, NPC_COLS } from '../npcFrames.js';
 import { txt, panel, richText, burst, bump, viewCam, COLORS } from '../ui/pixel.js';
 
+// what kind of note a card is, from its title: shown as a coloured ribbon + tag
+const KINDS = [
+  [/^FACT/, 'MY STORY', 0xf8d878],
+  [/^SKILL/, 'MY SKILL', 0xa888ff],
+  [/^DRAGON/, 'MY METHOD', 0xf83800],
+  [/^FLOOR/, 'ON THE JOB', 0xfca044],
+  [/^CLIENT/, 'MY CLIENTS', 0xfca044],
+  [/^DEGREE/, 'MY STUDIES', 0x58b0f8],
+  [/^CERT/, 'CERTIFICATE', 0xf8d878],
+];
+const kindOf = (title) => {
+  const k = KINDS.find(([re]) => re.test(String(title)));
+  return k ? { name: k[1], color: k[2] } : null;
+};
+
 // HUD overlay: compact top bar, fact/dialogue cards, pop-in banners, pause.
 export default class UIScene extends Phaser.Scene {
   constructor() {
@@ -145,17 +160,23 @@ export default class UIScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.dim);
     this.tweens.add({ targets: this.dim, fillAlpha: 0.3, duration: 250 });
 
-    const W = 214;
-    const rt = richText(this, 0, 0, text, { width: W - 18, depth: 0 });
-    const H = Math.max(34, rt.height + 26);
+    const [cur, total] = String(page).split('/').map(Number);
+    const last = cur === total;
+    const W = 232;
+    const PORT = 34; // portrait column
+    const rt = richText(this, 0, 0, text, { width: W - PORT - 20, depth: 0, lineH: 11 });
+    const H = Math.max(50, rt.height + 30);
     const bx = Phaser.Math.Clamp(ax - W / 2, 6, 250 - W);
     const by = Phaser.Math.Clamp(ay - H - 12, 20, 130);
     const tx = Phaser.Math.Clamp(ax, bx + 12, bx + W - 12);
     const ty = by + H + 5; // pivot = the tail tip, so the bubble grows out of the NPC
     const col = parseInt((color || '#f8d878').slice(1), 16);
+    const L = bx - tx; // local left edge
+    const T = by - ty; // local top edge
 
     const box = this.add.container(tx, ty).setDepth(25);
-    box.add(panel(this, bx - tx, by - ty, W, H, { depth: 0 }));
+    box.add(panel(this, L, T, W, H, { depth: 0 }));
+    box.add(this.add.rectangle(L + 3, T + 3, W - 6, 2, col).setOrigin(0)); // speaker colour stripe
     // tail: little pixel triangle pointing down at the NPC
     const tail = this.add.graphics();
     for (let r = 0; r < 4; r++) {
@@ -163,17 +184,32 @@ export default class UIScene extends Phaser.Scene {
       tail.fillStyle(0x1c2250).fillRect(-(4 - r), -5 + r + 1, 9 - 2 * r, 1);
     }
     box.add(tail);
+    // portrait well: the speaker's face (signs get a coloured letter instead)
+    const px = L + 8;
+    const py = T + 12;
+    box.add(this.add.rectangle(px, py, 24, 30, 0x0f0f1b).setOrigin(0).setStrokeStyle(1, col));
+    const row = NPC_ORDER.indexOf(id);
+    if (row >= 0) {
+      const face = this.add.sprite(px + 12, py + 31, 'npcs', row * NPC_COLS + 2).setOrigin(0.5, 1).setScale(0.92);
+      box.add(face);
+      this.tweens.add({ targets: face, y: face.y - 2, yoyo: true, repeat: -1, duration: 260, ease: 'Sine.inOut' });
+    } else {
+      box.add(txt(this, px + 12, py + 15, String(title).charAt(0), { display: true, origin: 0.5, color, shadow: false, depth: 0 }));
+    }
     // name chip
-    const nm = txt(this, bx - tx + 12, by - ty - 2, title, { color, bold: true, shadow: false, depth: 0, origin: [0, 0.5] });
+    const nm = txt(this, L + 12, T - 2, title, { color, bold: true, shadow: false, depth: 0, origin: [0, 0.5] });
     const chipW = nm.width + 12;
-    const chip = panel(this, bx - tx + 6, by - ty - 7, chipW, 11, { fill: 0x0f0f1b, frame: col, depth: 0 });
+    const chip = panel(this, L + 6, T - 7, chipW, 11, { fill: 0x0f0f1b, frame: col, depth: 0 });
     box.add([chip, nm]);
-    rt.container.setPosition(bx - tx + 9, by - ty + 9);
+    rt.container.setPosition(L + PORT + 10, T + 12);
     box.add(rt.container);
-    const pg = txt(this, bx - tx + 9, by - ty + H - 10, page, { color: COLORS.dim, shadow: false, depth: 0 });
-    const hint = txt(this, bx - tx + W - 8, by - ty + H - 10, 'ENTER >', { origin: [1, 0], color: COLORS.gold, shadow: false, depth: 0 });
+    // page dots (the current one is lit) and a "next / close" hint
+    for (let k = 0; k < total; k++) {
+      box.add(this.add.rectangle(L + PORT + 10 + k * 6, T + H - 8, 4, 3, k < cur ? col : 0x4a5aac).setOrigin(0));
+    }
+    const hint = txt(this, L + W - 8, T + H - 11, last ? 'ENTER  OK' : 'ENTER  >', { origin: [1, 0], color: COLORS.gold, bold: true, shadow: false, depth: 0 });
     hint.setAlpha(0);
-    box.add([pg, hint]);
+    box.add(hint);
 
     this.bubble = box;
     this.bubbleRt = rt;
@@ -203,7 +239,7 @@ export default class UIScene extends Phaser.Scene {
 
   // ------------------------------------------------------------------ cards
   // spec: { left: fn(container, cx, cy), label, text, color, hint, auto, slide }
-  buildCard({ left, label, labelColor = COLORS.gold, text, hint = '', auto = 0, slide = true }) {
+  buildCard({ left, label, labelColor = COLORS.gold, text, hint = '', auto = 0, slide = true, kind = null }) {
     if (this.cardTimer) this.cardTimer.remove();
     if (this.cardBox) this.cardBox.destroy();
     const X = 6;
@@ -217,6 +253,15 @@ export default class UIScene extends Phaser.Scene {
     box.add(this.add.rectangle(X + 44, Y + 4, 1, H - 8, 0x4a5aac).setOrigin(0));
     const lab = txt(this, TX, Y + 5, label, { color: labelColor, bold: true, depth: 0 });
     box.add([lab, rt.container]);
+    if (kind) {
+      // colour ribbon on top + a small tag naming what kind of note this is
+      box.add(this.add.rectangle(X + 3, Y + 3, W - 6, 2, kind.color).setOrigin(0));
+      const hex = '#' + kind.color.toString(16).padStart(6, '0');
+      lab.setColor(hex);
+      const kt = txt(this, X + W - 7, Y + 5, kind.name, { origin: [1, 0], color: hex, shadow: false, depth: 0 });
+      if (lab.width + kt.width + 10 <= W - (TX - X) - 8) box.add(kt); // only when there is room
+      else kt.destroy();
+    }
     if (hint) {
       const hnt = txt(this, X + W - 6, Y + H - 11, hint, { origin: [1, 0], color: COLORS.grey, depth: 0 });
       this.tweens.add({ targets: hnt, alpha: 0.35, yoyo: true, repeat: -1, duration: 500 });
@@ -248,6 +293,7 @@ export default class UIScene extends Phaser.Scene {
 
   showFact({ label, tag, text, title, icon = 'fact' }) {
     this.buildCard({
+      kind: kindOf(title),
       label: `${title} · ${label}`,
       text,
       auto: 7500,

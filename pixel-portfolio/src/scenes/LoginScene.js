@@ -100,7 +100,7 @@ export default class LoginScene extends Phaser.Scene {
       el.value = save.email || '';
       el.maxLength = 60;
       this.msg.setText(`NICE TO MEET YOU, ${this.pending.name}.\nLOG IN WITH YOUR EMAIL:`);
-      this.note.setText('ONLY USED SO I KNOW WHO PLAYED. NO SPAM.');
+      this.note.setText('ONLY SO APOORV KNOWS WHO PLAYED. NO SPAM.');
       this.hint.setText('ENTER');
     }
     el.focus();

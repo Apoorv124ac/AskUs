@@ -78,7 +78,7 @@ class Mini {
     this.say('SOLVED!');
     this.hud('SOLVED!');
     s.lockAnim('celebrate', 1400);
-    s.time.delayedCall(500, () => s.game.events.emit('banner', 'WELL DONE!\nREWARD UNLOCKED'));
+    s.time.delayedCall(500, () => s.game.events.emit('banner', 'MINI-GAME WON!\nREWARD UNLOCKED'));
     this.rewards.forEach((r, i) =>
       s.time.delayedCall(1500 + i * 1500, () => {
         if (!r.it.active) return;
@@ -95,7 +95,7 @@ class Mini {
 // ---------------------------------------------------------------- 1. memory pads
 class MemoryMini extends Mini {
   constructor(scene) {
-    super(scene, 'WATCH THE PADS LIGHT UP, THEN JUMP ONTO\nTHEM IN THE SAME ORDER. 3 ROUNDS.');
+    super(scene, 'WATCH THE PADS LIGHT UP. THEN JUMP ONTO\nTHEM IN THE SAME ORDER. 3 ROUNDS.');
     this.pads = [];
     ['ID', 'AI', 'PS', 'AE', 'XD'].forEach((name, i) => {
       const x = 40 + i * 32;
@@ -197,7 +197,7 @@ class MemoryMini extends Mini {
 // ---------------------------------------------------------------- 2. lights-out switches
 class LightsMini extends Mini {
   constructor(scene) {
-    super(scene, 'JUMP UP AND BUMP A SWITCH FROM BELOW.\nIT FLIPS ITSELF AND ITS NEIGHBOURS. LIGHT ALL 6!');
+    super(scene, 'BUMP A SWITCH FROM BELOW. IT FLIPS ITSELF\nAND ITS NEIGHBOURS. LIGHT ALL 6 BULBS.');
     this.n = 6;
     this.on = Array(this.n).fill(true);
     // start from "all lit", then press three different switches: always solvable
@@ -257,7 +257,7 @@ class LightsMini extends Mini {
 // ---------------------------------------------------------------- 3. whack-a-bug
 class WhackMini extends Mini {
   constructor(scene) {
-    super(scene, 'BUGS POP OUT OF THE FLOOR. JUMP AND STOMP\n8 OF THEM BEFORE THE TIME RUNS OUT!');
+    super(scene, 'BUGS POP OUT OF THE FLOOR.\nSTOMP 8 OF THEM BEFORE TIME RUNS OUT.');
     this.holes = [40, 88, 136, 184, 232];
     this.holes.forEach((x) => scene.add.ellipse(x, FLOOR + 1, 24, 6, 0x0f0f1b).setDepth(4));
     this.bugs = [];
@@ -345,7 +345,7 @@ class WhackMini extends Mini {
 // ---------------------------------------------------------------- 4. jump rope
 class RopeMini extends Mini {
   constructor(scene) {
-    super(scene, 'THE DEADLINE ROPE IS SWINGING! JUMP WHEN IT\nSWEEPS THE FLOOR. 10 CLEAN JUMPS TO WIN.');
+    super(scene, 'THE DEADLINE ROPE IS SWINGING.\nJUMP WHEN IT SWEEPS THE FLOOR. 10 CLEAN JUMPS.');
     this.g = scene.add.graphics().setDepth(7);
     ['rita', 'meera'].forEach((id, i) => scene.add.sprite(i ? 304 : 16, FLOOR - 16, 'npcs', 0).setFlipX(!i).anims.play(`${id}-idle`).setDepth(4));
     this.theta = Math.PI; // start with the rope up high
@@ -439,7 +439,7 @@ const WINDOW = 0.17; // seconds either side counts as a hit
 
 class RhythmMini extends Mini {
   constructor(scene) {
-    super(scene, 'PRESS ENTER, THEN HIT THE ARROW KEYS AS THE\nNOTES REACH THE LINE. HIT 14 OF 20 TO WIN.');
+    super(scene, 'PRESS ENTER. HIT THE ARROW KEYS AS THE\nNOTES REACH THE LINE. HIT 14 OF 20.');
     this.state = 'idle';
     this.notes = [];
     this.parts = [];

@@ -1,24 +1,24 @@
 {
   "story": [
     "HI *{name}*! I'M *APOORV*, A DESIGNER FROM LUCKNOW.",
-    "*12+ YEARS*, FOUR COMPANIES, AND A LOT OF COFFEE.",
-    "INSTEAD OF A RESUME, I BUILT A GAME. *YOU'RE PLAYING MY STORY.*",
-    "WALK THROUGH MY STORY, COLLECT THE COINS AND MEET THE TEAM.",
-    "READY? *LET'S GO!*"
+    "I'VE DESIGNED FOR *12+ YEARS*: BRANDS, CAMPAIGNS, DECKS AND TEAMS.",
+    "A RESUME LISTS WHAT I DID. SO I BUILT A *GAME* THAT SHOWS IT.",
+    "I DESIGNED THE STORY, THE LEVELS AND EVERY PIXEL. *AI TOOLS* HELPED ME BUILD IT.",
+    "EACH WORLD IS A CHAPTER OF MY CAREER. READY? *LET'S GO!*"
   ],
   "rita": {
     "name": "RITA",
     "role": "RECEPTION",
     "color": "#58d8d8",
     "lines": [
-      "WELCOME, *{name}*! I'M RITA. I RUN THIS LOBBY.",
-      "YOU'RE ABOUT TO PLAY THROUGH *12+ YEARS* OF DESIGN. FIND THE GOLD *?* COINS TO LEARN THE STORY.",
-      "*ARROWS* TO WALK. HOLD *SHIFT* TO RUN. *UP* TO JUMP, *UP AGAIN* IN THE AIR FOR A DOUBLE JUMP.",
-      "*SHIFT+UP* IS A LONG JUMP. STAND ON A *GREEN PIPE* AND PRESS *DOWN* TO SLIDE INSIDE.",
-      "STUCK ANYWHERE? PRESS *R* TO RETURN TO THE LAST CHECKPOINT. NO PENALTY!"
+      "WELCOME, *{name}*! I'M RITA. I RUN THE LOBBY.",
+      "THIS OFFICE IS *APOORV'S STORY*: 7 WORLDS, 12+ YEARS. THE GOLD *?* COINS HOLD HIS FIRST 10 FACTS.",
+      "*ARROWS* WALK. *SHIFT* RUNS. *UP* JUMPS, AND *UP AGAIN* IN THE AIR DOUBLE-JUMPS.",
+      "*SHIFT+UP* IS A LONG JUMP. ON A GREEN PIPE, PRESS *DOWN* TO GO INSIDE.",
+      "MOUSE? *SCROLL* WALKS, *CLICK* JUMPS. STUCK? PRESS *R* FOR THE LAST CHECKPOINT."
     ],
     "again": [
-      "TEN GOLD *?* COINS, {name}. THE FIRST ONE IS JUST AHEAD!"
+      "TEN GOLD *?* COINS, {name}. THE FIRST ONE IS JUST AHEAD."
     ]
   },
   "raju": {
@@ -26,11 +26,11 @@
     "role": "PANTRY",
     "color": "#f8d878",
     "lines": [
-      "COFFEE, *{name}*? FRESH FROM THE PANTRY!",
-      "DESIGNERS RUN ON COFFEE. THIS ONE GIVES YOU *SPEED* AND A *TRIPLE JUMP*!"
+      "COFFEE, *{name}*? FRESH FROM THE PANTRY.",
+      "APOORV RUNS ON IT. YOU GET *SPEED* AND A *TRIPLE JUMP*."
     ],
     "again": [
-      "TOO MUCH COFFEE? NEVER. TAKE ANOTHER!"
+      "TOO MUCH COFFEE? NEVER. TAKE ANOTHER."
     ],
     "giveCoffee": true
   },
@@ -39,12 +39,12 @@
     "role": "MANAGER",
     "color": "#f8a0d8",
     "lines": [
-      "WELL DONE, *{name}*! THAT'S THE LOBBY DONE.",
-      "I LIKE PEOPLE WHO TURN *COMPLEX IDEAS* INTO CLEAR STORIES. YOU JUST DID.",
-      "THROUGH THE DOOR IS THE *TRAINING CAMPUS*. SEE YOU THERE!"
+      "NICE WORK, *{name}*! THE LOBBY IS DONE.",
+      "APOORV TURNS *COMPLEX IDEAS* INTO CLEAR STORIES. THAT IS WHAT MAKES HIS WORK STAND OUT.",
+      "NEXT: THE *TRAINING CAMPUS*. SEE YOU THERE!"
     ],
     "again": [
-      "THE DOOR IS RIGHT THERE, {name}. NO MORE EXCUSES!"
+      "THE DOOR IS RIGHT THERE, {name}."
     ]
   },
   "prof": {
@@ -53,11 +53,11 @@
     "color": "#d8a870",
     "lines": [
       "WELCOME TO THE *TRAINING CAMPUS*, {name}! I'M PROF. DAS.",
-      "FOUR DEGREES, FOUR CLASSROOMS. FINISH EACH *TASK* TO OPEN THE GATE AND EARN THE *SCROLL*.",
-      "RELAX, NO EXAMS. THIS IS WHERE I LEARNED TO *THINK*, NOT JUST DRAW."
+      "APOORV STUDIED FOUR SUBJECTS HERE. FINISH EACH *TASK* TO OPEN THE GATE AND EARN A *SCROLL*.",
+      "NO EXAMS. THIS IS WHERE HE LEARNED TO *THINK*, NOT JUST DRAW."
     ],
     "again": [
-      "FOUR GATES, {name}. START WITH THE COLOUR LAB!"
+      "FOUR GATES, {name}. START WITH THE COLOUR LAB."
     ]
   },
   "profEnd": {
@@ -65,11 +65,11 @@
     "role": "CAMPUS",
     "color": "#d8a870",
     "lines": [
-      "FOUR SCROLLS, *{name}*! THAT'S A LOT OF LEARNING.",
-      "NEXT: THE *OFFICE FLOORS*, WHERE ALL OF THIS GOT PUT TO WORK."
+      "FOUR SCROLLS, *{name}*! THAT IS A LOT OF LEARNING.",
+      "NEXT: THE *OFFICE FLOORS*. THIS IS WHERE IT ALL WENT TO WORK."
     ],
     "again": [
-      "THE DOOR IS OPEN, {name}. OFF YOU GO!"
+      "THE DOOR IS OPEN, {name}. OFF YOU GO."
     ]
   },
   "floor1": {
@@ -77,12 +77,13 @@
     "role": "EARLY CLIENT",
     "color": "#58d8d8",
     "lines": [
-      "WELCOME TO THE *FREELANCE* FLOOR, {name}! 2013 TO 2016.",
-      "NO BOSS HERE, JUST *CLIENTS* AND DEADLINES. COLLECT THE 4 CLIENT BADGES TO GET THE ELEVATOR WORKING.",
-      "BHOOMI, VIBAANTA, GLOBAL EDUCATION AND 13JUGAAD.COM. EACH ONE TAUGHT ME SOMETHING."
+      "WELCOME TO THE *FREELANCE* FLOOR, {name}. 2013 TO 2016.",
+      "NO BOSS HERE. JUST *CLIENTS* AND DEADLINES.",
+      "COLLECT THE 4 CLIENT BADGES: BHOOMI, VIBAANTA, GLOBAL EDUCATION AND 13JUGAAD.COM.",
+      "THAT STARTS THE ELEVATOR."
     ],
     "again": [
-      "FOUR BADGES, {name}. THEN TAKE THE ELEVATOR!"
+      "FOUR BADGES, {name}. THEN TAKE THE ELEVATOR."
     ]
   },
   "floor2": {
@@ -91,10 +92,11 @@
     "color": "#f8a0d8",
     "lines": [
       "FLOOR 2: *BHOOMI EDUCATIONAL CONSULTANCY*. NOV 2016 TO DEC 2020.",
-      "MY FIRST FULL-TIME ROLE. OUR ENEMY: THE *VAGUE BRIEF*. STOMP IT TO TURN IT INTO A CLEAR DESIGN!"
+      "APOORV'S FIRST FULL-TIME ROLE. THE ENEMY IS THE *VAGUE BRIEF*.",
+      "STOMP IT TWICE TO TURN IT INTO A CLEAR DESIGN."
     ],
     "again": [
-      "STOMP THE VAGUE BRIEF, {name}. TWICE SHOULD DO IT!"
+      "STOMP THE VAGUE BRIEF, {name}. TWICE."
     ]
   },
   "floor3": {
@@ -102,11 +104,12 @@
     "role": "CREATIVE DIRECTOR",
     "color": "#f8d878",
     "lines": [
-      "I'M THE CREATIVE DIRECTOR. WELCOME TO *DELOITTE DIGITAL*, JUN 2021 TO APR 2022.",
-      "TODAY'S ENEMY: THE *DEADLINE CLOCK*. NEWSPAPER ADS FOR THE US, UK AND AUSTRALIA. STOMP IT!"
+      "I'M THE CREATIVE DIRECTOR AT *DELOITTE DIGITAL*. JUN 2021 TO APR 2022.",
+      "HERE APOORV MADE NEWSPAPER ADS FOR THE US, UK AND AUSTRALIA.",
+      "TODAY'S ENEMY: THE *DEADLINE CLOCK*. STOMP IT!"
     ],
     "again": [
-      "TICK TOCK, {name}. STOMP THE CLOCK!"
+      "TICK TOCK, {name}. STOMP THE CLOCK."
     ]
   },
   "floor4": {
@@ -114,11 +117,12 @@
     "role": "YOUR TEAM",
     "color": "#bcbcbc",
     "lines": [
-      "WELCOME TO *JLL*, BOSS! APR 2022 TO AUG 2024. YOU LEAD THIS TEAM.",
-      "ONE BRAND, MANY MARKETS. THE *OFF-BRAND BEAST* KEEPS CHANGING COLOURS. KEEP IT *CONSISTENT*!"
+      "THIS IS *JLL*. APR 2022 TO AUG 2024. APOORV LED OUR DESIGN TEAM.",
+      "ONE BRAND, MANY MARKETS. THE *OFF-BRAND BEAST* KEEPS CHANGING COLOURS.",
+      "STOMP IT THREE TIMES TO KEEP THE BRAND *CONSISTENT*."
     ],
     "again": [
-      "WE'RE BEHIND YOU, {name}. THREE STOMPS!"
+      "WE'RE BEHIND YOU, {name}. THREE STOMPS."
     ]
   },
   "floor5": {
@@ -126,11 +130,12 @@
     "role": "GLOBAL LEADERSHIP",
     "color": "#d8d8f8",
     "lines": [
-      "WELCOME TO *WSP*, AUG 2024 TO TODAY. THE LEADERSHIP MEETING STARTS SOON.",
-      "BUT THE *100-SLIDE DECK* IS LOOSE! MAKE IT CLEAR, {name}. STOMP IT!"
+      "THIS IS *WSP*. AUG 2024 TO TODAY.",
+      "APOORV DESIGNS PRESENTATIONS FOR *GLOBAL LEADERSHIP*.",
+      "THE *100-SLIDE DECK* IS LOOSE! STOMP IT THREE TIMES TO MAKE IT CLEAR."
     ],
     "again": [
-      "THE MEETING IS WAITING, {name}. THREE STOMPS!"
+      "THE MEETING IS WAITING, {name}. THREE STOMPS."
     ]
   },
   "floor5End": {
@@ -138,11 +143,11 @@
     "role": "GLOBAL LEADERSHIP",
     "color": "#d8d8f8",
     "lines": [
-      "NOW *THAT* IS A DECK I CAN PRESENT. WELL DESIGNED, {name}!",
-      "THAT'S MY WHOLE JOURNEY SO FAR. NEXT: THE *SKILL ARCADE*."
+      "NOW *THAT* IS A DECK I CAN PRESENT. WELL DONE, {name}!",
+      "THAT IS THE WHOLE JOURNEY. NEXT: THE *SKILL ARCADE*."
     ],
     "again": [
-      "GO ON, {name}. THE EXIT IS RIGHT THERE!"
+      "GO ON, {name}. THE EXIT IS RIGHT THERE."
     ]
   },
   "cheer": {
@@ -150,10 +155,10 @@
     "role": "JLL",
     "color": "#bcbcbc",
     "lines": [
-      "WE'RE WITH YOU, BOSS!"
+      "WE'VE GOT YOUR BACK!"
     ],
     "again": [
-      "GO GET IT, BOSS!"
+      "KEEP THE BRAND CONSISTENT!"
     ]
   },
   "skill1": {
@@ -161,12 +166,13 @@
     "role": "ARCADE",
     "color": "#a888ff",
     "lines": [
-      "WELCOME TO THE *SKILL ARCADE*, {name}! THREE CABINETS, *FIFTEEN* SKILLS.",
-      "EACH COIN IS A SKILL. GRAB IT TO SEE *WHERE I USED IT*. SOME COINS HIDE IN *PIPE ROOMS*.",
-      "THE BARS AT THE TOP SHOW HOW MANY YOU'VE FOUND IN EACH CABINET."
+      "WELCOME TO THE *SKILL ARCADE*, {name}. THREE CABINETS, *15 SKILLS*.",
+      "EACH COIN IS A SKILL. IT SHOWS *WHERE APOORV USED IT*.",
+      "SOME COINS SIT IN *PIPE ROOMS*. EACH ROOM IS A MINI-GAME. WIN IT TO UNLOCK THE COIN.",
+      "THOSE MINI-GAMES ARE HIS *GAME DESIGN* WORK TOO: PUZZLES, TIMING AND LEVELS."
     ],
     "again": [
-      "FIFTEEN SKILLS, {name}. YOU HAVE *{skills}* SO FAR!"
+      "15 SKILLS IN TOTAL. YOU HAVE *{skills}* SO FAR."
     ]
   },
   "skillEnd": {
@@ -174,11 +180,11 @@
     "role": "ARCADE",
     "color": "#a888ff",
     "lines": [
-      "*{skills}/15* SKILLS COLLECTED, {name}. NOT BAD AT ALL!",
-      "TWO WORLDS LEFT: THE *TROPHY HALL*, THEN THE *ROOFTOP*."
+      "*{skills}/15* SKILLS, {name}. NICE WORK!",
+      "THREE WORLDS LEFT: THE *TROPHY HALL*, THE *DRAGON'S LAIR* AND THE *ROOFTOP*."
     ],
     "again": [
-      "YOU HAVE *{skills}/15* SKILLS. ANY MISSING ONES ARE BACK IN THE PIPE ROOMS!"
+      "YOU HAVE *{skills}/15* SKILLS. MISSING ONES ARE IN THE PIPE ROOMS."
     ]
   },
   "curator": {
@@ -187,10 +193,10 @@
     "color": "#f8a0d8",
     "lines": [
       "WELCOME TO THE *TROPHY HALL*, {name}! I LOOK AFTER THESE SHELVES.",
-      "FIVE CERTIFICATES ARE WAITING. JUMP UP AND *HIT EACH ? BLOCK FROM BELOW* TO RELEASE ONE."
+      "FIVE CERTIFICATES ARE INSIDE *? BLOCKS*. JUMP UP AND HIT EACH ONE *FROM BELOW*."
     ],
     "again": [
-      "FIVE BLOCKS, {name}. HIT THEM FROM *BELOW*!"
+      "FIVE BLOCKS, {name}. HIT THEM FROM *BELOW*."
     ]
   },
   "curatorEnd": {
@@ -198,11 +204,11 @@
     "role": "CURATOR",
     "color": "#f8a0d8",
     "lines": [
-      "*{certs}/5* CERTIFICATES, {name}! LEARNING NEVER STOPS, AND NEITHER DOES APOORV.",
-      "THE LAST STOP IS THE *ROOFTOP*. TAKE THE DOOR!"
+      "*{certs}/5* CERTIFICATES, {name}! APOORV NEVER STOPS LEARNING.",
+      "NEXT: THE *DRAGON'S LAIR*. IT GUARDS THE EXIT."
     ],
     "again": [
-      "*{certs}/5* CERTIFICATES SO FAR, {name}. ANY MISSING BLOCKS?"
+      "*{certs}/5* CERTIFICATES SO FAR, {name}. ANY BLOCKS MISSING?"
     ]
   },
   "rooftop": {
@@ -210,11 +216,11 @@
     "role": "MANAGER",
     "color": "#f8a0d8",
     "lines": [
-      "YOU MADE IT TO THE *ROOFTOP*, {name}! LOOK WHO CAME TO CHEER.",
-      "THE SIGNS BEHIND ME HAVE *HOW TO REACH ME*. WHEN YOU'RE READY, RAISE THE FLAG!"
+      "YOU MADE IT TO THE *ROOFTOP*, {name}! THE WHOLE TEAM CAME TO CHEER.",
+      "THE SIGNS SHOW *HOW TO REACH APOORV*. WHEN YOU ARE READY, RAISE THE *FLAG*."
     ],
     "again": [
-      "SIGNS FIRST, THEN THE FLAG, {name}!"
+      "SIGNS FIRST, THEN THE FLAG, {name}."
     ]
   },
   "bLinkedIn": {
@@ -222,14 +228,14 @@
     "role": "FIND ME",
     "color": "#58b0f8",
     "lines": [
-      "LET'S CONNECT ON *LINKEDIN*!",
+      "FIND APOORV ON *LINKEDIN*:",
       "LINKEDIN.COM/IN/APOORV-CHAURASIA-152B51228",
-      "PRESS ENTER AGAIN TO *OPEN* IT."
+      "PRESS ENTER AGAIN TO *OPEN IT*."
     ],
     "again": [
-      "LET'S CONNECT ON *LINKEDIN*!",
+      "FIND APOORV ON *LINKEDIN*:",
       "LINKEDIN.COM/IN/APOORV-CHAURASIA-152B51228",
-      "PRESS ENTER AGAIN TO *OPEN* IT."
+      "PRESS ENTER AGAIN TO *OPEN IT*."
     ],
     "link": "https://www.linkedin.com/in/apoorv-chaurasia-152b51228"
   },
@@ -238,14 +244,14 @@
     "role": "WRITE TO ME",
     "color": "#ff7070",
     "lines": [
-      "*EMAIL* ME ANYTIME:",
+      "*EMAIL* APOORV ANYTIME:",
       "APOORV.UK@GMAIL.COM",
-      "PRESS ENTER AGAIN TO *OPEN YOUR MAIL APP* AND COPY THE ADDRESS."
+      "PRESS ENTER AGAIN TO *OPEN YOUR MAIL APP*. THE ADDRESS IS COPIED TOO."
     ],
     "again": [
-      "*EMAIL* ME ANYTIME:",
+      "*EMAIL* APOORV ANYTIME:",
       "APOORV.UK@GMAIL.COM",
-      "PRESS ENTER AGAIN TO *OPEN YOUR MAIL APP* AND COPY THE ADDRESS."
+      "PRESS ENTER AGAIN TO *OPEN YOUR MAIL APP*. THE ADDRESS IS COPIED TOO."
     ],
     "link": "mailto:apoorv.uk@gmail.com",
     "copy": "apoorv.uk@gmail.com"
@@ -255,12 +261,12 @@
     "role": "CALL ME",
     "color": "#58d854",
     "lines": [
-      "*CALL OR WHATSAPP* ME:",
+      "*CALL OR WHATSAPP* APOORV:",
       "+91 9044966056",
       "PRESS ENTER AGAIN TO *COPY THE NUMBER*."
     ],
     "again": [
-      "*CALL OR WHATSAPP* ME:",
+      "*CALL OR WHATSAPP* APOORV:",
       "+91 9044966056",
       "PRESS ENTER AGAIN TO *COPY THE NUMBER*."
     ],
@@ -272,11 +278,12 @@
     "color": "#f8d878",
     "lines": [
       "THANKS FOR PLAYING, *{name}*!",
-      "*12+ YEARS*, FOUR COMPANIES, ONE DESIGNER, READY FOR THE *NEXT CHAPTER AT WSP*.",
-      "RAISE THE FLAG TO FINISH. THEN LET'S *TALK*!"
+      "APOORV: *12+ YEARS* OF DESIGN, NOW *SPECIALIST AT WSP*.",
+      "HE DESIGNS, TELLS STORIES AND *BUILDS NEW THINGS*. LIKE THIS GAME.",
+      "RAISE THE FLAG TO FINISH. THEN *LET'S TALK*!"
     ],
     "again": [
-      "RAISE THE FLAG TO FINISH, {name}!"
+      "RAISE THE FLAG TO FINISH, {name}."
     ]
   },
   "bResume": {
@@ -298,11 +305,12 @@
     "color": "#f8a0d8",
     "lines": [
       "STOP, *{name}*! THE *DEADLINE DRAGON* GUARDS THE EXIT.",
-      "IT BREATHES FIRE ALONG THE FLOOR, SO *JUMP* OR HOP ONTO THE *LEDGES*. WATCH THE FIREBALLS TOO!",
-      "WHEN IT GETS *TIRED*, STOMP ITS HEAD. FIVE TIMES SHOULD DO IT. GOOD LUCK!"
+      "APOORV BEATS DEADLINES WITH *PLANNING* AND *CLEAR COMMUNICATION*.",
+      "IT BREATHES FIRE. *JUMP* THE FLAMES OR HOP ONTO THE LEDGES.",
+      "WHEN IT'S *TIRED*, STOMP ITS HEAD. OR *CLICK* TO THROW POINTER ARROWS."
     ],
     "again": [
-      "STOMP ITS HEAD WHEN IT'S TIRED, {name}. NOT BEFORE!"
+      "STOMP ITS HEAD WHEN IT'S TIRED, {name}. NOT BEFORE."
     ]
   }
 }

@@ -118,7 +118,7 @@ function buildWorld1() {
   put(L, 31, 9, 'f'); // 3
 
   npc(L, 'raju', 38);
-  label(L, 40, 8, 'TOOLKIT ROOM');
+  label(L, 40, 8, 'MINI-GAME');
   pipe(L, 41, 2, 'a', { room: 'bonus', pipe: 'b' });
 
   // pit with a moving platform
@@ -165,7 +165,7 @@ function buildBonus() {
   span(L, 1, 0, 19, 'B');
   L.mini = 'memory';
   L.noBreak = true;
-  label(L, 2, 2, 'THE TOOLKIT ROOM');
+  label(L, 2, 2, 'MINI-GAME: TOOL MEMORY');
   [3, 5, 7, 9, 11].forEach((c) => put(L, c, 9, 't'));
   pipe(L, 16, 2, 'b', { room: 'world1', pipe: 'a' });
   return L;
@@ -185,7 +185,7 @@ function buildWorld2() {
     { name: 'BUGS', title: 'MA JOURNALISM', years: '2018-2020', from: 32, to: 55, gateCol: 55, kind: 'bug',
       objective: 'STOMP 3 TYPO BUGS' },
     { name: 'IDEAS', title: 'IIT DELHI', years: '2021-2022', from: 56, to: 79, gateCol: 79, kind: 'bulb',
-      objective: 'FIND 3 IDEAS (ONE IS HIDDEN)' },
+      objective: 'FIND 3 IDEAS. ONE IS IN A SECRET ROOM' },
     { name: 'DATA', title: 'DATA SCIENCE', years: '2023-2024', from: 80, to: 103, gateCol: 103, kind: 'node',
       objective: 'COLLECT NODES IN ORDER 1-2-3-4' },
   ];
@@ -233,7 +233,7 @@ function buildWorld2() {
   spring(L, 73);
   span(L, 7, 74, 77, 'B');
   put(L, 75, 6, 'i');
-  label(L, 77, 9, 'SECRET ROOM');
+  label(L, 77, 9, 'MINI-GAME');
   pipe(L, 77, 2, 'a', { room: 'lab', pipe: 'b' });
   put(L, 57, 11, 'F');
 
@@ -270,7 +270,7 @@ function buildLab() {
   span(L, 1, 0, 19, 'B');
   L.mini = 'lights';
   L.noBreak = true;
-  label(L, 2, 2, 'THE SECRET IDEA LAB');
+  label(L, 2, 2, 'MINI-GAME: IDEA LAB');
   put(L, 8, 9, 'i'); // the reward (revealed when the puzzle is solved)
   pipe(L, 16, 2, 'b', { room: 'world2', pipe: 'a' });
   return L;
@@ -427,7 +427,7 @@ function buildWorld4() {
   enemy(L, 'bat', 28, { row: 7, range: 3 });
   span(L, 10, 36, 39, 'B');
   put(L, 37, 9, 'u');
-  label(L, 40, 8, 'BONUS ROOM');
+  label(L, 40, 8, 'MINI-GAME');
   pipe(L, 42, 2, 'a', { room: 'arc1', pipe: 'r' });
   put(L, 46, 11, 'F');
 
@@ -447,7 +447,7 @@ function buildWorld4() {
   enemy(L, 'turtle', 78);
   wall(L, 76);
   wall(L, 82);
-  label(L, 79, 8, 'BONUS ROOM');
+  label(L, 79, 8, 'MINI-GAME');
   pipe(L, 84, 2, 'b', { room: 'arc2', pipe: 'r' });
   put(L, 60, 11, 'F');
 
@@ -468,7 +468,7 @@ function buildWorld4() {
   wall(L, 100);
   wall(L, 105);
   enemy(L, 'croc', 102);
-  label(L, 113, 8, 'BONUS ROOM');
+  label(L, 113, 8, 'MINI-GAME');
   pipe(L, 112, 2, 'c', { room: 'arc3', pipe: 'r' });
   put(L, 86, 11, 'F');
 
@@ -486,7 +486,7 @@ function buildArcadeRoom(n, ch, name, count) {
   span(L, 1, 0, 19, 'B');
   L.mini = ['whack', 'rope', 'rhythm'][n - 1];
   L.noBreak = true;
-  label(L, 2, 2, `${['BUG SQUASH', 'DEADLINE ROPE', 'SHORTCUT BEAT'][n - 1]}  -  ${name}`);
+  label(L, 2, 2, `MINI-GAME: ${['BUG SQUASH', 'DEADLINE ROPE', 'SHORTCUT BEAT'][n - 1]}`);
   const xs = count === 1 ? [8] : [6, 11];
   xs.forEach((c) => put(L, c, 9, ch));
   pipe(L, 16, 2, 'r', { room: 'world4', pipe: ['a', 'b', 'c'][n - 1] });
@@ -562,7 +562,7 @@ function buildWorld6() {
   [13, 19, 25, 31, 37].forEach((c) => put(L, c, 11, 'T'));
   [[18, 9], [20, 9], [24, 9], [26, 9], [30, 9], [32, 9]].forEach(([c, r]) => put(L, c, r, 'o'));
   put(L, 42, 11, 'F');
-  label(L, 44, 6, 'HOW TO REACH ME');
+  label(L, 44, 6, 'HOW TO REACH APOORV');
   span(L, 10, 46, 49, 'B');
   span(L, 8, 52, 55, 'B');
   [[47, 9], [48, 9], [53, 7], [54, 7]].forEach(([c, r]) => put(L, c, r, 'o'));
