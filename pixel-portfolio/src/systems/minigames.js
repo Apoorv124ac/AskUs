@@ -97,7 +97,7 @@ class Mini {
 // ---------------------------------------------------------------- 1. memory pads
 class MemoryMini extends Mini {
   constructor(scene) {
-    super(scene, 'WATCH THE PADS LIGHT UP. THEN JUMP ONTO\nTHEM IN THE SAME ORDER. 3 ROUNDS.');
+    super(scene, 'WATCH THE PADS LIGHT UP. THEN JUMP ONTO\nTHEM IN THE SAME ORDER. 3 ROUNDS (EASY).');
     this.pads = [];
     ['ID', 'AI', 'PS', 'AE', 'XD'].forEach((name, i) => {
       const x = 40 + i * 32;
@@ -110,7 +110,7 @@ class MemoryMini extends Mini {
       pad.down = false;
       this.pads.push(pad);
     });
-    this.rounds = [3, 4, 5];
+    this.rounds = [2, 3, 4];
     this.round = 0;
     this.state = 'wait';
     this.nextAt = scene.time.now + 1800;
@@ -189,7 +189,7 @@ class MemoryMini extends Mini {
         this.state = 'input';
         this.say('YOUR TURN! JUMP ON THE PADS');
       } else {
-        this.glow(this.seq[this.idx++], 480);
+        this.glow(this.seq[this.idx++], 640);
         this.nextAt = time + 750;
       }
     }
@@ -199,11 +199,11 @@ class MemoryMini extends Mini {
 // ---------------------------------------------------------------- 2. lights-out switches
 class LightsMini extends Mini {
   constructor(scene) {
-    super(scene, 'BUMP A SWITCH FROM BELOW. IT FLIPS ITSELF\nAND ITS NEIGHBOURS. LIGHT ALL 6 BULBS.');
+    super(scene, 'BUMP A SWITCH FROM BELOW. IT FLIPS ITSELF\nAND ITS NEIGHBOURS. LIGHT ALL 6 BULBS (EASY).');
     this.n = 6;
     this.on = Array(this.n).fill(true);
     // start from "all lit", then press three different switches: always solvable
-    const picks = Phaser.Utils.Array.Shuffle([0, 1, 2, 3, 4, 5]).slice(0, 3);
+    const picks = Phaser.Utils.Array.Shuffle([0, 1, 2, 3, 4, 5]).slice(0, 1);
     picks.forEach((i) => this.flip(i, false));
     if (this.on.every(Boolean)) this.flip(2, false);
     this.blocks = scene.physics.add.staticGroup();
@@ -259,11 +259,11 @@ class LightsMini extends Mini {
 // ---------------------------------------------------------------- 3. whack-a-bug
 class WhackMini extends Mini {
   constructor(scene) {
-    super(scene, 'BUGS POP OUT OF THE FLOOR.\nSTOMP 8 OF THEM BEFORE TIME RUNS OUT.');
+    super(scene, 'BUGS POP OUT OF THE FLOOR.\nSTOMP 5 OF THEM. TAKE YOUR TIME.');
     this.holes = [40, 88, 136, 184, 232];
     this.holes.forEach((x) => scene.add.ellipse(x, FLOOR + 1, 24, 6, 0x0f0f1b).setDepth(4));
     this.bugs = [];
-    this.goal = 8;
+    this.goal = 5;
     this.count = 0;
     this.state = 'wait';
     this.nextAt = scene.time.now + 2000;
@@ -273,7 +273,7 @@ class WhackMini extends Mini {
   start() {
     this.state = 'run';
     this.count = 0;
-    this.endAt = this.s.time.now + 32000;
+    this.endAt = this.s.time.now + 50000;
     this.nextSpawn = this.s.time.now + 400;
     this.say('STOMP THE BUGS!');
   }
@@ -288,7 +288,7 @@ class WhackMini extends Mini {
     bug.hole = hole;
     bug.x0 = x;
     bug.dead = false;
-    const stay = Math.max(750, 1500 - this.count * 90);
+    const stay = Math.max(1300, 2200 - this.count * 60);
     bug.leaveAt = time + 150 + stay;
     this.s.tweens.add({ targets: bug, y: FLOOR - 8, duration: 150, ease: 'Quad.out' });
     this.bugs.push(bug);
@@ -436,12 +436,12 @@ const LANE_X = [124, 160, 196];
 const LANE_KEY = ['LEFT', 'UP', 'RIGHT'];
 const GLYPH = ['<', '^', '>'];
 const HIT_Y = 150;
-const SPEED = 90; // pixels per second the notes travel
-const WINDOW = 0.17; // seconds either side counts as a hit
+const SPEED = 70; // pixels per second the notes travel
+const WINDOW = 0.28; // seconds either side counts as a hit
 
 class RhythmMini extends Mini {
   constructor(scene) {
-    super(scene, 'PRESS ENTER OR TAP. HIT THE ARROW KEYS (OR TAP\nA LANE) AS NOTES REACH THE LINE. HIT 14 OF 20.');
+    super(scene, 'PRESS ENTER OR TAP. HIT THE ARROW KEYS (OR TAP\nA LANE) AS NOTES REACH THE LINE. HIT 10 OF 20.');
     this.state = 'idle';
     this.notes = [];
     this.parts = [];
@@ -490,12 +490,13 @@ class RhythmMini extends Mini {
       mk(txt(s, x, HIT_Y + 11, GLYPH[i], { origin: 0.5, color: '#fcfcfc', depth: 7, bold: true }));
     });
     this.t0 = s.time.now + 1700; // chart time zero (a lead-in so the first note can fall)
-    this.notes = CHART.map(([lane, t]) => {
+    this.notes = CHART.map(([lane, t0]) => {
+      const t = t0 * 1.3;
       const rect = s.add.rectangle(LANE_X[lane], -20, 24, 9, COLORS[lane * 2 % 5]).setStrokeStyle(1, 0x0f0f1b).setDepth(8);
       const g = txt(s, LANE_X[lane], -20, GLYPH[lane], { origin: 0.5, color: '#0f0f1b', depth: 9, bold: true, shadow: false });
       return { lane, t, rect, g, done: false };
     });
-    this.endAt = this.t0 + CHART[CHART.length - 1][1] * 1000 + 900;
+    this.endAt = this.t0 + CHART[CHART.length - 1][1] * 1300 + 900;
   }
 
   hit(lane) {
@@ -507,7 +508,7 @@ class RhythmMini extends Mini {
     target.done = true;
     this.score++;
     sfx('beat', lane);
-    this.s.popText(LANE_X[lane], HIT_Y - 12, this.score >= 14 ? 'OK!' : '+');
+    this.s.popText(LANE_X[lane], HIT_Y - 12, this.score >= 10 ? 'OK!' : '+');
     this.s.tweens.add({ targets: [target.rect, target.g], scale: 1.6, alpha: 0, duration: 160, onComplete: () => [target.rect, target.g].forEach((o) => o.destroy()) });
   }
 
@@ -536,10 +537,10 @@ class RhythmMini extends Mini {
     this.notes.forEach((n) => [n.rect, n.g].forEach((o) => o.active && o.destroy()));
     this.notes = [];
     this.lock = false;
-    if (this.score >= 14) return this.win();
+    if (this.score >= 10) return this.win();
     sfx('buzz');
     this.state = 'idle';
-    this.say(`${this.score}/20. NEED 14. ENTER OR TAP TO RETRY`);
+    this.say(`${this.score}/20. NEED 10. ENTER OR TAP TO RETRY`);
   }
 }
 

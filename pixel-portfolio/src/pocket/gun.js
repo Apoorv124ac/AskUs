@@ -21,7 +21,6 @@ export class Gun {
       scene.physics.add.overlap(this.group, scene.enemies.walkers, (a, e) => this.hit(this.arrowOf(a, e), this.enemyOf(a, e)));
       scene.physics.add.overlap(this.group, scene.enemies.fliers, (a, e) => this.hit(this.arrowOf(a, e), this.enemyOf(a, e)));
     }
-    scene.events.once('shutdown', () => this.group.clear(true, true));
   }
 
   arrowOf(a, b) {

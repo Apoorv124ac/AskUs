@@ -141,8 +141,8 @@ export default class UIScene extends Phaser.Scene {
       targets: this.banner,
       y: 88,
       alpha: 0,
-      delay: 1500,
-      duration: 350,
+      delay: 1100,
+      duration: 300,
       onComplete: () => this.banner.setVisible(false),
     });
   }
@@ -163,7 +163,7 @@ export default class UIScene extends Phaser.Scene {
     c.setAlpha(0).setScale(0.6);
     this.tweens.add({ targets: c, alpha: 1, scale: 1, duration: 320, ease: 'Back.out' });
     this.tweens.add({ targets: line, width: Math.max(a.width, b.width) + 16, duration: 500, delay: 200 });
-    this.tweens.add({ targets: c, alpha: 0, y: 26, delay: 2300, duration: 400, onComplete: () => c.destroy() });
+    this.tweens.add({ targets: c, alpha: 0, y: 26, delay: 1800, duration: 400, onComplete: () => c.destroy() });
   }
 
   // ---------------------------------------------------------- NPC speech bubble
@@ -293,7 +293,22 @@ export default class UIScene extends Phaser.Scene {
       this.tweens.add({ targets: box, y: 0, duration: 340, ease: 'Back.out' });
     }
     this.time.delayedCall(slide ? 140 : 0, () => rt.reveal());
-    if (auto) this.cardTimer = this.time.delayedCall(auto, () => this.hideCard());
+    if (auto) {
+      this.cardTimer = this.time.delayedCall(auto, () => this.hideCard());
+      // an automatic card also closes once the hero has walked on a little
+      const pl = this.scene.get(this.playKey());
+      const hero = pl && (pl.player || pl.plane);
+      this.cardWatch = hero ? { hero, x: hero.x } : null;
+    } else this.cardWatch = null;
+  }
+
+  update() {
+    const w = this.cardWatch;
+    if (!w || !this.cardBox) return;
+    if (Math.abs(w.hero.x - w.x) > 56) {
+      this.cardWatch = null;
+      this.hideCard();
+    }
   }
 
   hideCard() {
@@ -315,7 +330,7 @@ export default class UIScene extends Phaser.Scene {
       kind: kindOf(title),
       label: `${title} · ${label}`,
       text,
-      auto: 7500,
+      auto: 3200,
       left: (box, cx, cy) => {
         const coin = this.add.sprite(cx, cy - 9, icon, 0).setScale(1);
         if (icon === 'fact') coin.anims.play('fact-spin');
