@@ -13,6 +13,7 @@ export class Gun {
     this.range = range;
     this.source = source || (() => ({ x: scene.player.x, y: scene.player.y - 6, dir: scene.player.flipX ? -1 : 1 }));
     this.n = 0;
+    this.aim = 0; // -1 up, 1 down: where to shoot when no enemy is in range
     this.next = 0;
     this.group = scene.physics.add.group({ allowGravity: false });
     if (scene.solids) scene.physics.add.collider(this.group, scene.solids, (a) => this.pop(a));
@@ -56,6 +57,7 @@ export class Gun {
       }
     });
     if (best) ang = Math.atan2(best.y - o.y, best.x - o.x);
+    else if (this.aim && !o.free) ang = Math.atan2(this.aim * 0.9, o.dir);
     const a = this.group.create(o.x, o.y, 'ptr', this.n++ % PTR_COLORS.length).setDepth(8);
     a.body.setSize(8, 8).setOffset(2, 4);
     a.setRotation(ang + (3 * Math.PI) / 4);

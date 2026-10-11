@@ -4,7 +4,7 @@ import resume from '../data/resume.json';
 
 export const STAGES = [
   { id: 1, name: 'OVERVIEW', short: 'INTRO', topic: 'MEET APOORV', room: 'pk1', color: 0xf83800, blurb: 'LEARN THE MOVES. MEET APOORV.' },
-  { id: 2, name: 'EDUCATION & WORK', short: 'STUDY', topic: 'STUDIES AND JOBS', room: 'pk2', color: 0x0058f8, blurb: '4 MINI-GAMES. 5 ORGANISATIONS.' },
+  { id: 2, name: 'EDUCATION & WORK', short: 'STUDY', topic: 'STUDIES AND JOBS', room: 'pk2', color: 0x0058f8, blurb: '4 DEGREES. 5 OFFICES.' },
   { id: 3, name: 'SKILLS', short: 'SKILLS', topic: 'UNDERWATER', room: 'pk3', color: 0x00a8a8, blurb: 'DIVE IN. BEAT THE FISH DRAGON.' },
   { id: 4, name: 'SOFTWARE SKILLS', short: 'TOOLS', topic: 'IN THE AIR', scene: 'Plane', color: 0x6844fc, blurb: 'FLY. SHOOT DESIGN ARROWS.' },
   { id: 5, name: 'LINKS', short: 'LINKS', topic: 'LET\'S TALK', room: 'pk5', color: 0x00a800, blurb: 'COLLECT STARS. SAY HELLO.' },
@@ -75,18 +75,18 @@ export const DIALOGUE = {
   pk2Prof: {
     name: 'PROF. DAS', role: 'STUDIES', color: '#d8a870',
     lines: [
-      'FOUR STUDIES, FOUR *GATES*. ENTER EACH PIPE AND WIN THE *MINI-GAME*.',
-      'EACH WIN EARNS ONE *DEGREE* AND OPENS THE GATE.',
+      'WELCOME TO CAMPUS! ENTER EACH *PIPE* AND WIN THE *MINI-GAME*. EACH WIN EARNS ONE *DEGREE*.',
+      'THEN WALK ON. EACH *DOORWAY* LEADS INTO A NEW *OFFICE*. YOU NEED ALL *4 DEGREES* TO FINISH.',
     ],
-    again: ['FOUR GATES, {name}. START WITH THE FIRST PIPE.'],
+    again: ['FOUR PIPES, {name}. FOUR DEGREES.'],
   },
   pk2Sam: {
     name: 'SAM', role: 'WORK', color: '#bcbcbc',
     lines: [
-      'PAST THE GATES: *FIVE ORGANISATIONS* FROM 2013 TO TODAY.',
-      'COLLECT THE COINS TO SEE WHAT APOORV DID AT EACH.',
+      'THIS DOOR LEADS TO *FIVE OFFICES*, FROM 2013 TO TODAY.',
+      'EACH DOORWAY IS A *NEW JOB*. STEP THROUGH TO SEE WHAT APOORV DID THERE.',
     ],
-    again: ['FIVE COINS, {name}. THEN THE DOOR.'],
+    again: ['FIVE OFFICES, {name}. GO ON IN.'],
   },
   pk3Intro: {
     name: 'RAVI', role: 'DIVE GUIDE', color: '#a888ff',

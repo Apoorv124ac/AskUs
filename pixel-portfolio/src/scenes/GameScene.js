@@ -23,6 +23,7 @@ import { Water } from '../pocket/water.js';
 import { Gun } from '../pocket/gun.js';
 import { SeaStage } from '../pocket/seastage.js';
 import { EduGates } from '../pocket/edu.js';
+import { Offices } from '../pocket/offices.js';
 import { pocketGoal } from '../pocket/flow.js';
 import { Bricks } from '../systems/bricks.js';
 import { MINIS } from '../systems/minigames.js';
@@ -97,6 +98,7 @@ export default class GameScene extends Phaser.Scene {
     this.gun = null;
     this.sea = null;
     this.edu = null;
+    this.offices = null;
     this.decor = null;
     this.star = !!save.recruiter; // recruiter mode: star power (immune, knocks enemies out, faster, triple jump)
     this.nextSpark = 0;
@@ -127,7 +129,8 @@ export default class GameScene extends Phaser.Scene {
     if (L.water) this.water = new Water(this);
     if (L.gun) this.gun = new Gun(this);
     if (L.sea) this.sea = new SeaStage(this);
-    if (L.eduGates || L.edu !== undefined) this.edu = new EduGates(this);
+    if (L.offices || L.edu !== undefined) this.edu = new EduGates(this);
+    if (L.offices) this.offices = new Offices(this);
     if (L.chapterBanner) this.time.delayedCall(450, () => this.game.events.emit('chapter', L.chapterBanner));
     this.input.on('pointerdown', () => this.talking && this.advanceTalk());
     this.events.once('shutdown', () => this.game.events.emit('dialogue-end'));
@@ -142,7 +145,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.mouse = new MouseControls(this);
     showTouch(true, { fire: !!(L.dragon && !save.dragonDown) || !!L.gun, swim: !!L.water });
-    this.keyFire = this.input.keyboard.addKeys('X,Z');
+    this.keyFire = this.input.keyboard.addKeys('X,Z,SPACE');
     this.events.once('shutdown', () => showTouch(false));
     this.input.addPointer(2);
     this.pickMusic();
@@ -646,7 +649,7 @@ export default class GameScene extends Phaser.Scene {
     const upHeld = c.up.isDown || touch.jump || this.mouse.held();
     const tj = touch.takeJump();
     if (tj) this.interactPressed = true; // the jump button also talks / advances a message
-    if (touch.takeFire() && this.pointerPower) this.pointerPower.throwAuto();
+    if (this.pointerPower && touch.takeFire()) this.pointerPower.throwAuto();
 
     // coffee timer + HUD value
     this.coffeeMs = Math.max(0, this.coffeeMs - delta);
@@ -752,9 +755,15 @@ export default class GameScene extends Phaser.Scene {
     if (p.y > this.worldH + 30) this.respawn();
 
     this.syncHero(time, grounded, vx);
-    if (this.gun) this.gun.update(time, !frozen && (touch.fire || this.keyFire.X.isDown || this.keyFire.Z.isDown));
+    if (this.gun) {
+      // a quick tap on THROW still fires once (edge), holding keeps firing
+      const tap = touch.takeFire();
+      this.gun.aim = (this.cursors.up.isDown || touch.up ? -1 : 0) + (this.cursors.down.isDown || touch.down ? 1 : 0);
+      this.gun.update(time, !frozen && (tap || touch.fire || this.keyFire.X.isDown || this.keyFire.Z.isDown || this.keyFire.SPACE.isDown));
+    }
     if (this.sea) this.sea.update(time, delta);
     if (this.decor) this.decor.update(time);
+    if (this.offices) this.offices.update();
     if (this.mini) {
       this.mini.update(time, delta);
       this.mini.hudNow();

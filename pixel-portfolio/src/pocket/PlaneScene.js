@@ -305,7 +305,7 @@ export default class PlaneScene extends Phaser.Scene {
     this.plane.body.setVelocity(dx * sp, dy * sp);
     this.plane.setAngle(dy * 8);
     this.pilot.setPosition(this.plane.x + 2, this.plane.y - 3);
-    if (touch.fire || this.keys.X.isDown || this.keys.Z.isDown || this.keys.SPACE.isDown) this.fire();
+    if (touch.takeFire() || touch.fire || this.keys.X.isDown || this.keys.Z.isDown || this.keys.SPACE.isDown) this.fire();
 
     // spawn
     if (this.state === 'play') {

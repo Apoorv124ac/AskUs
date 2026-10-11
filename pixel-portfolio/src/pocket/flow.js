@@ -17,6 +17,14 @@ export function finishStage(from, stage) {
 }
 
 export function pocketGoal(scene) {
+  if (scene.level.pocket === 2) {
+    const n = save.pocket.edu.filter(Boolean).length;
+    if (n < 4) {
+      scene.game.events.emit('banner', `EARN ALL 4 DEGREES FIRST\nDEGREES ${n}/4`);
+      scene.time.delayedCall(2500, () => (scene.goalShown = false));
+      return;
+    }
+  }
   scene.lockAnim('celebrate', 2200);
   finishStage(scene, scene.level.pocket);
 }

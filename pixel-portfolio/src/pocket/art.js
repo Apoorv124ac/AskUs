@@ -268,7 +268,55 @@ export function createPocketTextures(scene) {
     }
   });
 
+  // ---------------------------------------------------------------- offices (stage 2): wall backdrops and the doors between them
+  const OFFICE_LOOK = [
+    ['#d8b888', '#b89868', '#a0602c'], // freelance: warm home studio
+    ['#9ad0a8', '#74a884', '#e8a020'], // Bhoomi
+    ['#8a9aa0', '#667880', '#86bc25'], // Deloitte
+    ['#9ab0d8', '#7890b8', '#c8283c'], // JLL
+    ['#d8a0a8', '#b87c86', '#f8f0f0'], // WSP
+  ];
+  OFFICE_LOOK.forEach(([wall, dark, accent], i) => {
+    canvas(scene, `pk-office-${i}`, 48, 192, 1, (c) => {
+      R(c, wall, 0, 0, 48, 192);
+      R(c, dark, 0, 0, 48, 10);
+      R(c, accent, 0, 10, 48, 2);
+      R(c, '#f8f8f8', 0, 12, 48, 1);
+      // window with a little skyline
+      R(c, '#e8e8e8', 9, 34, 30, 54);
+      R(c, '#8cd0ff', 11, 36, 26, 50);
+      R(c, '#bfe8ff', 11, 36, 26, 14);
+      [[12, 70, 6, 16], [20, 62, 7, 24], [29, 68, 6, 18]].forEach(([x, y, w, h]) => R(c, '#6c90d8', x, y, w, h));
+      [[14, 74], [22, 66], [22, 72], [31, 72]].forEach(([x, y]) => R(c, '#f8e890', x, y, 2, 2));
+      R(c, '#e8e8e8', 23, 36, 2, 50);
+      R(c, '#e8e8e8', 11, 60, 26, 2);
+      R(c, dark, 7, 88, 34, 3);
+      // wainscot and baseboard
+      R(c, dark, 0, 132, 48, 60);
+      R(c, accent, 0, 130, 48, 3);
+      for (let x = 0; x < 48; x += 16) R(c, wall, x + 1, 138, 14, 44);
+      R(c, '#0f0f1b', 0, 184, 48, 8);
+      R(c, dark, 0, 184, 48, 1);
+    });
+  });
+  // the doorway between two offices: a lit frame with a shimmering portal and blinking arrows
+  canvas(scene, 'pk-door', 40, 72, 2, (c, f) => {
+    R(c, '#5c6878', 0, 0, 40, 72);
+    R(c, '#8a98a8', 0, 0, 40, 3);
+    R(c, '#3c4654', 0, 69, 40, 3);
+    R(c, '#bfefff', 5, 12, 30, 60);
+    R(c, '#8cd0ff', 5, 12, 30, 22);
+    R(c, '#58b0f8', 5, 34, 30, 14);
+    for (let y = 0; y < 60; y += 6) R(c, '#fcfcfc', 7 + ((y * 3 + f * 9) % 24), 14 + y, 2, 2);
+    R(c, '#fcfcfc', 5 + f * 3, 12, 2, 60);
+    R(c, '#d8d8e8', 5, 66, 30, 6);
+    // arrows on the lintel
+    R(c, '#0f0f1b', 6, 4, 28, 7);
+    [10, 18, 26].forEach((x, i) => P(c, (i + f) % 3 === 0 ? '#fcfcfc' : '#f8d878', [[x, 5], [x + 4, 7], [x, 9]]));
+  });
+
   const A = (key, tex, frames, rate, repeat = -1) => scene.anims.create({ key, frames: frames.map((frame) => ({ key: tex, frame })), frameRate: rate, repeat });
+  A('pk-door-glow', 'pk-door', [0, 1], 2.5);
   A('pk-plant-sway', 'pk-plant', [0, 1, 2, 1], 3);
   A('pk-fern-sway', 'pk-fern', [0, 1, 2, 1], 3);
   A('pk-tree-sway', 'pk-tree', [0, 1, 2, 1], 2);

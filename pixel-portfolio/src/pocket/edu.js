@@ -1,27 +1,18 @@
-// Stage 2: four study gates. Each gate opens when its mini-game room is won.
+// Stage 2 education: each study mini-game room earns one degree.
 import { save, persist } from '../systems/save.js';
 import { sfx } from '../systems/audio.js';
 import { STUDIES } from './content.js';
-
-const GATE_ROWS = [3, 4, 5, 6, 7, 8, 9, 10, 11];
 
 export class EduGates {
   constructor(scene) {
     this.s = scene;
     const L = scene.level;
-    this.gates = scene.physics.add.staticGroup();
-    this.tiles = [];
-    (L.eduGates || []).forEach((g) => {
-      if (save.pocket.edu[g.k]) return;
-      GATE_ROWS.forEach((r) => this.tiles.push(this.gates.create(g.col * 16 + 8, r * 16 + 8, 'tile-gate').setDepth(3)));
-    });
-    if (L.eduGates) {
-      scene.physics.add.collider(scene.player, this.gates);
+    if (L.offices) {
       const n = save.pocket.edu.filter(Boolean).length;
-      scene.registry.set('hudInfo', `STUDIES ${n}/4`);
+      scene.registry.set('hudInfo', `DEGREES ${n}/4`);
       // coming back from a mini-game room that was just won
       const m = /^e(\d)$/.exec(scene.viaPipe || '');
-      if (m && save.pocket.edu[+m[1]]) scene.time.delayedCall(700, () => scene.game.events.emit('banner', `DEGREE ${n}/4 EARNED!\nTHE GATE IS OPEN`));
+      if (m && save.pocket.edu[+m[1]]) scene.time.delayedCall(700, () => scene.game.events.emit('banner', `DEGREE ${n}/4 EARNED!`));
     }
   }
 

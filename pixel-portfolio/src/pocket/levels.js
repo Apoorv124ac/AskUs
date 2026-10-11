@@ -38,54 +38,70 @@ function buildPk1() {
   return L;
 }
 
-// ---------------------------------------------------------------- Stage 2: studies (4 gates) + work (5 organisations)
+// ---------------------------------------------------------------- Stage 2: campus (4 study mini-games) + 5 offices
+// Education = mini-games behind the four pipes. Experience = the main run: each doorway leads into a new office.
+const OFFICES = [
+  { name: 'FREELANCE', from: 56 }, { name: 'BHOOMI', from: 78 }, { name: 'DELOITTE DIGITAL', from: 100 }, { name: 'JLL', from: 122 }, { name: 'WSP', from: 144 },
+];
 function buildPk2() {
-  const L = newLevel(132, 14, { room: 'pk2', world: 9, bg: 0x58b0f8 });
+  const L = newLevel(168, 14, { room: 'pk2', world: 9, bg: 0x58b0f8 });
   ground(L);
+  const zones = OFFICES.map((o, i) => ({ ...o, to: OFFICES[i + 1] ? OFFICES[i + 1].from : 168 }));
   Object.assign(L, {
-    pocket: 2, cards: EXPERIENCE_CARDS, cardTitle: 'FLOOR', fx: true, hud: 'STUDIES 0/4',
+    pocket: 2, fx: true, hud: 'DEGREES 0/4',
     chapterBanner: { title: 'STAGE 2', sub: 'EDUCATION AND WORK' },
-    eduGates: [0, 1, 2, 3].map((k) => ({ k, col: 33 + k * 22 })),
+    offices: { zones },
   });
   npc(L, 'prof', 7, -1, true, 'pk2Prof');
-  const gate = (k) => {
-    const g = 33 + k * 22;
-    pipe(L, g - 8, 2, `e${k}`, { room: `pkm${k + 1}`, pipe: 'r' });
-    label(L, g - 13, 4, `STUDY ${k + 1}/4`);
-    label(L, g - 13, 5, STUDIES[k].short);
-    label(L, g - 10, 8, 'MINI-GAME');
-    span(L, 10, g - 17, g - 14, 'o');
-  };
-  [0, 1, 2, 3].forEach(gate);
-  // a little variety between the gates
-  enemy(L, 'turtle', 24);
-  span(L, 8, 41, 45, 'B');
-  enemy(L, 'bat', 50, { row: 7, range: 3 });
-  put(L, 55, 11, 'F');
-  spring(L, 62);
-  span(L, 6, 64, 67, 'B');
-  span(L, 5, 64, 67, 'o');
-  enemy(L, 'turtle', 76);
-  span(L, 8, 80, 84, 'B');
-  put(L, 77, 11, 'F');
-  enemy(L, 'bat', 90, { row: 6, range: 3 });
-  // work corridor
-  npc(L, 'sam', 105, -1, true, 'pk2Sam');
-  label(L, 108, 3, 'FIVE ORGANISATIONS');
-  [[110, 9], [114, 8], [118, 9], [122, 8], [126, 9]].forEach(([c, r], i) => {
-    span(L, r + 1, c - 1, c + 1, 'B');
-    put(L, c, r, 'f');
-    label(L, c - 2, r - 3, ['FREELANCE', 'BHOOMI', 'DELOITTE', 'JLL', 'WSP'][i]);
+  // campus: one pipe per degree
+  label(L, 3, 3, 'CAMPUS');
+  [0, 1, 2, 3].forEach((k) => {
+    const c = 15 + k * 10;
+    pipe(L, c, 2, `e${k}`, { room: `pkm${k + 1}`, pipe: 'r' });
+    label(L, c - 2, 3, `STUDY ${k + 1}/4`);
+    label(L, c - 2, 4, STUDIES[k].short);
+    label(L, c - 1, 8, 'MINI-GAME');
+    span(L, 10, c - 4, c - 2, 'o');
   });
-  enemy(L, 'turtle', 112);
-  enemy(L, 'turtle', 124);
-  put(L, 130, 11, 'G');
+  enemy(L, 'turtle', 28);
+  enemy(L, 'turtle', 48);
+  put(L, 36, 11, 'F');
+  npc(L, 'sam', 53, -1, true, 'pk2Sam');
+  label(L, 49, 5, 'WORK STARTS');
+  label(L, 49, 6, 'THROUGH THE DOOR');
+  // offices
+  const at = (i, rel) => OFFICES[i].from + rel;
+  OFFICES.forEach((o, i) => {
+    label(L, o.from + 3, 2, o.name);
+    label(L, o.from + 3, 3, EXPERIENCE_CARDS[i].dates.toUpperCase());
+    put(L, at(i, 6), 11, 'D');
+    put(L, at(i, 8), 11, 'D');
+    put(L, at(i, 17), 11, 'K');
+    put(L, at(i, 19), 11, 'T');
+    span(L, 8, at(i, 11), at(i, 14), 'B');
+    put(L, at(i, 12), 7, 'o');
+    put(L, at(i, 13), 7, 'o');
+  });
+  enemy(L, 'turtle', at(0, 12));
+  enemy(L, 'bat', at(1, 12), { row: 6, range: 3 });
+  enemy(L, 'turtle', at(2, 9));
+  enemy(L, 'turtle', at(2, 16));
+  spring(L, at(3, 9));
+  enemy(L, 'bat', at(3, 15), { row: 6, range: 3 });
+  enemy(L, 'turtle', at(4, 9));
+  put(L, at(1, 4), 11, 'F');
+  put(L, at(3, 4), 11, 'F');
+  put(L, 166, 11, 'G');
   L.decor = [
-    { t: 'tree', col: 4 }, { t: 'plant', col: 13 }, { t: 'bush', col: 22 }, { t: 'torch', col: 18 }, { t: 'fern', col: 29 },
-    { t: 'plant', col: 38 }, { t: 'torch', col: 47 }, { t: 'tree', col: 52 }, { t: 'bush', col: 60 }, { t: 'fern', col: 70 },
-    { t: 'plant', col: 80 }, { t: 'torch', col: 86 }, { t: 'tree', col: 94 }, { t: 'bush', col: 100 }, { t: 'torch', col: 108 },
-    { t: 'plant', col: 116 }, { t: 'fern', col: 121 }, { t: 'tree', col: 128 },
+    { t: 'tree', col: 4 }, { t: 'plant', col: 12 }, { t: 'bush', col: 23 }, { t: 'tree', col: 31 }, { t: 'fern', col: 33 }, { t: 'torch', col: 41 },
+    { t: 'bush', col: 44 }, { t: 'tree', col: 46 },
   ];
+  OFFICES.forEach((o, i) => {
+    L.decor.push({ t: 'torch', col: o.from + 2, front: false });
+    L.decor.push({ t: i % 2 ? 'fern' : 'plant', col: o.from + 5 });
+    L.decor.push({ t: 'plant', col: o.from + 16 });
+    L.decor.push({ t: 'bush', col: o.from + 20 });
+  });
   return L;
 }
 
