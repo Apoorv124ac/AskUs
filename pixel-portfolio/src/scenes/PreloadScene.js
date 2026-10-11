@@ -6,6 +6,7 @@ import { FW, FH, HERO_ANIMS, frameIndex } from '../heroFrames.js';
 import { save, persist, resetSave } from '../systems/save.js';
 import { NPC_ORDER, NPC_ANIMS } from '../npcFrames.js';
 import { createCreatureTextures, createVignette } from '../art/creatures.js';
+import { createPocketTextures } from '../pocket/art.js';
 import { GAME_W, GAME_H, ZOOM } from '../config.js';
 import { createPointerTexture } from '../systems/mouse.js';
 import { CHARACTERS } from '../data/characters.js';
@@ -466,6 +467,7 @@ export default class PreloadScene extends Phaser.Scene {
     t.get('skyline-far'); // keep reference quiet for bundlers
 
     createCreatureTextures(this);
+    if (typeof __RESUME_URL__ !== 'undefined') createPocketTextures(this); // Pocket Edition build only
     createVignette(this, GAME_W * ZOOM, GAME_H * ZOOM);
     const a = this.anims;
     const seq = (key, tex, frames, fps, repeat = -1) =>

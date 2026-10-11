@@ -59,4 +59,4 @@ export const OWNER_NAME = 'APOORV';
 export const EMAIL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbynySs274HusacGnNI9FasB5efNmxb4ph7EfCtw8tiRioG_z5a55ubMWROMem-FRT1D/exec';
 
 // Link to your normal resume (PDF or web page). '' = the button shows "SOON".
-export const CLASSIC_RESUME_URL = '';
+export const CLASSIC_RESUME_URL = typeof __RESUME_URL__ !== 'undefined' ? __RESUME_URL__ : '';

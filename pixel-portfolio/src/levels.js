@@ -598,3 +598,6 @@ export function items(L, ch) {
 }
 export const WORLD1_FACTS = items(LEVELS.world1, 'f');
 export const countFacts = (collected) => WORLD1_FACTS.filter((f) => collected.has(f.id)).length;
+
+// Helpers shared with the Pocket Edition levels (src/pocket/levels.js)
+export const H = { TILE, GROUND_ROW, newLevel, put, span, ground, pipe, label, npc, board, cheer, enemy, wall, spring, spikes, crumble, belt, mover };

@@ -82,6 +82,28 @@ export class Enemies {
         e.phase = i;
         e.anims.play('bat-fly');
         break;
+      case 'fish': // Pocket Edition: swims in a lazy wave. Can carry a skill (d.skill) revealed when it is beaten
+        e = this.fliers.create(x, (d.row ?? 7) * 16 + 8, 'pk-fish', 0);
+        e.body.setSize(12, 8).setOffset(2, 2);
+        e.y0 = e.y;
+        e.x0 = x;
+        e.range = (d.range ?? 4) * 16;
+        e.speed = 26 * dm;
+        e.phase = i;
+        e.hp = 1 + this.diff.hp;
+        e.skill = d.skill;
+        e.anims.play('pk-fish-swim');
+        break;
+      case 'jelly': // Pocket Edition: drifts up and down, never stomp it
+        e = this.fliers.create(x, (d.row ?? 7) * 16 + 8, 'pk-jelly', 0);
+        e.body.setSize(10, 12).setOffset(2, 2);
+        e.y0 = e.y;
+        e.x0 = x;
+        e.range = 0;
+        e.speed = 0;
+        e.phase = i * 2;
+        e.anims.play('pk-jelly-pulse');
+        break;
       case 'diver':
         e = this.fliers.create(x, (d.row ?? 5) * 16 + 8, 'diver', 0);
         e.body.setSize(10, 10).setOffset(3, 4);
@@ -153,6 +175,9 @@ export class Enemies {
           return;
         }
         return s.hurtPlayer(e.x);
+      case 'jelly':
+        return s.hurtPlayer(e.x);
+      case 'fish':
       case 'bat':
       case 'diver':
         if (falling) {
@@ -214,6 +239,13 @@ export class Enemies {
     if (e.dead) return;
     e.dead = true;
     sfx('pop');
+    s.events.emit('enemy-down', e);
+    if (s.level.fx) {
+      // Pocket Edition: defeated enemies go up in a little pixel fire
+      const boom = s.add.sprite(e.x, e.y, 'pk-boom', 0).setDepth(9);
+      boom.anims.play('pk-boom-burn');
+      boom.once('animationcomplete', () => boom.destroy());
+    }
     e.body.enable = false;
     burst(s, e.x, e.y, { n: 10, colors: [0xf8d878, 0xfcfcfc, 0xf83800] });
     s.popText(e.x, e.y - 12, how === 'squish' ? 'SQUISH!' : 'POW!');
@@ -247,7 +279,11 @@ export class Enemies {
           this.walk(e, e.speed, true);
           break;
         case 'bat':
+        case 'fish':
           this.updBat(e, time);
+          break;
+        case 'jelly':
+          e.body.setVelocity(0, (e.y0 + Math.sin(time / 600 + e.phase) * 22 - e.y) * 4);
           break;
         case 'diver':
           this.updDiver(e, time, p, dt);

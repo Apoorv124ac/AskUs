@@ -17,3 +17,16 @@ export async function sendEmail({ email, name }) {
     return false;
   }
 }
+
+// Pocket Edition: the final feedback. It rides in the same Google Sheet row format, so the existing
+// script stores it without any change: the "Device" column holds "feedback 4/5 | comment".
+export async function sendFeedback({ email, name, rating, comment }) {
+  if (!EMAIL_ENDPOINT) return false;
+  const q = new URLSearchParams({ email: email || '', name: name || '', device: `feedback ${rating}/5 | ${comment || ''}`.slice(0, 480) });
+  try {
+    await fetch(`${EMAIL_ENDPOINT}?${q}`, { method: 'GET', mode: 'no-cors', cache: 'no-store' });
+    return true;
+  } catch {
+    return false;
+  }
+}

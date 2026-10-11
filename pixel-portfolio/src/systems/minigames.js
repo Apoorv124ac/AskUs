@@ -23,7 +23,8 @@ class Mini {
     scene.registry.set('factsTotal', 0); // the room's own progress replaces the HUD counter
     this.won = false;
     this.rewards = this.findRewards();
-    this.solved = this.rewards.length === 0;
+    this.edu = scene.level.edu; // Pocket Edition: winning one of these rooms earns a degree
+    this.solved = this.rewards.length === 0 && this.edu === undefined;
     this.rewards.forEach((r) => {
       r.it.setVisible(false);
       if (r.it.body) r.it.body.enable = false;
@@ -78,6 +79,7 @@ class Mini {
     this.say('SOLVED!');
     this.hud('SOLVED!');
     s.lockAnim('celebrate', 1400);
+    if (this.edu !== undefined) return s.edu?.roomWon(this.edu);
     s.time.delayedCall(500, () => s.game.events.emit('banner', 'MINI-GAME WON!\nREWARD UNLOCKED'));
     this.rewards.forEach((r, i) =>
       s.time.delayedCall(1500 + i * 1500, () => {

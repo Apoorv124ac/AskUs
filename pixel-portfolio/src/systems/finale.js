@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 // World 6 "Rooftop": contact boards, the cheering cast and the "hire me" flagpole.
 import { save, persist } from './save.js';
 import { burst } from '../ui/pixel.js';
+import { finishStage } from '../pocket/flow.js';
 
 export class Rooftop {
   constructor(scene) {
@@ -41,6 +42,8 @@ export class Rooftop {
     s.npcs.filter((n) => n.cheer).forEach((n, i) =>
       s.tweens.add({ targets: n.spr, y: n.spr.y - 8, yoyo: true, repeat: 5, duration: 220, delay: i * 90, ease: 'Sine.out' })
     );
+    // Pocket Edition: the last stage unlocks its project, then the credits
+    if (s.level.pocket) return s.time.delayedCall(3400, () => finishStage(s, s.level.pocket));
     s.time.delayedCall(4200, () => {
       s.scene.stop('UI');
       s.cameras.main.fadeOut(400, 15, 15, 27);

@@ -18,6 +18,12 @@ import { Rooftop } from '../systems/finale.js';
 import { MouseControls } from '../systems/mouse.js';
 import { sfx, music, duck } from '../systems/audio.js';
 import { touch, showTouch } from '../systems/touch.js';
+import { Decor } from '../pocket/decor.js';
+import { Water } from '../pocket/water.js';
+import { Gun } from '../pocket/gun.js';
+import { SeaStage } from '../pocket/seastage.js';
+import { EduGates } from '../pocket/edu.js';
+import { pocketGoal } from '../pocket/flow.js';
 import { Bricks } from '../systems/bricks.js';
 import { MINIS } from '../systems/minigames.js';
 
@@ -49,6 +55,7 @@ export default class GameScene extends Phaser.Scene {
     const reg = this.registry;
     this.level = LEVELS[this.roomKey];
     const L = this.level;
+    reg.set('playScene', 'Game');
     this.worldW = L.w * TILE;
     this.worldH = L.h * TILE;
 
@@ -86,6 +93,11 @@ export default class GameScene extends Phaser.Scene {
     this.dragon = null;
     this.pointerPower = null;
     this.mini = null;
+    this.water = null;
+    this.gun = null;
+    this.sea = null;
+    this.edu = null;
+    this.decor = null;
     this.star = !!save.recruiter; // recruiter mode: star power (immune, knocks enemies out, faster, triple jump)
     this.nextSpark = 0;
     this.motes = [];
@@ -110,16 +122,27 @@ export default class GameScene extends Phaser.Scene {
     if (L.hall) this.trophies = new TrophyHall(this);
     if (L.finale) this.finale = new Rooftop(this);
     if (L.mini) this.mini = new MINIS[L.mini](this);
+    // Pocket Edition extras (each only exists when a level asks for it)
+    if (L.decor) this.decor = new Decor(this);
+    if (L.water) this.water = new Water(this);
+    if (L.gun) this.gun = new Gun(this);
+    if (L.sea) this.sea = new SeaStage(this);
+    if (L.eduGates || L.edu !== undefined) this.edu = new EduGates(this);
+    if (L.chapterBanner) this.time.delayedCall(450, () => this.game.events.emit('chapter', L.chapterBanner));
     this.input.on('pointerdown', () => this.talking && this.advanceTalk());
     this.events.once('shutdown', () => this.game.events.emit('dialogue-end'));
     if (L.world === 0) {
       reg.set('factsTotal', WORLD1_FACTS.length);
       reg.set('facts', countFacts(this.collected));
+    } else if (L.cards) {
+      reg.set('factsTotal', L.cards.length);
+      reg.set('facts', this.countCards());
     } else reg.set('factsTotal', 0);
-    if (L.world === 0) reg.set('hudInfo', '');
+    if (L.world === 0 || L.cards) reg.set('hudInfo', L.hud || '');
 
     this.mouse = new MouseControls(this);
-    showTouch(true, { fire: !!(L.dragon && !save.dragonDown) });
+    showTouch(true, { fire: !!(L.dragon && !save.dragonDown) || !!L.gun, swim: !!L.water });
+    this.keyFire = this.input.keyboard.addKeys('X,Z');
     this.events.once('shutdown', () => showTouch(false));
     this.input.addPointer(2);
     this.pickMusic();
@@ -170,7 +193,7 @@ export default class GameScene extends Phaser.Scene {
           this.add.image(c * TILE + 8, (r + 1) * TILE - 16, 'cabinet', 'MNO'.indexOf(ch)).setDepth(2);
           continue;
         }
-        const tex = TILE_TEX[ch];
+        const tex = (L.tileTex && L.tileTex[ch]) || TILE_TEX[ch];
         if (!tex) continue;
         const t = this.solids.create(c * TILE + 8, r * TILE + 8, tex);
         t.setDepth(PIPE_CHARS.has(L.grid[r][c]) ? 6 : 3);
@@ -201,10 +224,10 @@ export default class GameScene extends Phaser.Scene {
         const y = r * TILE + 8;
         if ('ocft'.includes(ch) && ch !== '.' && this.collected.has(id)) continue;
         if (ch === 'o') {
-          const s = this.coins.create(x, y, 'coin', 0).setDepth(4);
+          const s = this.coins.create(x, y, L.stars ? 'pk-star' : 'coin', 0).setDepth(4);
           s.setSize(10, 12);
           s.itemId = id;
-          s.anims.play('coin-spin');
+          s.anims.play(L.stars ? 'pk-star-spin' : 'coin-spin');
           s.anims.setProgress((c % 4) / 4);
         } else if (ch === 'f') {
           const s = this.factItems.create(x, y, 'fact', 0).setDepth(4);
@@ -305,14 +328,20 @@ export default class GameScene extends Phaser.Scene {
   collectFact(it) {
     this.collected.add(it.itemId);
     const n = it.n;
+    const cards = this.level.cards;
     this.popText(it.x, it.y - 8, `FACT ${n + 1}`);
     it.destroy();
-    this.registry.set('facts', countFacts(this.collected));
-    const f = resume.introFacts[n] || { tag: '?', label: '', text: '' };
-    this.game.events.emit('fact', { title: `FACT ${n + 1}/${WORLD1_FACTS.length}`, ...f });
+    this.registry.set('facts', cards ? this.countCards() : countFacts(this.collected));
+    const f = (cards && cards[n]) || resume.introFacts[n] || { tag: '?', label: '', text: '' };
+    this.game.events.emit('fact', { title: `${(cards && this.level.cardTitle) || 'FACT'} ${n + 1}/${cards ? cards.length : WORLD1_FACTS.length}`, ...f });
     burst(this, it.x, it.y, { n: 12 });
     this.lockAnim('celebrate', 500);
     this.award();
+  }
+
+  // Pocket Edition: how many of this level's story cards have been collected
+  countCards() {
+    return items(this.level, 'f').filter((f) => this.collected.has(f.id)).length;
   }
 
   collectTool(it) {
@@ -468,6 +497,7 @@ export default class GameScene extends Phaser.Scene {
   hitGoal() {
     if (this.goalShown) return;
     this.goalShown = true;
+    if (this.level.pocket) return pocketGoal(this);
     sfx('win');
     save.completed[this.level.world] = true;
     save.lastWorld = Math.min(this.level.world + 1, 6);
@@ -568,6 +598,7 @@ export default class GameScene extends Phaser.Scene {
   // music: calm loop for bonus rooms, a lively one for the worlds (a different key per world)
   pickMusic() {
     const L = this.level;
+    if (L.music) return music(L.music[0], L.music[1] || 0);
     if (L.dragon) return music('cave');
     if (L.theme === 'underground') return music('cave');
     music('play', [0, 2, 5, -2, 3, 0, 4][L.world] || 0);
@@ -637,7 +668,7 @@ export default class GameScene extends Phaser.Scene {
       this.airJumps = boosted ? P.coffeeAirJumps : P.baseAirJumps;
       this.longJumping = false;
       this.jumping = false;
-      if (!this.wasGrounded && this.prevVy > 150) {
+      if (!this.water && !this.wasGrounded && this.prevVy > 150) {
         this.dust(p.x, b.bottom, 5);
         this.lockAnim('land', 90, time);
         this.squash(1.25, 0.78, 150);
@@ -651,7 +682,7 @@ export default class GameScene extends Phaser.Scene {
       this.jumpPressedAt = time;
       fresh = true;
     }
-    if (time - this.jumpPressedAt <= P.jumpBufferMs) {
+    if (!this.water && time - this.jumpPressedAt <= P.jumpBufferMs) {
       if (time - this.lastGrounded <= P.coyoteMs) {
         this.doJump(shift, dir, powered);
       } else if (fresh && this.airJumps > 0) {
@@ -660,7 +691,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
     // right / middle click: the extra mid-air jump(s) follow automatically
-    if (this.mouse.comboDue(time, grounded) && !frozen && this.airJumps > 0) {
+    if (!this.water && this.mouse.comboDue(time, grounded) && !frozen && this.airJumps > 0) {
       this.airJumps--;
       this.doJump(false, dir, powered, true);
     }
@@ -669,20 +700,21 @@ export default class GameScene extends Phaser.Scene {
       b.setVelocityY(b.velocity.y * P.jumpCutFactor);
       this.jumping = false;
     }
-    b.setGravityY(b.velocity.y > 0 ? P.fallExtraGravity : 0);
+    if (this.water) this.water.apply(dt, !frozen && (upHeld || c.up.isDown), !frozen && (c.down.isDown || touch.down));
+    else b.setGravityY(b.velocity.y > 0 ? P.fallExtraGravity : 0);
 
     // horizontal movement
-    const boost = (powered ? P.coffeeSpeedBoost : 1) * (this.star ? 1.15 : 1);
+    const boost = (powered ? P.coffeeSpeedBoost : 1) * (this.star ? 1.15 : 1) * (this.water ? 0.62 : 1);
     let maxSpeed = (shift ? P.runSpeed : P.walkSpeed) * boost;
     let vx = b.velocity.x;
-    let accel = P.accel * (grounded ? 1 : P.airControl);
+    let accel = P.accel * (grounded ? 1 : P.airControl) * (this.water ? 0.45 : 1);
     let target;
     if (this.longJumping && !grounded && (dir === 0 || dir === this.ljDir)) {
       target = this.ljDir * P.longJumpSpeed * boost;
       accel = P.accel;
     } else if (dir === 0) {
       target = 0;
-      accel = grounded ? P.friction : P.airDrag;
+      accel = this.water ? 150 : grounded ? P.friction : P.airDrag;
     } else {
       // keep momentum in the air even if Shift is released
       if (!grounded && Math.sign(vx) === dir) maxSpeed = Math.max(maxSpeed, Math.abs(vx));
@@ -720,6 +752,9 @@ export default class GameScene extends Phaser.Scene {
     if (p.y > this.worldH + 30) this.respawn();
 
     this.syncHero(time, grounded, vx);
+    if (this.gun) this.gun.update(time, !frozen && (touch.fire || this.keyFire.X.isDown || this.keyFire.Z.isDown));
+    if (this.sea) this.sea.update(time, delta);
+    if (this.decor) this.decor.update(time);
     if (this.mini) {
       this.mini.update(time, delta);
       this.mini.hudNow();

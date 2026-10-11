@@ -283,3 +283,6 @@ export function createVignette(scene, w, h) {
   c.fillRect(0, 0, w, h);
   tex.refresh();
 }
+
+// shared with the Pocket Edition art (src/pocket/art.js)
+export { canvas, R, D, P };

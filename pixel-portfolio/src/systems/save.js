@@ -1,5 +1,5 @@
 // Progress + login stored in the visitor's own browser (localStorage).
-const KEY = 'officeQuest.save.v1';
+const KEY = typeof __SAVE_KEY__ !== 'undefined' ? __SAVE_KEY__ : 'officeQuest.save.v1';
 
 const DEFAULTS = {
   email: '',
@@ -20,6 +20,7 @@ const DEFAULTS = {
   character: '', // chosen hero id ('' = not chosen yet)
   gender: '',
   muted: false,
+  pocket: { done: [false, false, false, false, false], edu: [false, false, false, false], feedback: false }, // Pocket Edition progress
 };
 
 function read() {

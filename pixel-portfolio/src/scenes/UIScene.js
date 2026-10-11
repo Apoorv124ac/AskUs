@@ -97,24 +97,29 @@ export default class UIScene extends Phaser.Scene {
     this.refresh();
   }
 
+  playKey() {
+    return this.registry.get('playScene') || 'Game';
+  }
+
   toMap() {
-    if (!this.scene.isPaused('Game')) return;
+    if (!this.scene.isPaused(this.playKey())) return;
     this.pauseBox.setVisible(false);
-    this.scene.stop('Game');
+    this.scene.stop(this.playKey());
     this.scene.stop('UI');
     this.scene.start('Menu');
   }
 
   toCheckpoint() {
-    if (!this.scene.isPaused('Game')) return;
+    if (!this.scene.isPaused(this.playKey())) return;
     this.togglePause();
-    this.scene.get('Game').returnToCheckpoint();
+    this.scene.get(this.playKey()).returnToCheckpoint?.();
   }
 
   togglePause() {
-    const paused = this.scene.isPaused('Game');
-    if (paused) this.scene.resume('Game');
-    else this.scene.pause('Game');
+    const key = this.playKey();
+    const paused = this.scene.isPaused(key);
+    if (paused) this.scene.resume(key);
+    else this.scene.pause(key);
     this.pauseBox.setVisible(!paused);
   }
 
