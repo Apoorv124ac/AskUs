@@ -19,6 +19,8 @@ const isTouchDevice = () =>
 
 let root = null;
 let fireBtn = null;
+let jumpBtn = null;
+let downBtn = null;
 
 const CSS = `
 #oq-touch{position:fixed;inset:0;z-index:15;pointer-events:none;display:none;font-family:Silkscreen,monospace;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -32,20 +34,22 @@ const CSS = `
 #oq-touch .pad .thumb{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:rgba(248,216,120,.85);border:3px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.35);pointer-events:none;transition:transform .09s ease-out}
 #oq-touch .pad.drag .thumb{transition:none;background:rgba(255,235,160,.95)}
 #oq-touch .pad.fast .thumb{background:rgba(255,120,90,.95)}
-#oq-touch.plane .pad,#oq-touch.swim .pad{width:156px;height:156px;border-radius:50%;background:radial-gradient(circle,rgba(15,15,27,.28),rgba(15,15,27,.5))}
-#oq-touch.plane .pad::before,#oq-touch.swim .pad::before{content:'\\25B2';left:50%;top:12px;transform:translateX(-50%)}
-#oq-touch.plane .pad::after,#oq-touch.swim .pad::after{content:'\\25BC';right:auto;left:50%;top:auto;bottom:2px;transform:translateX(-50%)}
+#oq-touch.plane .pad{width:156px;height:156px;border-radius:50%;background:radial-gradient(circle,rgba(15,15,27,.28),rgba(15,15,27,.5))}
+#oq-touch.plane .pad::before{content:'\\25B2';left:50%;top:12px;transform:translateX(-50%)}
+#oq-touch.plane .pad::after{content:'\\25BC';right:auto;left:50%;top:auto;bottom:2px;transform:translateX(-50%)}
 #oq-touch .d{left:calc(max(12px,env(safe-area-inset-left)) + 8px);bottom:calc(max(14px,env(safe-area-inset-bottom)) + 92px);width:56px;height:56px;font-size:22px}
-#oq-touch.plane .d,#oq-touch.swim .d{display:none}
+#oq-touch.plane .d{display:none}
 #oq-touch .j{right:max(14px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:92px;height:92px;background:rgba(228,0,43,.55);font-size:16px}
 #oq-touch .j.on{background:rgba(255,160,150,.85)}
 #oq-touch .run{right:calc(max(14px,env(safe-area-inset-right)) + 104px);bottom:calc(max(18px,env(safe-area-inset-bottom)) + 8px);width:62px;height:62px;font-size:12px}
 #oq-touch .fire{right:calc(max(14px,env(safe-area-inset-right)) + 14px);bottom:calc(max(18px,env(safe-area-inset-bottom)) + 104px);width:66px;height:66px;font-size:11px;background:rgba(88,176,248,.55);display:none}
 #oq-touch.plane .j,#oq-touch.plane .run{display:none}
 #oq-touch.plane .fire{right:max(14px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:92px;height:92px;font-size:14px}
-#oq-touch.swim .j{background:rgba(88,176,248,.55)}
+#oq-touch.swim .run{display:none}
+#oq-touch.swim .j{background:rgba(88,176,248,.6);font-size:13px}
+#oq-touch.swim .d{width:74px;height:74px;font-size:12px;border-radius:50%;background:rgba(88,176,248,.4)}
 #oq-touch .pause{right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));width:44px;height:44px;font-size:16px;border-radius:12px}
-@media (max-height:420px){#oq-touch .pad{width:176px;height:68px}#oq-touch .pad .thumb{width:54px;height:54px;margin:-27px 0 0 -27px}#oq-touch.plane .pad,#oq-touch.swim .pad{width:132px;height:132px}#oq-touch .d{bottom:calc(max(14px,env(safe-area-inset-bottom)) + 80px);width:50px;height:50px}#oq-touch .j{width:84px;height:84px}#oq-touch .run{right:calc(max(14px,env(safe-area-inset-right)) + 96px);width:56px;height:56px}}
+@media (max-height:420px){#oq-touch .pad{width:176px;height:68px}#oq-touch .pad .thumb{width:54px;height:54px;margin:-27px 0 0 -27px}#oq-touch.plane .pad{width:132px;height:132px}#oq-touch .d{bottom:calc(max(14px,env(safe-area-inset-bottom)) + 80px);width:50px;height:50px}#oq-touch .j{width:84px;height:84px}#oq-touch .run{right:calc(max(14px,env(safe-area-inset-right)) + 96px);width:56px;height:56px}}
 `;
 
 function bind(btn, key) {
@@ -84,7 +88,7 @@ function buildPad() {
   pad.appendChild(thumb);
   let id = null;
   let last = 0;
-  const is2d = () => root.classList.contains('plane') || root.classList.contains('swim');
+  const is2d = () => root.classList.contains('plane');
   const reset = () => {
     id = null;
     touch.left = touch.right = false;
@@ -158,8 +162,8 @@ function build() {
     return b;
   };
   padEl = buildPad();
-  mk('d', '▼', 'down', 'Down (enter pipe)');
-  mk('j', 'JUMP', 'jump', 'Jump');
+  downBtn = mk('d', '▼', 'down', 'Down (enter pipe)');
+  jumpBtn = mk('j', 'JUMP', 'jump', 'Jump');
   mk('run', 'RUN', 'run', 'Run');
   fireBtn = mk('fire', 'THROW', 'fire', 'Throw pointer arrows');
   const p = mk('pause sq', 'II', null, 'Pause');
@@ -182,6 +186,8 @@ export function showTouch(on, { fire = false, plane = false, swim = false } = {}
   root.classList.toggle('plane', plane);
   root.classList.toggle('swim', swim);
   if (padEl) padEl.reset();
+  if (jumpBtn) jumpBtn.textContent = swim ? 'SWIM UP' : 'JUMP';
+  if (downBtn) downBtn.textContent = swim ? 'DOWN' : '▼';
   if (fireBtn) fireBtn.style.display = on && fire ? 'grid' : 'none';
   if (!on) ['left', 'right', 'up', 'down', 'run', 'jump', 'fire'].forEach((k) => (touch[k] = false));
 }

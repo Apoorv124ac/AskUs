@@ -646,7 +646,7 @@ export default class GameScene extends Phaser.Scene {
     duck(frozen);
     const keyDir = (c.right.isDown || touch.right ? 1 : 0) - (c.left.isDown || touch.left ? 1 : 0);
     const dir = crouching || frozen ? 0 : keyDir || this.mouse.dir(time);
-    const upHeld = c.up.isDown || touch.jump || (this.water && touch.up) || this.mouse.held();
+    const upHeld = c.up.isDown || touch.jump || (!this.water && this.mouse.held());
     const tj = touch.takeJump();
     if (tj) this.interactPressed = true; // the jump button also talks / advances a message
     if (this.pointerPower && touch.takeFire()) this.pointerPower.throwAuto();
@@ -703,7 +703,7 @@ export default class GameScene extends Phaser.Scene {
       b.setVelocityY(b.velocity.y * P.jumpCutFactor);
       this.jumping = false;
     }
-    if (this.water) this.water.apply(dt, !frozen && (upHeld || c.up.isDown), !frozen && (c.down.isDown || touch.down));
+    if (this.water) this.water.apply(dt, !frozen && (c.up.isDown || touch.jump), !frozen && (c.down.isDown || touch.down));
     else b.setGravityY(b.velocity.y > 0 ? P.fallExtraGravity : 0);
 
     // horizontal movement
@@ -755,6 +755,7 @@ export default class GameScene extends Phaser.Scene {
     if (p.y > this.worldH + 30) this.respawn();
 
     this.syncHero(time, grounded, vx);
+    if (this.water) this.water.syncVis(time);
     if (this.gun) {
       // a quick tap on THROW still fires once (edge), holding keeps firing
       const tap = touch.takeFire();

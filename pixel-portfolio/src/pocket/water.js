@@ -2,6 +2,9 @@
 // "swim up" while it is held, DOWN lets you sink. Bubbles, light rays and a blue tint sell it.
 import Phaser from 'phaser';
 import { PHYSICS as P, ZOOM } from '../config.js';
+import { canvas, R } from '../art/creatures.js';
+import { save } from '../systems/save.js';
+import { characterById } from '../data/characters.js';
 
 const OFF_X = 128 * (ZOOM - 1);
 const OFF_Y = 112 * (ZOOM - 1);
@@ -36,6 +39,26 @@ export class Water {
       scene.tweens.add({ targets: f, x: f.x + dir * 160, yoyo: true, repeat: -1, duration: 5200 + i * 700, ease: 'Sine.inOut', onYoyo: () => f.setFlipX(dir < 0), onRepeat: () => f.setFlipX(dir > 0) });
     }
     scene.cameras.main.setBackgroundColor(scene.level.bg);
+    // the hero swims: a horizontal swimmer in a swimsuit replaces the standing sprite
+    this.key = swimmerTexture(scene, characterById(save.character));
+    scene.vis.setTexture(this.key, 0).setOrigin(0.5, 0.5);
+    scene.shadow.setVisible(false);
+  }
+
+  // called every frame after the normal hero sync
+  syncVis(time) {
+    const s = this.s;
+    const p = s.player;
+    const v = s.vis;
+    const vx = p.body.velocity.x;
+    const vy = p.body.velocity.y;
+    const stroke = Math.abs(vx) > 12 || vy < -10;
+    const f = Math.floor(time / (stroke ? 130 : 320)) % 4;
+    v.setTexture(this.key, f);
+    v.setPosition(p.x, p.y + 1);
+    v.setFlipX(p.flipX);
+    const tilt = Phaser.Math.Clamp(vy / 78, -1, 1) * 22 * (p.flipX ? -1 : 1);
+    v.setAngle(tilt);
   }
 
   makeBg(key, i) {
@@ -100,4 +123,53 @@ export class Water {
     const b = s.add.rectangle(x, y, size, size, 0xd8f4ff, 0.8).setDepth(7).setStrokeStyle(1, 0x6ab8f0, 0.8);
     s.tweens.add({ targets: b, y: y - rise - Phaser.Math.Between(0, 30), x: x + Phaser.Math.Between(-8, 8), alpha: 0, duration: 900 + rise * 6, ease: 'Sine.out', onComplete: () => b.destroy() });
   }
+}
+
+// A 36x20 swimmer, 4 stroke frames, facing right. Skin, hair and suit colours come from the chosen hero.
+function swimmerTexture(scene, c) {
+  const key = `pk-swim-${c.id}`;
+  if (scene.textures.exists(key)) return key;
+  const L = c.look;
+  canvas(scene, key, 36, 20, 4, (g, f) => {
+    const legA = [0, 1, 2, 1][f];
+    const legB = [2, 1, 0, 1][f];
+    const armF = [0, 1, 2, 1][f];
+    // legs and flippers (behind the body)
+    R(g, L.skinS, 4, 9 + legB, 10, 3);
+    R(g, L.skin, 4, 8 + legA, 10, 3);
+    R(g, '#f8d878', 0, 7 + legA, 5, 3);
+    R(g, '#f8d878', 0, 10 + legB, 5, 3);
+    // far arm along the body
+    R(g, L.skinS, 15, 12 - (f % 2), 9, 2);
+    // swimsuit / trunks and torso
+    R(g, L.skin, 14, 8, 11, 6);
+    if (L.female) {
+      R(g, L.blazer, 10, 8, 14, 6);
+      R(g, L.blazerHi, 10, 8, 14, 1);
+      R(g, L.lanyard, 17, 8, 1, 6);
+    } else {
+      R(g, L.blazer, 8, 8, 8, 6);
+      R(g, L.blazerHi, 8, 8, 8, 1);
+      R(g, L.lanyard, 8, 11, 8, 1);
+    }
+    // head
+    R(g, L.skin, 25, 5, 8, 8);
+    R(g, L.skinS, 25, 12, 8, 1);
+    R(g, L.hair, 24, 3, 9, 3);
+    R(g, L.hair, 24, 5, 3, 5);
+    if (L.hairStyle === 'long' || L.hairStyle === 'bob') R(g, L.hair, 19 - (f % 2), 5, 7, 4 + (L.hairStyle === 'long' ? 2 : 0));
+    if (L.hairStyle === 'curly') R(g, L.hair, 23, 2, 10, 4);
+    if (L.hairStyle === 'bun') R(g, L.hair, 22, 1, 4, 3);
+    R(g, L.hairHi, 27, 3, 4, 1);
+    if (L.beard) R(g, L.hair, 28, 11, 5, 3);
+    // goggles and a smile
+    R(g, '#9fe8ff', 29, 7, 3, 3);
+    R(g, '#0f0f1b', 30, 8, 1, 1);
+    R(g, L.lanyard, 25, 7, 4, 1);
+    R(g, L.lips, 31, 11, 2, 1);
+    // near arm reaching forward
+    R(g, L.skin, 22, 6 + armF, 6, 2);
+    R(g, L.skin, 28, 8 + armF + (f === 2 ? 1 : 0), 6, 2);
+  });
+  return key;
 }

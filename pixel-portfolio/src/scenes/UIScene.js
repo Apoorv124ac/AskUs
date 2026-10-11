@@ -59,18 +59,19 @@ export default class UIScene extends Phaser.Scene {
 
     this.pauseBox = this.add.container(0, 0).setDepth(40).setVisible(false);
     this.pauseBox.add([
-      this.add.rectangle(0, 0, 256, 224, 0x0f0f1b, 0.6).setOrigin(0),
-      panel(this, 50, 78, 156, 68, { depth: 0 }),
-      txt(this, 128, 90, 'PAUSED', { display: true, origin: 0.5, color: COLORS.gold, depth: 41 }),
-      txt(this, 128, 108, 'P / ESC   RESUME', { origin: 0.5, depth: 41 }),
-      txt(this, 128, 120, 'R   BACK TO CHECKPOINT', { origin: 0.5, depth: 41 }),
-      txt(this, 128, 132, 'Q   WORLD MAP', { origin: 0.5, depth: 41 }),
+      this.add.rectangle(0, 0, 256, 224, 0x0f0f1b, 0.7).setOrigin(0),
+      panel(this, 44, 62, 168, 100, { depth: 0 }),
+      txt(this, 128, 74, 'PAUSED', { display: true, origin: 0.5, color: COLORS.gold, depth: 41 }),
     ]);
-    // the same three choices work by tap on phones
-    [[108, () => this.togglePause()], [120, () => this.toCheckpoint()], [132, () => this.toMap()]].forEach(([y, fn]) => {
-      const z = this.add.zone(128, y, 156, 12).setInteractive({ useHandCursor: true });
-      z.on('pointerdown', fn);
-      this.pauseBox.add(z);
+    // three big buttons: tap (phones) or use the key shown (desktop)
+    [
+      [92, 'RESUME', 'P', 0x2c8a3c, () => this.togglePause()],
+      [114, 'LAST CHECKPOINT', 'R', 0x3c64a0, () => this.toCheckpoint()],
+      [136, 'STAGE MENU', 'Q', 0xa02848, () => this.toMap()],
+    ].forEach(([y, label, key, col, fn]) => {
+      const r = this.add.rectangle(128, y, 148, 18, col).setStrokeStyle(1, 0xfcfcfc).setDepth(41).setInteractive({ useHandCursor: true });
+      r.on('pointerdown', fn);
+      this.pauseBox.add([r, txt(this, 128, y, `${label}   ${key}`, { origin: 0.5, depth: 42, shadow: false })]);
     });
 
     const g = this.game.events;
