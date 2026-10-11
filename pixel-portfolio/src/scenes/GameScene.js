@@ -646,7 +646,7 @@ export default class GameScene extends Phaser.Scene {
     duck(frozen);
     const keyDir = (c.right.isDown || touch.right ? 1 : 0) - (c.left.isDown || touch.left ? 1 : 0);
     const dir = crouching || frozen ? 0 : keyDir || this.mouse.dir(time);
-    const upHeld = c.up.isDown || touch.jump || this.mouse.held();
+    const upHeld = c.up.isDown || touch.jump || (this.water && touch.up) || this.mouse.held();
     const tj = touch.takeJump();
     if (tj) this.interactPressed = true; // the jump button also talks / advances a message
     if (this.pointerPower && touch.takeFire()) this.pointerPower.throwAuto();
